@@ -13,6 +13,12 @@ target/
 # Maven wrapper 下载的 jar 留着（首次 clone 需要）
 # .mvn/wrapper/maven-wrapper.jar
 
+### 敏感配置（每人本地留自己的）###
+# 数据库密码、个人 token 等敏感信息
+src/main/resources/db.properties
+src/main/resources/application.properties
+*.local.properties
+
 ### Eclipse ###
 .apt_generated
 .classpath
