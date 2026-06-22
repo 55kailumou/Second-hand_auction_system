@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>二手物品拍卖系统 · 系统框架图</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<style>
+  body {
+    margin: 0;
+    padding: 32px;
+    background: #fafbfc;
+    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+  }
+  h1 {
+    text-align: center;
+    color: #1f2937;
+    font-size: 26px;
+    margin: 0 0 8px;
+  }
+  .subtitle {
+    text-align: center;
+    color: #6b7280;
+    font-size: 14px;
+    margin-bottom: 28px;
+  }
+  .legend {
+    max-width: 1200px;
+    margin: 0 auto 16px;
+    display: flex;
+    gap: 18px;
+    justify-content: center;
+    font-size: 13px;
+    color: #4b5563;
+  }
+  .legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .legend i {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+  }
+  .mermaid {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    max-width: 1400px;
+    margin: 0 auto;
+    overflow: auto;
+  }
+</style>
+</head>
+<body>
+  <h1>二手物品拍卖系统 · 系统功能框架图</h1>
+  <div class="subtitle">JSP + Servlet + JDBC ｜ 兼顾「二手交易」与「在线拍卖」双核心场景</div>
+
+  <div class="legend">
+    <span><i style="background:#dbeafe"></i>用户端</span>
+    <span><i style="background:#dcfce7"></i>买家专属</span>
+    <span><i style="background:#fef3c7"></i>卖家专属</span>
+    <span><i style="background:#fee2e2"></i>管理后台</span>
+  </div>
+
+  <div class="mermaid">
+flowchart TB
+    ROOT["<b>二手物品拍卖系统</b><br/>用户统一身份：注册即同时具备买家与卖家权限"]
+
+    ROOT --> U["<b>用户端</b><br/>前台 · 公共访问"]
+    ROOT --> A["<b>管理后台</b><br/>仅管理员可访问"]
+
+    %% ===== 用户端 =====
+    U --> U1["<b>1. 注册/登录</b><br/>账号密码 · 短信验证<br/>图形验证码 · Session/Cookie"]
+    U --> U2["<b>2. 拍品浏览</b>"]
+    U --> U3["<b>3. 竞拍出价</b>"]
+    U --> U4["<b>4. 发布拍品</b><br/>(卖家动作)"]
+    U --> U5["<b>5. 个人中心</b>"]
+
+    %% 拍品浏览展开
+    U2 --> U2a["首页推荐<br/>热门 · 即将结束 · 最新"]
+    U2 --> U2b["分类筛选<br/>数码 · 服饰 · 书籍 · 家居..."]
+    U2 --> U2c["关键字搜索"]
+    U2 --> U2d["拍品详情页<br/>实时最高价 · 倒计时 · 出价历史"]
+
+    %% 竞拍出价展开
+    U3 --> U3a["在线加价<br/>≥最低加价幅度校验"]
+    U3 --> U3b["代理出价<br/>系统自动顶价"]
+    U3 --> U3c["收藏/关注<br/>开拍提醒"]
+    U3 --> U3d["拍卖结束<br/>自动判定中标"]
+
+    %% 发布拍品展开
+    U4 --> U4a["填写商品信息<br/>标题 · 描述 · 分类 · 图片<br/>品牌型号 · 新旧程度"]
+    U4 --> U4b["设置拍卖参数<br/>起拍价 · 加价幅度<br/>保留价 · 拍卖时长"]
+    U4 --> U4c["提交进入审核"]
+
+    %% 个人中心展开（按买家/卖家视角）
+    U5 --> U5a["<b>买家视角</b><br/>我的出价 · 我的订单 · 我的收藏"]
+    U5 --> U5b["<b>卖家视角</b><br/>我发布的拍品 · 卖出订单 · 拍卖收入"]
+    U5 --> U5c["<b>通用</b><br/>消息通知 · 个人信息与安全<br/>收货地址 · 信用评价"]
+
+    %% ===== 管理后台 =====
+    A --> A1["<b>1. 管理员登录</b><br/>独立账号体系"]
+    A --> A2["<b>2. 拍品审核</b><br/>待审核 · 违规下架"]
+    A --> A3["<b>3. 用户管理</b><br/>用户列表 · 封禁/解封"]
+    A --> A4["<b>4. 订单管理</b><br/>订单查询 · 投诉处理"]
+    A --> A5["<b>5. 分类与标签</b>"]
+    A --> A6["<b>6. 系统公告</b>"]
+    A --> A7["<b>7. 数据统计</b><br/>成交额 · 活跃度 · 分类占比"]
+
+    %% 样式
+    classDef userEnd fill:#dbeafe,stroke:#3b82f6,stroke-width:1px,color:#1e3a8a;
+    classDef buyer fill:#dcfce7,stroke:#16a34a,stroke-width:1px,color:#14532d;
+    classDef seller fill:#fef3c7,stroke:#d97706,stroke-width:1px,color:#78350f;
+    classDef admin fill:#fee2e2,stroke:#dc2626,stroke-width:1px,color:#7f1d1d;
+    classDef rootStyle fill:#ede9fe,stroke:#7c3aed,stroke-width:2px,color:#4c1d95;
+
+    class ROOT rootStyle;
+    class U,U1,U2,U2a,U2b,U2c,U2d,U3,U3c,U5,U5c userEnd;
+    class U3a,U3b,U3d,U5a buyer;
+    class U4,U4a,U4b,U4c,U5b seller;
+    class A,A1,A2,A3,A4,A5,A6,A7 admin;
+  </div>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'default',
+      flowchart: {
+        useMaxWidth: true,
+        htmlLabels: true,
+        curve: 'basis',
+        nodeSpacing: 30,
+        rankSpacing: 40,
+        padding: 12
+      },
+      themeVariables: {
+        fontFamily: 'Microsoft YaHei, PingFang SC, sans-serif',
+        fontSize: '13px'
+      }
+    });
+  </script>
+</body>
+</html>

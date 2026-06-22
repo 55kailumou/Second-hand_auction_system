@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+    <!-- 引入外部 db.properties -->
+    <properties resource="db.properties"/>
+
+    <!-- 全局配置 -->
+    <settings>
+        <!-- 开启控制台 SQL 日志 -->
+        <setting name="logImpl" value="STDOUT_LOGGING"/>
+        <!-- 开启驼峰命名自动映射: database_column -> javaField -->
+        <setting name="mapUnderscoreToCamelCase" value="true"/>
+    </settings>
+
+    <!-- 实体类别名 (包扫描): 使用时无需写完整类名 -->
+    <typeAliases>
+        <package name="org.example.entity"/>
+    </typeAliases>
+
+    <!-- 环境配置 -->
+    <environments default="development">
+        <environment id="development">
+            <!-- 使用 JDBC 事务管理 -->
+            <transactionManager type="JDBC"/>
+            <!-- 数据库连接池: POOLED(自带) -->
+            <dataSource type="POOLED">
+                <property name="driver" value="${jdbc.driver}"/>
+                <property name="url"    value="${jdbc.url}"/>
+                <property name="username" value="${jdbc.username}"/>
+                <property name="password" value="${jdbc.password}"/>
+            </dataSource>
+        </environment>
+    </environments>
+
+    <!-- 注册 Mapper XML (逐个列出,简单清晰) -->
+    <mappers>
+        <mapper resource="org/example/mapper/UserMapper.xml"/>
+        <!-- 后续模块按需追加,例如:
+        <mapper resource="org/example/mapper/ItemMapper.xml"/>
+        <mapper resource="org/example/mapper/BidMapper.xml"/>
+        -->
+    </mappers>
+
+</configuration>

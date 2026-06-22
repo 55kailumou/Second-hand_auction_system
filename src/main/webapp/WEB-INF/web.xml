@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
+                             http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"
+         version="4.0">
+
+    <display-name>Second-hand Auction System</display-name>
+
+    <!-- 欢迎页（项目启动默认访问） -->
+    <welcome-file-list>
+        <welcome-file>index.jsp</welcome-file>
+    </welcome-file-list>
+
+    <!-- 默认会话超时（30分钟） -->
+    <session-config>
+        <session-timeout>30</session-timeout>
+    </session-config>
+
+    <!-- 错误页 -->
+    <error-page>
+        <error-code>404</error-code>
+        <location>/WEB-INF/jsp/error.jsp</location>
+    </error-page>
+
+    <!-- ===================== Filter 注册（注意顺序） ===================== -->
+    <!--
+        Filter 顺序：先执行 encodingFilter（设置编码），再执行 authFilter（登录拦截）
+        web.xml 中 <filter-mapping> 的书写顺序 = Filter 链执行顺序
+    -->
+    <filter>
+        <filter-name>encodingFilter</filter-name>
+        <filter-class>org.example.filter.EncodingFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>encodingFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <filter>
+        <filter-name>authFilter</filter-name>
+        <filter-class>org.example.filter.AuthFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>authFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <!--
+        Servlet 用 @WebServlet 注解配置（不写到这里）
+        Filter 用 web.xml 注册是因为要控制顺序
+    -->
+
+</web-app>
