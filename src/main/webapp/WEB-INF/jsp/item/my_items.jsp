@@ -18,96 +18,65 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我发布的拍品 · 个人中心</title>
-    <link rel="stylesheet" href="<%=ctx%>/static/css/common.css">
+    <link rel="stylesheet" href="<%=ctx%>/static/css/cyberpunk.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
     <style>
-        body { background: #f5f5f5; }
-        .header { background: #fff; height: 60px; position: sticky; top: 0; z-index: 100;
-                  box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
-        .header-inner { max-width: 1200px; margin: 0 auto; padding: 0 16px; height: 100%;
-                        display: flex; align-items: center; gap: 20px; }
-        .logo { font-size: 20px; font-weight: 800; color: var(--color-primary);
-                display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-        .logo-icon { width: 30px; height: 30px; background: var(--color-primary);
-                     color: #fff; border-radius: 4px; display: grid; place-items: center;
-                     font-size: 14px; }
-        .nav { display: flex; gap: 24px; margin-left: auto; }
-        .nav a { color: var(--color-text); font-size: 14px; font-weight: 500;
-                 padding: 0 4px; height: 60px; display: flex; align-items: center;
-                 position: relative; transition: color 0.2s; }
-        .nav a:hover, .nav a.active { color: var(--color-primary); }
-        .nav a.active::after {
-            content: ''; position: absolute;
-            bottom: 8px; left: 4px; right: 4px;
-            height: 2px; background: var(--color-primary); border-radius: 2px;
-        }
+        body { background: #0a0a0a; color: #FFEE00; font-family: 'Courier New', Consolas, 'Source Code Pro', monospace; }
 
-        .container { max-width: 1200px; margin: 16px auto; padding: 0 16px; }
-        .page-head { background: #fff; border-radius: 8px; padding: 20px 24px;
-                     box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-                     display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
-        .page-head-title { font-size: 18px; font-weight: 700; }
-        .page-head-sub { font-size: 12px; color: var(--color-muted); margin-top: 4px; }
-        .page-head-info { flex: 1; }
+        .cp-page-head { background: #111; border: 1px solid #FFEE00; padding: 20px 24px; display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
+        .cp-page-title { font-size: 18px; font-weight: 700; color: #FFEE00; }
+        .cp-page-sub { font-size: 12px; color: #FFEE00; opacity: 0.7; margin-top: 4px; }
 
-        .item-card { background: #fff; border-radius: 8px; padding: 18px 20px;
-                     box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-                     display: flex; gap: 16px; align-items: center; margin-bottom: 10px; }
-        .item-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
-        .item-cover { width: 100px; height: 100px; border-radius: 6px;
-                      background: var(--color-primary-soft); flex-shrink: 0;
-                      display: grid; place-items: center; overflow: hidden; }
-        .item-cover img { width: 100%; height: 100%; object-fit: cover; }
-        .item-cover i { font-size: 28px; color: rgba(255,107,53,0.4); }
-        .item-info { flex: 1; min-width: 0; }
-        .item-title { font-size: 14px; font-weight: 600;
-                      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .item-meta { font-size: 12px; color: var(--color-muted); margin-top: 4px;
-                     display: flex; gap: 12px; flex-wrap: wrap; }
-        .item-price { color: var(--color-primary); font-weight: 700; font-size: 16px;
-                      margin-top: 6px; }
+        .cp-card { background: #111; border: 1px solid #FFEE00; padding: 18px 20px; display: flex; gap: 16px; align-items: center; margin-bottom: 10px; }
+        .cp-card:hover { box-shadow: 0 0 15px rgba(255,238,0,0.15); }
+        .cp-card-cover { width: 100px; height: 100px; border: 1px solid #FFEE00; background: #0a0a0a; flex-shrink: 0; display: grid; place-items: center; overflow: hidden; }
+        .cp-card-cover img { width: 100%; height: 100%; object-fit: cover; }
+        .cp-card-cover i { font-size: 28px; color: #FFEE00; opacity: 0.4; }
+        .cp-card-info { flex: 1; min-width: 0; }
+        .cp-card-title { font-size: 14px; font-weight: 600; color: #FFEE00; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cp-card-title a { color: #FFEE00; text-decoration: none; }
+        .cp-card-title a:hover { color: #00f0ff; }
+        .cp-card-meta { font-size: 12px; color: #FFEE00; opacity: 0.7; margin-top: 4px; display: flex; gap: 12px; flex-wrap: wrap; }
+        .cp-card-price { color: #00f0ff; font-weight: 700; font-size: 16px; margin-top: 6px; text-shadow: 0 0 5px #00f0ff; }
 
-        .status-pill { display: inline-block; padding: 3px 10px;
-                       border-radius: 12px; font-size: 11px; font-weight: 600; }
-        .status-0 { background: #fef3c7; color: #b45309; }
-        .status-1 { background: #dbeafe; color: #1d4ed8; }
-        .status-2 { background: #d1fae5; color: #047857; }
-        .status-3 { background: #f3f4f6; color: #6b7280; }
-        .status-4 { background: #fee2e2; color: #b91c1c; }
-        .status-5 { background: #fde68a; color: #92400e; }
+        .cp-status-pill { display: inline-block; padding: 3px 10px; border: 1px solid #FFEE00; font-size: 11px; font-weight: 600; color: #FFEE00; }
+        .status-0 { border-color: #FFEE00; color: #FFEE00; }
+        .status-1 { border-color: #00f0ff; color: #00f0ff; text-shadow: 0 0 5px #00f0ff; }
+        .status-2 { border-color: #00ff88; color: #00ff88; }
+        .status-3 { border-color: #666; color: #666; }
+        .status-4 { border-color: #ff00ff; color: #ff00ff; }
+        .status-5 { border-color: #ff4444; color: #ff4444; }
 
-        .item-actions { display: flex; gap: 6px; flex-shrink: 0; }
-        .item-actions a, .item-actions button {
-            padding: 6px 12px; border-radius: 4px; font-size: 12px;
-            text-decoration: none; cursor: pointer; border: 1px solid transparent;
-            transition: all 0.15s;
-        }
-        .btn-edit { background: #fff; color: var(--color-primary); border-color: var(--color-primary); }
-        .btn-edit:hover { background: var(--color-primary); color: #fff; }
-        .btn-offline-card { background: #fff; color: var(--color-danger); border-color: var(--color-danger); }
-        .btn-offline-card:hover { background: var(--color-danger); color: #fff; }
-        .btn-view { background: #f9fafb; color: var(--color-text-sub); border-color: var(--color-border); }
-        .btn-view:hover { background: #f3f4f6; }
-        .btn-disabled { background: #f9fafb; color: #9ca3af; border-color: var(--color-border); cursor: not-allowed; }
+        .cp-card-actions { display: flex; gap: 6px; flex-shrink: 0; }
+        .cp-card-actions a, .cp-card-actions button { padding: 6px 12px; font-size: 12px; text-decoration: none; cursor: pointer; font-family: inherit; transition: all 0.15s; border: 1px solid transparent; }
+        .cp-btn-sm { background: #FFEE00; color: #0a0a0a; border: none; font-weight: 600; }
+        .cp-btn-sm:hover { background: #fff; box-shadow: 0 0 10px rgba(255,238,0,0.5); }
+        .cp-btn-danger-sm { background: transparent; border: 1px solid #ff00ff; color: #ff00ff; }
+        .cp-btn-danger-sm:hover { background: #ff00ff; color: #0a0a0a; }
+        .cp-btn-outline-sm { background: transparent; border: 1px solid #FFEE00; color: #FFEE00; }
+        .cp-btn-outline-sm:hover { background: #FFEE00; color: #0a0a0a; }
+        .cp-btn-disabled { background: #1a1a1a; border: 1px solid #333; color: #666; cursor: not-allowed; }
 
-        .empty-state { background: #fff; border-radius: 8px; padding: 60px 20px;
-                       text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
-        .empty-state i { font-size: 56px; color: rgba(255,107,53,0.3); margin-bottom: 16px; }
-        .empty-state p { color: var(--color-muted); margin-bottom: 20px; }
+        .cp-empty-state { background: #111; border: 1px solid #FFEE00; padding: 60px 20px; text-align: center; }
+        .cp-empty-state i { font-size: 56px; color: #FFEE00; opacity: 0.3; }
+        .cp-empty-state p { color: #FFEE00; opacity: 0.7; margin-bottom: 20px; }
 
-        .alert-error { background: #fee2e2; color: var(--color-danger); padding: 12px 16px;
-                       border-radius: 8px; font-size: 13px; margin-bottom: 12px; }
+        .cp-alert-error { background: rgba(255,0,255,0.1); border: 1px solid #ff00ff; color: #ff00ff; padding: 12px 16px; font-size: 13px; margin-bottom: 12px; }
+
+        .cp-scanline { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); }
     </style>
 </head>
 <body>
 
-<header class="header">
-    <div class="header-inner">
-        <a href="<%=ctx%>/index.jsp" class="logo">
-            <span class="logo-icon"><i class="fa fa-gavel"></i></span>
+<div class="cp-scanline"></div>
+
+<header class="cp-nav">
+    <div class="cp-nav-inner">
+        <a href="<%=ctx%>/index.jsp" class="cp-logo">
+            <span class="cp-logo-icon"><i class="fa fa-gavel"></i></span>
             <span>二手拍卖</span>
         </a>
-        <nav class="nav">
+        <nav class="cp-nav-menu">
             <a href="<%=ctx%>/item?action=list">浏览拍品</a>
             <a href="<%=ctx%>/item?action=publish-page">发布拍品</a>
             <a href="<%=ctx%>/user?action=center">个人中心</a>
@@ -115,63 +84,63 @@
     </div>
 </header>
 
-<div class="container" id="app" v-cloak>
-    <div class="page-head">
-        <div style="width: 48px; height: 48px; border-radius: 8px; background: var(--color-primary-light);
-                    display: grid; place-items: center; color: var(--color-primary); font-size: 22px;">
+<div class="cp-container" id="app" v-cloak>
+    <div class="cp-page-head">
+        <div style="width: 48px; height: 48px; border: 1px solid #FFEE00;
+                    display: grid; place-items: center; color: #FFEE00; font-size: 22px;">
             <i class="fa fa-handshake-o"></i>
         </div>
-        <div class="page-head-info">
-            <div class="page-head-title">我发布的拍品</div>
-            <div class="page-head-sub">
+        <div class="cp-page-head-info">
+            <div class="cp-page-title">我发布的拍品</div>
+            <div class="cp-page-sub">
                 共 <strong>{{ items.length }}</strong> 件 ·
-                拍卖中 <strong style="color: #1d4ed8;">{{ countByStatus(1) }}</strong> ·
-                待审核 <strong style="color: #b45309;">{{ countByStatus(0) }}</strong> ·
-                已成交 <strong style="color: #047857;">{{ countByStatus(2) }}</strong> ·
-                已下架 <strong style="color: #b91c1c;">{{ countByStatus(4) }}</strong>
+                拍卖中 <strong style="color: #00f0ff;">{{ countByStatus(1) }}</strong> ·
+                待审核 <strong style="color: #FFEE00;">{{ countByStatus(0) }}</strong> ·
+                已成交 <strong style="color: #00ff88;">{{ countByStatus(2) }}</strong> ·
+                已下架 <strong style="color: #ff00ff;">{{ countByStatus(4) }}</strong>
             </div>
         </div>
-        <a href="<%=ctx%>/item?action=publish-page" class="btn-edit"
-           style="padding: 9px 20px; background: var(--color-primary); color: #fff; border: none; font-weight: 600;">
+        <a href="<%=ctx%>/item?action=publish-page" class="cp-btn-sm"
+           style="padding: 9px 20px; background: #FFEE00; color: #0a0a0a; border: none; font-weight: 600;">
             <i class="fa fa-plus"></i> 发布新拍品
         </a>
     </div>
 
-    <div v-if="items.length === 0" class="empty-state">
+    <div v-if="items.length === 0" class="cp-empty-state">
         <i class="fa fa-inbox"></i>
         <p>您还没有发布过拍品</p>
         <a href="<%=ctx%>/item?action=publish-page"
-           style="display: inline-block; padding: 10px 28px; background: var(--color-primary);
-                  color: #fff; border-radius: 6px; text-decoration: none; font-weight: 600;">
+           style="display: inline-block; padding: 10px 28px; background: #FFEE00;
+                  color: #0a0a0a; text-decoration: none; font-weight: 600;">
             <i class="fa fa-plus"></i> 立即发布
         </a>
     </div>
 
-    <div v-for="it in items" :key="it.id" class="item-card">
-        <a :href="'<%=ctx%>/item?action=detail&id=' + it.id" class="item-cover">
+    <div v-for="it in items" :key="it.id" class="cp-card">
+        <a :href="'<%=ctx%>/item?action=detail&id=' + it.id" class="cp-card-cover">
             <img v-if="it.coverImage" :src="it.coverImage" :alt="it.title">
             <i v-else class="fa fa-image"></i>
         </a>
-        <div class="item-info">
-            <div class="item-title">
+        <div class="cp-card-info">
+            <div class="cp-card-title">
                 <a :href="'<%=ctx%>/item?action=detail&id=' + it.id"
-                   style="color: var(--color-text); text-decoration: none;">{{ it.title }}</a>
+                   style="color: #FFEE00; text-decoration: none;">{{ it.title }}</a>
             </div>
-            <div class="item-meta">
+            <div class="cp-card-meta">
                 <span>浏览 {{ it.viewCount || 0 }} 次</span>
                 <span>当前价 ¥{{ formatPrice(it.currentPrice) }}</span>
                 <span v-if="it.endTime">结束：{{ formatDateTime(it.endTime) }}</span>
             </div>
-            <div class="item-price">¥{{ formatPrice(it.currentPrice || it.startPrice) }}</div>
+            <div class="cp-card-price">¥{{ formatPrice(it.currentPrice || it.startPrice) }}</div>
         </div>
-        <span :class="['status-pill', 'status-' + it.status]">{{ statusText(it.status) }}</span>
-        <div class="item-actions">
-            <a :href="'<%=ctx%>/item?action=detail&id=' + it.id" class="btn-view">查看</a>
+        <span :class="['cp-status-pill', 'status-' + it.status]">{{ statusText(it.status) }}</span>
+        <div class="cp-card-actions">
+            <a :href="'<%=ctx%>/item?action=detail&id=' + it.id" class="cp-btn-outline-sm">查看</a>
             <a :href="'<%=ctx%>/item?action=edit-page&id=' + it.id"
-               :class="canEdit(it) ? 'btn-edit' : 'btn-disabled'">
+               :class="canEdit(it) ? 'cp-btn-sm' : 'cp-btn-disabled'">
                 编辑
             </a>
-            <button v-if="canOffline(it)" type="button" class="btn-offline-card"
+            <button v-if="canOffline(it)" type="button" class="cp-btn-danger-sm"
                     @click="offlineItem(it)">撤拍</button>
         </div>
     </div>

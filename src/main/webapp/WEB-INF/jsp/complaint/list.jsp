@@ -31,186 +31,239 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的投诉 · 二手物品拍卖系统</title>
-    <link rel="stylesheet" href="<%=ctx%>/static/css/common.css">
+    <link rel="stylesheet" href="<%=ctx%>/static/css/cyberpunk.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
     <style>
         /* ============================================================
-         * 我的投诉 v1 · 仿闲鱼 v2
-         * - 顶 nav 统一
-         * - 标题栏 + tab（我发起的 / 我收到的 / 全部）+ 搜索
-         * - 投诉列表（每条：状态徽章 + 订单 + 对方 + 原因 + 审核结果）
+         * Cyberpunk 2077 — 我的投诉
+         * 黑色背景 / #FFEE00 霓虹黄 / 单色字体 / clip-path 多边形
          * ============================================================ */
-        body { background: #f5f5f5; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* 顶 nav（与 credit/favorite/address/message 一致） */
-        .header { background: #fff; height: 60px; position: sticky; top: 0; z-index: 100;
-                  box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
-        .header-inner { max-width: 1200px; margin: 0 auto; padding: 0 16px; height: 100%;
-                        display: flex; align-items: center; gap: 20px; }
-        .logo { font-size: 20px; font-weight: 800; color: var(--color-primary);
-                display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-        .logo-icon { width: 30px; height: 30px; background: var(--color-primary);
-                     color: #fff; border-radius: 4px; display: grid; place-items: center;
-                     font-size: 14px; }
-        .nav { display: flex; gap: 24px; }
-        .nav a { color: var(--color-text); font-size: 14px; font-weight: 500;
-                 padding: 0 4px; height: 60px; display: flex; align-items: center;
-                 position: relative; transition: color 0.2s; }
-        .nav a:hover, .nav a.active { color: var(--color-primary); }
-        .nav a.active::after { content: ''; position: absolute;
-            bottom: 8px; left: 4px; right: 4px;
-            height: 2px; background: var(--color-primary); border-radius: 2px; }
-        .nav-search { flex: 0 1 380px; display: flex; background: #fff7ed;
-                      border: 2px solid var(--color-primary);
-                      border-radius: 20px; overflow: hidden; height: 36px; }
-        .nav-search input { flex: 1; padding: 0 14px; border: none; outline: none;
-                            background: transparent; font-size: 13px; color: var(--color-text); }
-        .nav-search input::placeholder { color: #9ca3af; }
-        .nav-search button { background: var(--color-primary); color: #fff;
-                            font-size: 13px; font-weight: 600; padding: 0 18px;
-                            display: flex; align-items: center; gap: 5px; }
-        .nav-search button:hover { background: var(--color-primary-hover); }
-        .user-info { display: flex; align-items: center; gap: 8px; font-size: 14px; flex-shrink: 0; margin-left: auto; }
-        .user-info .avatar { width: 32px; height: 32px; border-radius: 50%;
-            background: linear-gradient(135deg, var(--color-primary), #ffaa80);
-            color: #fff; display: grid; place-items: center;
-            font-size: 13px; font-weight: 600; }
-        .user-name-link { color: var(--color-text); font-weight: 500; }
+        body {
+            background: #000;
+            color: #FFEE00;
+            font-family: 'Courier New', Consolas, 'Source Code Pro', monospace;
+            line-height: 1.6;
+        }
 
-        /* 主体 */
+        a { color: #FFEE00; text-decoration: none; transition: all 0.15s; }
+        a:hover { color: #fff; text-shadow: 0 0 10px #FFEE00, 0 0 20px #FFEE00; }
+
+        /* ---- Nav ---- */
+
+        .cp-logo:hover { text-shadow: 0 0 10px #FFEE00; }
+        .logo-icon {
+            width: 30px; height: 30px; background: #FFEE00; color: #000;
+            display: grid; place-items: center; font-size: 14px;
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+        }
+
+        .cp-nav-search button:hover { background: #fff; }
+
+        .user-name-link { color: #FFEE00; font-weight: 500; }
+        .user-name-link:hover { text-shadow: 0 0 8px #FFEE00; }
+
+        /* ---- Page head ---- */
         .cpl-wrap { max-width: 1200px; margin: 12px auto 0; padding: 0 16px 60px; }
 
-        /* 标题栏 */
-        .cpl-head { background: #fff; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-                    padding: 20px 24px; display: flex; align-items: center; gap: 16px; }
-        .cpl-head-icon { width: 48px; height: 48px; border-radius: 8px;
-                         background: #fee2e2; color: #b91c1c;
-                         display: grid; place-items: center; font-size: 22px; }
+        .cp-page-head {
+            background: #0a0a0a;
+            border: 1px solid #FFEE00;
+            clip-path: polygon(12px 0, 100% 0, 100% 100%, 0 100%, 0 12px);
+            padding: 20px 24px;
+            display: flex; align-items: center; gap: 16px;
+        }
+        .cpl-head-icon {
+            width: 48px; height: 48px;
+            border: 2px solid #FFEE00; color: #FFEE00; background: #000;
+            display: grid; place-items: center; font-size: 22px;
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+        }
         .cpl-head-info { flex: 1; min-width: 0; }
-        .cpl-head-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
-        .cpl-head-sub { font-size: 12px; color: var(--color-muted); }
-        .cpl-head-actions a { padding: 8px 16px; background: #fff; color: var(--color-text);
-                              border: 1px solid var(--color-border); border-radius: 6px;
-                              font-size: 13px; text-decoration: none;
-                              display: flex; align-items: center; gap: 5px; transition: all 0.15s; }
-        .cpl-head-actions a:hover { border-color: var(--color-primary); color: var(--color-primary); }
+        .cp-page-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; }
+        .cp-page-sub { font-size: 12px; color: #888; font-family: 'Courier New', monospace; }
+        .cpl-head-actions { }
 
-        /* 错误条 */
-        .alert { padding: 10px 16px; border-radius: 8px; margin-top: 12px; font-size: 13px; }
-        .alert-warning { background: #fef3c7; color: #b45309; }
+        /* ---- Alert ---- */
+        .alert {
+            padding: 10px 16px; margin-top: 12px; font-size: 13px;
+            border: 1px solid #FFEE00; background: #111; color: #FFEE00;
+            clip-path: polygon(6px 0, 100% 0, 100% 100%, 0 100%, 0 6px);
+        }
 
-        /* tab + 搜索 */
-        .filter-bar { background: #fff; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-                      margin-top: 12px; padding: 4px 20px;
-                      display: flex; align-items: center; }
-        .filter-tab { padding: 12px 16px; font-size: 14px; color: var(--color-text-sub);
-                      cursor: pointer; position: relative; font-weight: 500;
-                      text-decoration: none; }
-        .filter-tab:hover { color: var(--color-primary); }
-        .filter-tab.active { color: var(--color-primary); font-weight: 600; }
-        .filter-tab.active::after { content: ''; position: absolute;
-                                    bottom: 0; left: 50%; transform: translateX(-50%);
-                                    width: 24px; height: 2px; background: var(--color-primary);
-                                    border-radius: 2px; }
+        /* ---- Tabs ---- */
+        .cp-tabs {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            margin-top: 12px; padding: 4px 20px;
+            display: flex; align-items: center;
+        }
+        .cp-tab {
+            padding: 12px 16px; font-size: 14px; color: #888;
+            cursor: pointer; position: relative; font-weight: 500;
+            text-decoration: none; font-family: 'Courier New', monospace;
+        }
+        .cp-tab:hover { color: #FFEE00; }
+        .cp-tab.active { color: #FFEE00; font-weight: 700; }
+        .cp-tab.active::after {
+            content: ''; position: absolute;
+            bottom: 0; left: 50%; transform: translateX(-50%);
+            width: 24px; height: 2px; background: #FFEE00;
+            box-shadow: 0 0 8px #FFEE00;
+        }
         .filter-search { margin-left: auto; display: flex; gap: 6px; }
-        .filter-search input { padding: 6px 12px; border: 1px solid var(--color-border);
-                               border-radius: 4px; font-size: 13px; outline: none; width: 220px; }
-        .filter-search input:focus { border-color: var(--color-primary); }
-        .filter-search button { padding: 6px 14px; background: var(--color-primary); color: #fff;
-                                border: none; border-radius: 4px; font-size: 13px; cursor: pointer; }
-        .filter-search button:hover { background: var(--color-primary-hover); }
+        .filter-search input {
+            padding: 6px 12px; border: 1px solid #333;
+            background: #111; color: #FFEE00;
+            font-size: 13px; outline: none; width: 220px;
+            font-family: 'Courier New', monospace;
+        }
+        .filter-search input:focus { border-color: #FFEE00; }
+        .filter-search input::placeholder { color: #555; }
 
-        /* 列表 */
+        /* ---- Card list ---- */
         .cpl-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
-        .cpl-card { background: #fff; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-                    padding: 16px 20px; display: grid;
-                    grid-template-columns: 60px 1fr auto; gap: 14px;
-                    align-items: start; border-left: 3px solid transparent; }
-        .cpl-card.status-0 { border-left-color: #f59e0b; }   /* 待处理 */
-        .cpl-card.status-2 { border-left-color: #10b981; }   /* 已处理 */
-        .cpl-card.status-3 { border-left-color: #9ca3af; }   /* 已驳回 */
-        .cpl-cover { width: 60px; height: 60px; border-radius: 4px;
-                     background: #f3f4f6; display: grid; place-items: center;
-                     color: #9ca3af; overflow: hidden; flex-shrink: 0; }
+        .cpl-card {
+            background: #0a0a0a;
+            border: 1px solid #FFEE00;
+            clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px);
+            padding: 16px 20px; display: grid;
+            grid-template-columns: 60px 1fr auto; gap: 14px;
+            align-items: start;
+        }
+        .cpl-card.status-0 { border-color: #FFEE00; box-shadow: 0 0 4px rgba(255,238,0,0.3); }
+        .cpl-card.status-2 { border-color: #00f0ff; box-shadow: 0 0 4px rgba(0,240,255,0.3); }
+        .cpl-card.status-3 { border-color: #555; }
+        .cpl-cover {
+            width: 60px; height: 60px;
+            clip-path: polygon(6px 0, 100% 0, 100% 100%, 0 100%, 0 6px);
+            background: #111; display: grid; place-items: center;
+            color: #555; overflow: hidden; flex-shrink: 0;
+        }
         .cpl-cover img { width: 100%; height: 100%; object-fit: cover; }
         .cpl-body { min-width: 0; }
-        .cpl-line-1 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-                      margin-bottom: 4px; font-size: 13px; color: var(--color-text-sub); }
-        .cpl-line-1 .role-tag { padding: 1px 8px; font-size: 11px;
-                                background: #fef3c7; color: #b45309; border-radius: 2px; }
-        .cpl-line-1 .username { font-weight: 600; color: var(--color-text); }
-        .cpl-line-1 .sep { color: #e5e7eb; }
-        .cpl-line-2 { font-size: 13px; color: var(--color-text); margin-bottom: 6px; }
-        .cpl-reason { font-size: 13px; line-height: 1.6; color: var(--color-text);
-                      background: var(--color-bg); padding: 10px 12px;
-                      border-radius: 4px; margin-top: 6px; word-break: break-all;
-                      white-space: pre-wrap; }
-        .cpl-reason i { color: var(--color-danger); margin-right: 4px; }
-        .cpl-result { background: #f0f9ff; border-left: 3px solid #3b82f6;
-                      padding: 8px 12px; border-radius: 4px; font-size: 12px;
-                      color: #1e40af; margin-top: 8px; line-height: 1.5; }
-        .cpl-result i { color: #3b82f6; margin-right: 4px; }
-        .cpl-side { text-align: right; font-size: 12px; color: var(--color-placeholder);
-                    white-space: nowrap; }
-        .cpl-side .badge { padding: 3px 10px; border-radius: 12px; font-weight: 500; margin-bottom: 6px;
-                           display: inline-block; }
-        .badge-warning { background: #fef3c7; color: #b45309; }
-        .badge-info    { background: #dbeafe; color: #1e40af; }
-        .badge-success { background: #d1fae5; color: #047857; }
-        .badge-gray    { background: #f3f4f6; color: #6b7280; }
+        .cpl-line-1 {
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+            margin-bottom: 4px; font-size: 13px; color: #888;
+        }
+        .cpl-line-1 .role-tag {
+            padding: 1px 8px; font-size: 11px;
+            background: #222; color: #FFEE00; border: 1px solid #FFEE00;
+        }
+        .cpl-line-1 .username { font-weight: 600; color: #FFEE00; }
+        .cpl-line-1 .sep { color: #444; }
+        .cpl-line-2 { font-size: 13px; color: #aaa; margin-bottom: 6px; }
+        .cpl-reason {
+            font-size: 13px; line-height: 1.6; color: #ccc;
+            background: #111; padding: 10px 12px;
+            border-left: 3px solid #FFEE00;
+            margin-top: 6px; word-break: break-all; white-space: pre-wrap;
+        }
+        .cpl-reason i { color: #FFEE00; margin-right: 4px; }
+        .cpl-result {
+            background: #0a0a2a; border-left: 3px solid #00f0ff;
+            padding: 8px 12px; font-size: 12px;
+            color: #00f0ff; margin-top: 8px; line-height: 1.5;
+        }
+        .cpl-result i { color: #00f0ff; margin-right: 4px; }
+        .cpl-side { text-align: right; font-size: 12px; color: #555; white-space: nowrap; }
         .cpl-side .time { display: block; margin-top: 4px; }
 
-        /* 空状态 */
-        .empty-state { background: #fff; border-radius: 8px;
-                       box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-                       margin-top: 12px;
-                       text-align: center; padding: 80px 20px;
-                       color: var(--color-muted); font-size: 13px; }
+        /* ---- Badges ---- */
+        .cp-badge {
+            padding: 3px 10px; font-weight: 600; margin-bottom: 6px;
+            display: inline-block; font-size: 11px;
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .cp-badge-yellow { background: #FFEE00; color: #000; }
+        .cp-badge-red { background: #ff0044; color: #fff; }
+        .cp-badge-cyan { background: #00f0ff; color: #000; }
+        .cp-badge-dim { background: #222; color: #888; border: 1px solid #444; }
+
+        /* ---- Buttons ---- */
+        .cp-btn-sm {
+            padding: 6px 14px; background: #FFEE00; color: #000;
+            border: none; font-size: 13px; cursor: pointer;
+            font-family: 'Courier New', monospace; font-weight: 700;
+            text-transform: uppercase;
+            clip-path: polygon(4px 0, 100% 0, 100% 100%, 0 100%, 0 4px);
+        }
+        .cp-btn-sm:hover { background: #fff; }
+
+        .cp-btn-outline {
+            padding: 8px 16px; background: transparent; color: #FFEE00;
+            border: 1px solid #FFEE00; font-size: 13px; text-decoration: none;
+            display: flex; align-items: center; gap: 5px;
+            font-family: 'Courier New', monospace;
+            clip-path: polygon(6px 0, 100% 0, 100% 100%, 0 100%, 0 6px);
+            transition: all 0.15s;
+        }
+        .cp-btn-outline:hover { background: #FFEE00; color: #000; }
+
+        /* ---- Empty state ---- */
+        .empty-state {
+            background: #0a0a0a; border: 1px solid #333;
+            clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px);
+            margin-top: 12px; text-align: center; padding: 80px 20px;
+            color: #555; font-size: 13px;
+        }
         .empty-state i { font-size: 48px; opacity: 0.3; margin-bottom: 12px; display: block; }
-        .empty-state a { color: var(--color-primary); text-decoration: none; font-weight: 600; }
+        .empty-state a { color: #FFEE00; font-weight: 600; }
 
-        /* 分页 */
+        /* ---- Pager ---- */
         .pager { margin-top: 16px; display: flex; justify-content: center; gap: 6px; }
-        .pager a, .pager span { padding: 6px 12px; border: 1px solid var(--color-border);
-                                border-radius: 4px; font-size: 13px; color: var(--color-text-sub);
-                                text-decoration: none; min-width: 32px; text-align: center;
-                                background: #fff; }
-        .pager a:hover { border-color: var(--color-primary); color: var(--color-primary); }
-        .pager .active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
-        .pager .disabled { color: var(--color-placeholder); cursor: not-allowed; background: var(--color-bg); }
+        .pager a, .pager span {
+            padding: 6px 12px; border: 1px solid #333;
+            font-size: 13px; color: #888; text-decoration: none;
+            min-width: 32px; text-align: center; background: #0a0a0a;
+            font-family: 'Courier New', monospace;
+        }
+        .pager a:hover { border-color: #FFEE00; color: #FFEE00; }
+        .pager .active { background: #FFEE00; color: #000; border-color: #FFEE00; font-weight: 700; }
+        .pager .disabled { color: #444; cursor: not-allowed; background: #050505; }
 
-        /* 页脚 */
-        .cpl-footer { background: #1f2937; color: #d1d5db;
-                      margin-top: 32px; padding: 32px 16px 16px;
-                      text-align: center; font-size: 12px; }
-        .cpl-footer-inner { max-width: 1200px; margin: 0 auto; color: #6b7280; }
+        /* ---- Footer ---- */
+        .cpl-footer {
+            background: #050505; border-top: 1px solid #FFEE00;
+            margin-top: 32px; padding: 32px 16px 16px;
+            text-align: center; font-size: 12px;
+        }
+        .cpl-footer-inner { max-width: 1200px; margin: 0 auto; color: #555; }
 
         [v-cloak] { display: none; }
+
+        /* ---- Scrollbar ---- */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #FFEE00; }
     </style>
 </head>
 <body>
 
-<header class="header">
-    <div class="header-inner">
-        <a href="<%=ctx%>/index.jsp" class="logo">
+<header class="cp-nav">
+    <div class="cp-nav-inner">
+        <a href="<%=ctx%>/index.jsp" class="cp-logo">
             <span class="logo-icon"><i class="fa fa-gavel"></i></span>
             <span>二手拍卖</span>
         </a>
-        <nav class="nav">
+        <nav class="cp-nav-menu">
             <a href="<%=ctx%>/index.jsp">首页</a>
             <a href="<%=ctx%>/item?action=list">浏览拍品</a>
             <a href="<%=ctx%>/item?action=publish-page">发布拍品</a>
             <a href="<%=ctx%>/order?action=list">我的订单</a>
             <a href="<%=ctx%>/message?action=list">消息中心</a>
         </nav>
-        <form action="<%=ctx%>/item" method="get" class="nav-search">
+        <form action="<%=ctx%>/item" method="get" class="cp-nav-search">
             <input type="hidden" name="action" value="list">
             <input type="text" name="keyword" placeholder="搜索拍品 · 数码 / 服饰 / 书籍 ...">
             <button type="submit"><i class="fa fa-search"></i> 搜索</button>
         </form>
-        <div class="user-info">
+        <div class="cp-nav-user">
             <a href="<%=ctx%>/user?action=center" class="user-name-link"><%= currentUser.getUsername() %></a>
-            <a href="<%=ctx%>/user?action=logout" style="font-size: 12px; color: var(--color-muted);">退出</a>
+            <a href="<%=ctx%>/user?action=logout" style="font-size: 12px; color: #555;">退出</a>
             <a href="<%=ctx%>/user?action=center" class="avatar">
                 <%= currentUser.getUsername() != null && !currentUser.getUsername().isEmpty()
                     ? currentUser.getUsername().substring(0, 1).toUpperCase() : "?" %>
@@ -221,40 +274,40 @@
 
 <div class="cpl-wrap" id="app" v-cloak>
 
-    <div class="cpl-head">
+    <div class="cp-page-head">
         <div class="cpl-head-icon"><i class="fa fa-flag"></i></div>
         <div class="cpl-head-info">
-            <div class="cpl-head-title">我的投诉</div>
-            <div class="cpl-head-sub">共 {{ total }} 条 · 投诉提交后由管理员在 1-3 个工作日内处理</div>
+            <div class="cp-page-title">我的投诉</div>
+            <div class="cp-page-sub">共 {{ total }} 条 · 投诉提交后由管理员在 1-3 个工作日内处理</div>
         </div>
         <div class="cpl-head-actions">
-            <a href="<%=ctx%>/order?action=list">
+            <a href="<%=ctx%>/order?action=list" class="cp-btn-outline">
                 <i class="fa fa-list-alt"></i> 前往订单发起投诉
             </a>
         </div>
     </div>
 
     <% if (error != null) { %>
-        <div class="alert alert-warning">
+        <div class="alert">
             <i class="fa fa-exclamation-circle"></i> <%= error %>
         </div>
     <% } %>
 
-    <div class="filter-bar">
-        <a href="<%=ctx%>/complaint?action=list&role=complainant" class="filter-tab <%= "complainant".equals(role) ? "active" : "" %>">
+    <div class="cp-tabs">
+        <a href="<%=ctx%>/complaint?action=list&role=complainant" class="cp-tab <%= "complainant".equals(role) ? "active" : "" %>">
             <i class="fa fa-paper-plane"></i> 我发起的
         </a>
-        <a href="<%=ctx%>/complaint?action=list&role=respondent" class="filter-tab <%= "respondent".equals(role) ? "active" : "" %>">
+        <a href="<%=ctx%>/complaint?action=list&role=respondent" class="cp-tab <%= "respondent".equals(role) ? "active" : "" %>">
             <i class="fa fa-inbox"></i> 收到的（被投诉）
         </a>
-        <a href="<%=ctx%>/complaint?action=list&role=all" class="filter-tab <%= "all".equals(role) ? "active" : "" %>">
+        <a href="<%=ctx%>/complaint?action=list&role=all" class="cp-tab <%= "all".equals(role) ? "active" : "" %>">
             <i class="fa fa-list"></i> 全部
         </a>
         <form class="filter-search" method="get" action="<%=ctx%>/complaint">
             <input type="hidden" name="action" value="list">
             <input type="hidden" name="role" value="<%= role %>">
             <input type="text" name="keyword" value="<%= EscapeUtil.html(keyword) %>" placeholder="搜索投诉原因">
-            <button type="submit"><i class="fa fa-search"></i> 搜索</button>
+            <button type="submit" class="cp-btn-sm"><i class="fa fa-search"></i> 搜索</button>
         </form>
     </div>
 
@@ -271,11 +324,11 @@
                         <span class="username">{{ c.respondentUsername }}</span>
                     </span>
                     <span v-else-if="role === 'respondent'">
-                        <span class="role-tag" style="background: #fee2e2; color: #b91c1c;">被投诉</span>
+                        <span class="role-tag" style="background: #330000; color: #ff0044; border-color: #ff0044;">被投诉</span>
                         <span class="username">用户&#35;{{ c.complainantId }}</span>
                     </span>
                     <span v-else>
-                        <span class="role-tag" style="background: #f3f4f6; color: #6b7280;">双向</span>
+                        <span class="role-tag" style="background: #222; color: #888; border-color: #555;">双向</span>
                     </span>
                     <span class="sep">·</span>
                     <span>订单号 <code style="font-family: 'Courier New', monospace;">{{ c.orderNo }}</code></span>
@@ -296,7 +349,7 @@
                 </div>
             </div>
             <div class="cpl-side">
-                <span :class="['badge', 'badge-' + statusBadgeClass(c.status)]">{{ c.statusText }}</span>
+                <span :class="['cp-badge', 'cp-badge-' + statusBadgeClass(c.status)]">{{ c.statusText }}</span>
                 <span class="time">{{ formatAgo(c.createTime) }}</span>
             </div>
         </div>
@@ -330,7 +383,7 @@
 
 <footer class="cpl-footer">
     <div class="cpl-footer-inner">
-        © 2025 二手物品拍卖系统 · Powered by JSP + Servlet + MyBatis + Vue
+        &copy; 2025 二手物品拍卖系统 &middot; Powered by JSP + Servlet + MyBatis + Vue
     </div>
 </footer>
 
@@ -376,11 +429,11 @@
                 }
                 function statusBadgeClass(s) {
                     switch (s) {
-                        case 0: return 'warning';
-                        case 1: return 'info';
-                        case 2: return 'success';
-                        case 3: return 'gray';
-                        default: return 'gray';
+                        case 0: return 'yellow';
+                        case 1: return 'cyan';
+                        case 2: return 'cyan';
+                        case 3: return 'dim';
+                        default: return 'dim';
                     }
                 }
                 function formatTime(dt) {

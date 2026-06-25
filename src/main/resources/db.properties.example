@@ -12,4 +12,4 @@ jdbc.driver=com.mysql.cj.jdbc.Driver
 # allowPublicKeyRetrieval=true fixes "Public Key Retrieval is not allowed" on MySQL 8.0
 jdbc.url=jdbc:mysql://localhost:3306/auction_db?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true&allowPublicKeyRetrieval=true
 jdbc.username=root
-jdbc.password=your_mysql_password_here
+jdbc.password=root

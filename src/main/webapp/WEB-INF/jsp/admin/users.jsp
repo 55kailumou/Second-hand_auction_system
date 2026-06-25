@@ -32,187 +32,187 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>用户管理 · 管理后台</title>
-    <link rel="stylesheet" href="<%=ctx%>/static/css/common.css">
+    <link rel="stylesheet" href="<%=ctx%>/static/css/cyberpunk.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
     <style>
-        body { background: #f5f5f5; margin: 0; }
-        .admin-header { background: #1f2937; color: #d1d5db; height: 56px;
-                        position: sticky; top: 0; z-index: 100; }
-        .admin-header-inner { max-width: 1400px; margin: 0 auto; padding: 0 20px; height: 100%;
-                              display: flex; align-items: center; gap: 20px; }
-        .admin-logo { display: flex; align-items: center; gap: 8px;
-                      font-size: 16px; font-weight: 700; color: #fff;
-                      text-decoration: none; }
-        .admin-logo-icon { width: 28px; height: 28px; background: #f59e0b; color: #1f2937;
-                           border-radius: 4px; display: grid; place-items: center;
-                           font-size: 14px; font-weight: 700; }
-        .admin-nav { display: flex; gap: 4px; margin-left: 20px; }
-        .admin-nav a { padding: 8px 14px; color: #d1d5db; font-size: 13px;
-                       border-radius: 4px; text-decoration: none; transition: all 0.15s; }
-        .admin-nav a:hover { background: rgba(255,255,255,0.1); color: #fff; }
-        .admin-nav a.active { background: rgba(245,158,11,0.2); color: #fbbf24; }
-        .admin-user { margin-left: auto; display: flex; align-items: center; gap: 12px; font-size: 13px; }
-        .admin-user .role-tag { padding: 2px 8px; background: #374151; color: #fbbf24;
-                                border-radius: 3px; font-size: 11px; font-weight: 600; }
-        .admin-user a { color: #9ca3af; text-decoration: none; font-size: 12px; }
-        .admin-user a:hover { color: #fff; }
+        .admin-main { max-width: 1400px; margin: 24px auto 0; padding: 0 24px 60px; position: relative; z-index: 3; }
 
-        .admin-main { max-width: 1400px; margin: 16px auto 0; padding: 0 20px 60px; }
+        .admin-main .cp-page-head { margin: 0 0 16px; }
+        .admin-main .cp-page-head .cp-page-sub { font-size: 11px; }
 
-        .page-head { background: #fff; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-                     padding: 20px 24px; display: flex; align-items: center; gap: 16px; }
-        .page-head-icon { width: 48px; height: 48px; border-radius: 8px;
-                          background: #d1fae5; color: #047857;
-                          display: grid; place-items: center; font-size: 22px; }
-        .page-head-info { flex: 1; }
-        .page-head-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
-        .page-head-sub { font-size: 12px; color: var(--color-muted); }
-        .page-head-stat { display: flex; gap: 6px; align-items: center; padding: 8px 16px;
-                          background: #d1fae5; color: #047857; border-radius: 6px;
-                          font-size: 13px; font-weight: 600; }
-        .page-head-stat .num { font-size: 18px; }
-
-        .filter-bar { background: #fff; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-                      margin-top: 12px; padding: 12px 20px;
-                      display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
-        .filter-tab { padding: 8px 14px; font-size: 13px; color: var(--color-text-sub);
-                      cursor: pointer; position: relative; font-weight: 500;
-                      text-decoration: none; border-radius: 4px; transition: all 0.15s; }
-        .filter-tab:hover { color: var(--color-primary); background: #f9fafb; }
-        .filter-tab.active { color: #fff; background: var(--color-primary); font-weight: 600; }
-        .filter-tab .count { margin-left: 4px; font-size: 12px; opacity: 0.85; }
+        .filter-bar {
+            background: #000;
+            border: 1.5px solid var(--cp-yellow);
+            clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .filter-tab {
+            padding: 6px 14px;
+            font-size: 11px;
+            color: var(--cp-text-dim);
+            font-family: var(--font-mono);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: all 0.15s;
+            clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+            text-decoration: none;
+            font-weight: 700;
+        }
+        .filter-tab:hover { color: var(--cp-yellow); background: rgba(255,238,0,0.1); }
+        .filter-tab.active { background: var(--cp-yellow); color: #000; }
+        .filter-tab .count { margin-left: 4px; font-size: 10px; opacity: 0.7; }
         .filter-search { margin-left: auto; display: flex; gap: 6px; }
-        .filter-search input { padding: 6px 12px; border: 1px solid var(--color-border);
-                                border-radius: 4px; font-size: 13px; outline: none; width: 260px; }
-        .filter-search input:focus { border-color: var(--color-primary); }
-        .filter-search button { padding: 6px 14px; background: var(--color-primary); color: #fff;
-                                border: none; border-radius: 4px; font-size: 13px; cursor: pointer; }
+        .filter-search input {
+            padding: 6px 12px;
+            font-size: 12px;
+            color: var(--cp-yellow);
+            background: #000;
+            border: 1.5px solid var(--cp-yellow);
+            clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+            outline: none;
+            font-family: var(--font-mono);
+            width: 260px;
+        }
+        .filter-search input:focus { box-shadow: 0 0 8px rgba(255,238,0,0.3); }
+        .filter-search input::placeholder { color: var(--cp-text-dim); }
+        .filter-search button {
+            padding: 6px 14px;
+            background: var(--cp-yellow); color: #000;
+            border: none;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            cursor: pointer;
+            clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+            font-family: var(--font-mono);
+        }
 
-        .alert { padding: 10px 16px; border-radius: 8px; margin-top: 12px; font-size: 13px; }
-        .alert-warning { background: #fef3c7; color: #b45309; }
+        .alert {
+            padding: 10px 16px;
+            font-family: var(--font-mono); font-size: 11px;
+            margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em;
+        }
+        .alert-warning {
+            background: rgba(255,238,0,0.1);
+            color: var(--cp-yellow);
+            border: 1px solid var(--cp-yellow-dim);
+        }
 
-        .user-table { background: #fff; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-                       margin-top: 12px; overflow: hidden; }
-        .user-row { display: grid;
-                     grid-template-columns: 60px 1fr 220px 100px 100px 110px 280px;
-                     gap: 14px; padding: 14px 20px; align-items: center;
-                     border-bottom: 1px solid var(--color-border-soft); }
-        .user-row:last-child { border-bottom: none; }
-        .user-row.head { background: #f9fafb; font-size: 12px; color: var(--color-muted);
-                          font-weight: 600; padding: 10px 20px; }
-        .col-avatar { width: 44px; height: 44px; border-radius: 50%;
-                       background: linear-gradient(135deg, #d1fae5, #6ee7b7); color: #047857;
-                       display: grid; place-items: center; font-size: 18px; font-weight: 700; }
-        .col-avatar.banned { background: linear-gradient(135deg, #fee2e2, #fca5a5); color: #b91c1c; opacity: 0.7; }
-        .col-user { min-width: 0; }
-        .col-user .username { font-size: 13px; font-weight: 600; color: var(--color-text);
-                              margin-bottom: 2px;
-                              overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .col-user .uid { font-size: 11px; color: var(--color-muted); }
-        .col-contact { font-size: 12px; }
-        .col-contact .row { margin-bottom: 2px;
-                             overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .col-contact .row i { color: var(--color-muted); margin-right: 4px; }
-        .col-credit { font-size: 14px; font-weight: 700; text-align: center; }
-        .col-credit .score { font-size: 18px; }
-        .col-credit.high { color: #047857; }
-        .col-credit.mid  { color: #b45309; }
-        .col-credit.low  { color: #b91c1c; }
-        .col-balance { font-size: 13px; text-align: center; color: var(--color-text-sub); }
-        .col-balance .num { font-size: 15px; font-weight: 700; color: var(--color-primary); }
-        .col-status .badge { padding: 3px 10px; border-radius: 12px; font-weight: 500;
-                              font-size: 11px; }
-        .col-actions { display: flex; gap: 4px; justify-content: flex-end; flex-wrap: wrap; }
-        .col-actions button { padding: 5px 10px; border: 1px solid var(--color-border);
-                              border-radius: 3px; font-size: 12px; cursor: pointer;
-                              background: #fff; color: var(--color-text-sub);
-                              transition: all 0.15s; }
-        .col-actions button:hover { border-color: var(--color-primary); color: var(--color-primary); }
-        .col-actions button.danger:hover { border-color: var(--color-danger); color: var(--color-danger); }
+        .cp-table td, .cp-table th { white-space: nowrap; }
 
-        .empty-state { text-align: center; padding: 60px 20px; color: var(--color-muted); font-size: 13px; }
-        .empty-state i { font-size: 48px; opacity: 0.3; margin-bottom: 12px; display: block; }
+        .empty-state {
+            text-align: center; padding: 60px 20px;
+            font-family: var(--font-mono); font-size: 12px;
+            color: var(--cp-text-dim);
+        }
+        .empty-state i { font-size: 48px; opacity: 0.3; margin-bottom: 12px; display: block; color: var(--cp-yellow-dim); }
 
-        .pager { margin-top: 16px; display: flex; justify-content: center; gap: 6px; }
-        .pager a, .pager span { padding: 6px 12px; border: 1px solid var(--color-border);
-                                border-radius: 4px; font-size: 13px; color: var(--color-text-sub);
-                                text-decoration: none; min-width: 32px; text-align: center;
-                                background: #fff; }
-        .pager a:hover { border-color: var(--color-primary); color: var(--color-primary); }
-        .pager .active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
-        .pager .disabled { color: var(--color-placeholder); cursor: not-allowed; background: var(--color-bg); }
+        .user-avatar {
+            width: 36px; height: 36px;
+            background: var(--cp-yellow); color: #000;
+            display: grid; place-items: center;
+            font-size: 14px; font-weight: 900;
+            clip-path: polygon(20% 0, 100% 0, 80% 100%, 0 100%);
+            flex-shrink: 0;
+        }
+        .user-avatar.banned { background: var(--cp-red); color: #fff; opacity: 0.7; }
 
-        /* 弹窗 */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000;
-                 display: none; align-items: center; justify-content: center; }
-        .modal.show { display: flex; }
-        .modal-content { background: #fff; border-radius: 10px; padding: 28px;
-                         width: 90%; max-width: 460px; }
-        .modal-title { font-size: 17px; font-weight: 700; margin-bottom: 8px;
-                       display: flex; align-items: center; gap: 8px; color: #b45309; }
-        .modal-title.danger { color: #b91c1c; }
-        .modal-title.success { color: #047857; }
-        .modal-sub { font-size: 12px; color: var(--color-muted); margin-bottom: 18px;
-                     line-height: 1.5; }
+        .action-btn {
+            padding: 4px 10px;
+            background: #000;
+            border: 1px solid var(--cp-yellow-dim);
+            color: var(--cp-text-dim);
+            font-family: var(--font-mono);
+            font-size: 10px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.15s;
+            clip-path: polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px);
+        }
+        .action-btn:hover { border-color: var(--cp-yellow); color: var(--cp-yellow); }
+        .action-btn.danger:hover { border-color: var(--cp-red); color: var(--cp-red); }
+
+        .form-input {
+            width: 100%;
+            padding: 9px 12px;
+            font-size: 13px;
+            color: var(--cp-yellow);
+            background: #000;
+            border: 1.5px solid var(--cp-yellow);
+            clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+            outline: none;
+            font-family: var(--font-mono);
+            box-sizing: border-box;
+        }
+        .form-input:focus { box-shadow: 0 0 8px rgba(255,238,0,0.3); }
+        .form-hint { font-size: 10px; font-family: var(--font-mono); color: var(--cp-text-dim); margin-top: 4px; }
+
         .form-group { margin-bottom: 14px; }
-        .form-label { display: block; font-size: 13px; color: var(--color-text-sub);
-                      margin-bottom: 6px; font-weight: 500; }
-        .form-input { width: 100%; padding: 9px 12px; border: 1px solid var(--color-border);
-                      border-radius: 6px; font-size: 14px; outline: none;
-                      font-family: inherit; box-sizing: border-box; }
-        .form-input:focus { border-color: var(--color-primary); }
-        .form-hint { font-size: 11px; color: var(--color-muted); margin-top: 4px; }
-        .modal-actions { display: flex; gap: 8px; margin-top: 20px;
-                         padding-top: 16px; border-top: 1px solid var(--color-border-soft); }
-        .modal-actions button { flex: 1; padding: 10px; border: none; border-radius: 6px;
-                                font-size: 14px; font-weight: 600; cursor: pointer; }
-        .btn-modal-cancel { background: #f3f4f6; color: var(--color-text); }
-        .btn-modal-confirm { background: var(--color-primary); color: #fff; }
-        .btn-modal-danger { background: #ef4444; color: #fff; }
+        .form-label {
+            display: block;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--cp-yellow-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 6px;
+        }
 
-        /* 徽章颜色 */
-        .badge-success { background: #d1fae5; color: #047857; }
-        .badge-danger  { background: #fee2e2; color: #b91c1c; }
-        .badge-gray    { background: #e5e7eb; color: #6b7280; }
+        .cp-modal-actions {
+            display: flex; gap: 8px; margin-top: 20px;
+            padding-top: 16px; border-top: 1px solid rgba(255,238,0,0.15);
+        }
+        .cp-modal-actions button { flex: 1; padding: 10px; font-size: 12px; font-weight: 700; }
+        .btn-modal-cancel {
+            background: rgba(255,238,0,0.1); color: var(--cp-yellow-dim);
+            border: 1px solid var(--cp-yellow-dim);
+            font-family: var(--font-mono);
+            text-transform: uppercase;
+        }
+        .btn-modal-danger {
+            background: var(--cp-red); color: #fff;
+            font-family: var(--font-mono);
+            text-transform: uppercase;
+        }
     </style>
 </head>
 <body>
 
-<header class="admin-header">
-    <div class="admin-header-inner">
-        <a href="<%=ctx%>/admin" class="admin-logo">
-            <span class="admin-logo-icon">A</span>
-            <span>管理后台</span>
-        </a>
-        <nav class="admin-nav">
+<header class="cp-nav">
+    <div class="cp-nav-inner">
+        <a href="<%=ctx%>/admin" class="cp-logo">管理后台</a>
+        <nav class="cp-nav-menu">
             <a href="<%=ctx%>/admin"><i class="fa fa-dashboard"></i> 概览</a>
             <a href="<%=ctx%>/admin/refund?action=list"><i class="fa fa-undo"></i> 退款审批</a>
             <a href="<%=ctx%>/admin/complaint?action=list"><i class="fa fa-flag"></i> 投诉审批</a>
             <a href="<%=ctx%>/admin/item?action=list"><i class="fa fa-gavel"></i> 拍品管理</a>
-            <a href="<%=ctx%>/admin/user?action=list" class="active">
-                <i class="fa fa-users"></i> 用户管理
-            </a>
+            <a href="<%=ctx%>/admin/user?action=list" class="active"><i class="fa fa-users"></i> 用户管理</a>
         </nav>
-        <div class="admin-user">
-            <i class="fa fa-user-circle-o"></i>
-            <span><%= EscapeUtil.html(admin.getAdminName()) %></span>
-            <span class="role-tag"><%= admin.getRole() == null ? "admin" : admin.getRole() %></span>
-            <a href="<%=ctx%>/admin/login?action=logout"><i class="fa fa-sign-out"></i> 退出</a>
+        <div class="cp-nav-user">
+            <i class="fa fa-user-circle-o" style="color: var(--cp-yellow-dim);"></i>
+            <span style="font-size: 12px; color: var(--cp-text-dim); font-family: var(--font-mono);"><%= EscapeUtil.html(admin.getAdminName()) %></span>
+            <span style="padding: 2px 6px; background: rgba(255,238,0,0.1); color: var(--cp-yellow-dim); font-size: 9px; font-family: var(--font-mono); text-transform: uppercase; border: 1px solid var(--cp-yellow-dim);"><%= admin.getRole() == null ? "admin" : admin.getRole() %></span>
+            <a href="<%=ctx%>/admin/login?action=logout" class="icon-btn"><i class="fa fa-sign-out"></i></a>
         </div>
     </div>
 </header>
 
 <div class="admin-main" id="app">
 
-    <div class="page-head">
-        <div class="page-head-icon"><i class="fa fa-users"></i></div>
-        <div class="page-head-info">
-            <div class="page-head-title">用户管理</div>
-            <div class="page-head-sub">封禁 / 解封用户、调整信用分（0-150）、重置密码。初始账号 ID=1 受保护。</div>
+    <div class="cp-page-head">
+        <div>
+            <div class="cp-page-title">用户管理</div>
+            <div class="cp-page-sub">封禁 / 解封用户、调整信用分（0-150）、重置密码。初始账号 ID=1 受保护。</div>
         </div>
-        <div class="page-head-stat">
+        <div class="cp-badge cp-badge-yellow" style="font-size: 12px; padding: 6px 14px;">
             <i class="fa fa-check-circle"></i>
-            正常 <span class="num"><%= normalCount %></span> / 封禁 <span class="num" style="color: #b91c1c;"><%= bannedCount %></span>
+            正常 <%= normalCount %> / 封禁 <%= bannedCount %>
         </div>
     </div>
 
@@ -243,64 +243,68 @@
     </form>
 
     <!-- 列表 -->
-    <div v-if="users.length > 0" class="user-table">
-        <div class="user-row head">
-            <div>头像</div>
-            <div>用户</div>
-            <div>联系方式</div>
-            <div style="text-align: center;">信用分</div>
-            <div style="text-align: center;">余额</div>
-            <div style="text-align: center;">状态</div>
-            <div style="text-align: right;">操作</div>
-        </div>
-        <div v-for="u in users" :key="u.id" class="user-row">
-            <div :class="['col-avatar', u.status === 1 ? 'banned' : '']">
-                {{ u.username ? u.username.charAt(0).toUpperCase() : '?' }}
-            </div>
-            <div class="col-user">
-                <div class="username">{{ u.username || '(未设置)' }}</div>
-                <div class="uid">ID: {{ u.id }} · 注册 {{ formatTime(u.registerTime) }}</div>
-            </div>
-            <div class="col-contact">
-                <div class="row" v-if="u.phone">
-                    <i class="fa fa-mobile"></i> {{ u.phone }}
-                </div>
-                <div class="row" v-if="u.email">
-                    <i class="fa fa-envelope-o"></i> {{ u.email }}
-                </div>
-                <div class="row" v-if="!u.phone && !u.email" style="color: var(--color-muted);">
-                    未填写
-                </div>
-            </div>
-            <div :class="['col-credit', creditLevel(u.creditScore)]">
-                <div class="score">{{ u.creditScore == null ? '-' : u.creditScore }}</div>
-            </div>
-            <div class="col-balance">
-                <small>¥</small><span class="num">{{ formatBalance(u.balance) }}</span>
-            </div>
-            <div class="col-status" style="text-align: center;">
-                <span :class="['badge', u.status === 1 ? 'badge-danger' : 'badge-success']">
-                    {{ u.status === 1 ? '封禁' : '正常' }}
-                </span>
-            </div>
-            <div class="col-actions">
-                <button v-if="u.status !== 1" class="danger" @click="banUser(u)">
-                    <i class="fa fa-ban"></i> 封禁
-                </button>
-                <button v-else @click="unbanUser(u)">
-                    <i class="fa fa-check"></i> 解封
-                </button>
-                <button @click="openCreditModal(u)">
-                    <i class="fa fa-sliders"></i> 信用分
-                </button>
-                <button class="danger" @click="resetPassword(u)">
-                    <i class="fa fa-key"></i> 重置密码
-                </button>
-            </div>
-        </div>
+    <div v-if="users.length > 0" class="cp-table-wrap">
+        <table class="cp-table">
+            <thead>
+                <tr>
+                    <th style="width: 50px;">头像</th>
+                    <th>用户</th>
+                    <th>联系方式</th>
+                    <th style="text-align: center;">信用分</th>
+                    <th style="text-align: center;">余额</th>
+                    <th style="text-align: center;">状态</th>
+                    <th style="text-align: right;">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="u in users" :key="u.id">
+                    <td>
+                        <div :class="['user-avatar', u.status === 1 ? 'banned' : '']">
+                            {{ u.username ? u.username.charAt(0).toUpperCase() : '?' }}
+                        </div>
+                    </td>
+                    <td>
+                        <div style="font-weight: 700; color: var(--cp-yellow);">{{ u.username || '(未设置)' }}</div>
+                        <div style="font-size: 10px; color: var(--cp-text-dim); font-family: var(--font-mono);">ID: {{ u.id }} · 注册 {{ formatTime(u.registerTime) }}</div>
+                    </td>
+                    <td style="font-size: 11px; font-family: var(--font-mono);">
+                        <div v-if="u.phone" style="margin-bottom: 2px;"><i class="fa fa-mobile" style="color: var(--cp-text-dim);"></i> {{ u.phone }}</div>
+                        <div v-if="u.email"><i class="fa fa-envelope-o" style="color: var(--cp-text-dim);"></i> {{ u.email }}</div>
+                        <div v-if="!u.phone && !u.email" style="color: var(--cp-text-dim);">未填写</div>
+                    </td>
+                    <td style="text-align: center;">
+                        <div style="font-size: 16px; font-weight: 700;" :style="{ color: u.creditScore >= 120 ? 'var(--cp-yellow)' : u.creditScore >= 90 ? '#FFAA00' : 'var(--cp-red)' }">
+                            {{ u.creditScore == null ? '-' : u.creditScore }}
+                        </div>
+                    </td>
+                    <td style="text-align: center; font-family: var(--font-mono);">
+                        <small style="color: var(--cp-text-dim);">¥</small><span style="font-size: 14px; font-weight: 700; color: var(--cp-yellow);">{{ formatBalance(u.balance) }}</span>
+                    </td>
+                    <td style="text-align: center;">
+                        <span :class="['cp-badge', u.status === 1 ? 'cp-badge-red' : 'cp-badge-yellow']">
+                            {{ u.status === 1 ? '封禁' : '正常' }}
+                        </span>
+                    </td>
+                    <td style="text-align: right;">
+                        <button v-if="u.status !== 1" class="action-btn danger" @click="banUser(u)">
+                            <i class="fa fa-ban"></i> 封禁
+                        </button>
+                        <button v-else class="action-btn" @click="unbanUser(u)">
+                            <i class="fa fa-check"></i> 解封
+                        </button>
+                        <button class="action-btn" @click="openCreditModal(u)">
+                            <i class="fa fa-sliders"></i> 信用分
+                        </button>
+                        <button class="action-btn danger" @click="resetPassword(u)">
+                            <i class="fa fa-key"></i> 重置密码
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 
-    <div v-else class="user-table">
+    <div v-else class="cp-table-wrap">
         <div class="empty-state">
             <i class="fa fa-user-o"></i>
             <p>暂无符合条件的用户</p>
@@ -308,24 +312,25 @@
     </div>
 
     <!-- 分页 -->
-    <div v-if="totalPages > 1" class="pager">
-        <a v-if="pageNo > 1" :href="pageHref(pageNo - 1)">‹ 上一页</a>
-        <span v-else class="disabled">‹ 上一页</span>
-        <span v-for="p in pagesToShow" :key="p" :class="p === pageNo ? 'active' : ''">
-            <a v-if="p !== pageNo" :href="pageHref(p)">{{ p }}</a>
-            <span v-else>{{ p }}</span>
-        </span>
-        <a v-if="pageNo < totalPages" :href="pageHref(pageNo + 1)">下一页 ›</a>
-        <span v-else class="disabled">下一页 ›</span>
+    <div v-if="totalPages > 1" class="cp-pagination">
+        <button v-if="pageNo > 1" class="cp-page-btn" @click="window.location.href = pageHref(pageNo - 1)">&lsaquo; 上一页</button>
+        <button v-else class="cp-page-btn" disabled>&lsaquo; 上一页</button>
+        <button v-for="p in pagesToShow" :key="p" :class="['cp-page-btn', p === pageNo ? 'active' : '']"
+                @click="window.location.href = pageHref(p)">{{ p }}</button>
+        <button v-if="pageNo < totalPages" class="cp-page-btn" @click="window.location.href = pageHref(pageNo + 1)">下一页 &rsaquo;</button>
+        <button v-else class="cp-page-btn" disabled>下一页 &rsaquo;</button>
     </div>
 
     <!-- 调信用分弹窗 -->
-    <div :class="['modal', { show: creditModalOpen }]" @click.self="closeCreditModal">
-        <div class="modal-content">
-            <div class="modal-title"><i class="fa fa-sliders"></i> 调整信用分</div>
-            <div class="modal-sub">
-                当前用户：<strong>{{ currentUser ? currentUser.username : '' }}</strong>
-                · 当前信用分：<strong style="color: var(--color-primary);">{{ currentUser ? currentUser.creditScore : '-' }}</strong>
+    <div v-if="creditModalOpen" class="cp-modal-overlay" @click.self="closeCreditModal">
+        <div class="cp-modal">
+            <div class="cp-modal-title">
+                <span><i class="fa fa-sliders"></i> 调整信用分</span>
+                <span class="cp-modal-close" @click="closeCreditModal">&times;</span>
+            </div>
+            <div class="cp-page-sub" style="margin-bottom: 18px; line-height: 1.5;">
+                当前用户：<strong style="color: var(--cp-yellow);">{{ currentUser ? currentUser.username : '' }}</strong>
+                · 当前信用分：<strong style="color: var(--cp-yellow);">{{ currentUser ? currentUser.creditScore : '-' }}</strong>
                 <br>范围 0-150，自动约束。输入正值上调，负值下调。
             </div>
             <form @submit.prevent="submitCredit">
@@ -337,9 +342,9 @@
                         新信用分（预览）：{{ creditPreview }}
                     </div>
                 </div>
-                <div class="modal-actions">
+                <div class="cp-modal-actions">
                     <button type="button" class="btn-modal-cancel" @click="closeCreditModal">取消</button>
-                    <button type="submit" class="btn-modal-confirm" :disabled="creditSubmitting">
+                    <button type="submit" class="cp-btn cp-btn-sm" :disabled="creditSubmitting">
                         {{ creditSubmitting ? '处理中...' : '确认调整' }}
                     </button>
                 </div>

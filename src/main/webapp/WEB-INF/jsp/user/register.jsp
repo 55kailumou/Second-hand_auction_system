@@ -12,93 +12,185 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>注册 · 二手物品拍卖系统</title>
-    <link rel="stylesheet" href="<%=ctx%>/static/css/common.css">
+    <title>// 注册 · 赛博拍卖系统</title>
+    <link rel="stylesheet" href="<%=ctx%>/static/css/cyberpunk.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
     <style>
         /* ============================================================
-         * 注册页 v2 · 跟首页/列表/详情/登录保持同一套设计语言
-         * - body 浅灰 #f5f5f5（与其他页一致）
-         * - 白底卡 8px 圆角 + 弱阴影（与其他页一致）
-         * - 顶部品牌区：橙红 gavel icon + "二手拍卖"
-         * - 输入框、按钮、错误条全部走 common.css 风格
+         * 注册页 Cyberpunk 风格
          * ============================================================ */
         body {
-            background: #f5f5f5;
-            min-height: 100vh; padding: 24px 16px;
+            min-height: 100vh;
             display: flex; align-items: center; justify-content: center;
+            padding: 24px 16px;
         }
         .auth-wrap {
             width: 100%; max-width: 880px;
-            display: grid; grid-template-columns: 1fr 480px;
-            background: #fff; border-radius: 8px; overflow: hidden;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+            display: grid; grid-template-columns: 1fr 420px;
+            background: #000;
+            border: 1.5px solid var(--cp-yellow);
+            clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
+            box-shadow: 0 0 48px rgba(255,238,0,0.15);
+            position: relative; z-index: 10;
         }
         @media (max-width: 768px) {
-            .auth-wrap { grid-template-columns: 1fr; max-width: 480px; }
+            .auth-wrap { grid-template-columns: 1fr; max-width: 420px; }
             .auth-side { display: none; }
         }
-        /* 左侧品牌区（与登录页同款） */
         .auth-side {
-            background:
-                linear-gradient(135deg, rgba(255,107,53,0.10) 0%, rgba(255,107,53,0.02) 100%),
-                linear-gradient(45deg, #fef3c7 0%, #fed7aa 60%, #fdba74 100%);
-            padding: 40px 36px; display: flex; flex-direction: column;
+            padding: 40px 36px;
+            display: flex; flex-direction: column;
             justify-content: space-between; min-height: 640px;
+            background:
+                radial-gradient(ellipse at 30% 30%, rgba(255,238,0,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(0,240,255,0.05) 0%, transparent 40%),
+                #000;
+            border-right: 1px solid var(--cp-yellow);
         }
         .auth-brand {
-            display: flex; align-items: center; gap: 8px;
-            font-size: 20px; font-weight: 800; color: var(--color-primary);
+            display: flex; align-items: center; gap: 10px;
+            font-size: 20px; font-weight: 900; font-style: italic;
+            color: var(--cp-yellow);
+            text-transform: uppercase;
+            text-shadow: 0 0 12px rgba(255,238,0,0.4);
         }
         .auth-brand .logo-icon {
-            width: 30px; height: 30px; background: var(--color-primary);
-            color: #fff; border-radius: 4px; display: grid; place-items: center;
+            width: 30px; height: 30px;
+            background: var(--cp-yellow); color: #000;
+            clip-path: polygon(20% 0, 100% 0, 80% 100%, 0 100%);
+            display: grid; place-items: center;
             font-size: 14px;
         }
         .auth-slogan { margin-top: 28px; }
         .auth-slogan h2 {
-            font-size: 24px; font-weight: 700; color: var(--color-text);
+            font-size: 24px; font-weight: 900; font-style: italic;
+            color: var(--cp-yellow);
             line-height: 1.4; margin-bottom: 12px;
+            text-shadow: 0 0 8px rgba(255,238,0,0.3);
         }
-        .auth-slogan p { font-size: 13px; color: #6b7280; line-height: 1.7; }
+        .auth-slogan p {
+            font-size: 13px; color: var(--cp-text-dim);
+            line-height: 1.7;
+            font-family: var(--font-mono);
+            border-left: 2px solid var(--cp-yellow);
+            padding-left: 12px;
+        }
         .auth-features { display: flex; flex-direction: column; gap: 12px; }
-        .auth-feat { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--color-text); }
+        .auth-feat {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 12px; color: var(--cp-text);
+            font-family: var(--font-mono);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
         .auth-feat i {
-            width: 28px; height: 28px; border-radius: 50%;
-            background: #fff; color: var(--color-primary);
-            display: grid; place-items: center; font-size: 13px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.04); flex-shrink: 0;
+            width: 28px; height: 28px;
+            background: rgba(255,238,0,0.1);
+            color: var(--cp-yellow);
+            border: 1px solid var(--cp-yellow);
+            clip-path: polygon(20% 0, 100% 0, 80% 100%, 0 100%);
+            display: grid; place-items: center; font-size: 12px;
+            flex-shrink: 0;
         }
-        .auth-side-foot { font-size: 12px; color: #92400e; }
+        .auth-side-foot {
+            font-size: 10px; color: var(--cp-text-dim);
+            font-family: var(--font-mono);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
 
-        /* 右侧表单区 */
         .auth-main { padding: 36px 40px; }
-        .auth-title { font-size: 22px; font-weight: 700; color: var(--color-text); margin-bottom: 6px; }
-        .auth-subtitle { font-size: 13px; color: var(--color-muted); margin-bottom: 22px; }
-        .auth-error {
-            padding: 10px 14px; background: #fee2e2; color: var(--color-danger);
-            border-radius: 6px; font-size: 13px; margin-bottom: 18px;
-            display: flex; align-items: center; gap: 8px;
+        .auth-title {
+            font-size: 22px; font-weight: 900; font-style: italic;
+            color: var(--cp-yellow);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            text-shadow: 0 0 8px rgba(255,238,0,0.3);
         }
-        .auth-link { text-align: center; margin-top: 16px; font-size: 13px; color: var(--color-muted); }
-        .check-status { font-size: 12px; margin-top: 4px; display: block; min-height: 16px; }
-        .check-status.checking { color: var(--color-info); }
-        .check-status.success { color: var(--color-success); }
-        .check-status.error { color: var(--color-danger); }
+        .auth-subtitle {
+            font-size: 12px; color: var(--cp-text-dim);
+            margin-bottom: 22px;
+            font-family: var(--font-mono);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .auth-error {
+            padding: 10px 14px;
+            background: rgba(255,0,60,0.1);
+            color: var(--cp-red);
+            border: 1px solid var(--cp-red);
+            clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+            font-size: 12px;
+            margin-bottom: 18px;
+            display: flex; align-items: center; gap: 8px;
+            font-family: var(--font-mono);
+        }
+        .auth-link {
+            text-align: center;
+            margin-top: 18px;
+            font-size: 12px;
+            color: var(--cp-text-dim);
+            font-family: var(--font-mono);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .auth-link a { color: var(--cp-yellow); }
+        .auth-link a:hover { text-shadow: 0 0 8px var(--cp-yellow); }
+
+        /* 手机号检查状态 */
+        .cp-check-status {
+            font-size: 11px;
+            margin-top: 4px;
+            display: block;
+            min-height: 16px;
+            font-family: var(--font-mono);
+        }
+        .cp-check-status.checking { color: var(--cp-cyan); }
+        .cp-check-status.success { color: var(--cp-yellow); }
+        .cp-check-status.error { color: var(--cp-red); }
+
+        /* 协议复选框行 */
+        .cp-agree-label {
+            display: flex; align-items: center; gap: 8px;
+            cursor: pointer; user-select: none;
+        }
+        .cp-agree-label input[type="checkbox"] {
+            appearance: none;
+            width: 16px; height: 16px;
+            border: 1.5px solid var(--cp-yellow);
+            background: #000;
+            clip-path: polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px);
+            cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .cp-agree-label input[type="checkbox"]:checked {
+            background: var(--cp-yellow);
+            position: relative;
+        }
+        .cp-agree-label input[type="checkbox"]:checked::after {
+            content: '>';
+            color: #000;
+            font-weight: 900;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
 <div id="app" class="auth-wrap">
+    <div class="scanline" style="z-index:1;"></div>
+
     <!-- 左侧品牌区 -->
     <div class="auth-side">
         <div>
             <div class="auth-brand">
                 <span class="logo-icon"><i class="fa fa-gavel"></i></span>
-                <span>二手拍卖</span>
+                <span>赛博拍卖</span>
             </div>
+            <div style="margin-top:8px;font-family:var(--font-mono);font-size:10px;color:var(--cp-yellow-dim);text-transform:uppercase;letter-spacing:0.15em;">// 在线拍卖网络</div>
             <div class="auth-slogan">
-                <h2>加入二手拍卖<br>开启闲置好生活</h2>
-                <p>1 分钟注册，立即参与竞拍 / 发布好物<br>千万用户在线交易，安全有保障</p>
+                <h2>&gt; 注册<br>&gt; 加入赛博空间</h2>
+                <p>// 1 分钟注册 // 立即竞拍<br>// 千万用户 // 安全有保障</p>
             </div>
         </div>
         <div class="auth-features">
@@ -106,13 +198,14 @@
             <div class="auth-feat"><i class="fa fa-check-circle"></i> 实名认证 · 信用可查</div>
             <div class="auth-feat"><i class="fa fa-truck"></i> 包邮到家 · 7 天可退</div>
         </div>
-        <div class="auth-side-foot">© 2025 二手物品拍卖系统</div>
+        <div class="auth-side-foot">// 2025 赛博拍卖系统</div>
     </div>
 
     <!-- 右侧表单 -->
     <div class="auth-main">
+    <div class="module-tag">// 身份注册</div>
     <h1 class="auth-title">创建账号</h1>
-    <p class="auth-subtitle">加入我们，开始买卖二手好物</p>
+    <p class="auth-subtitle">&gt;&gt; 加入我们，开始买卖二手好物</p>
 
     <!-- 错误提示（来自 Servlet） -->
     <div v-if="serverError" class="auth-error">
@@ -122,92 +215,92 @@
 
     <form action="<%=ctx%>/user?action=register" method="post" @submit.prevent="handleSubmit($event)">
         <!-- 用户名（必填，可重复，仅展示用） -->
-        <div class="form-group">
-            <label class="form-label">用户名<span class="required">*</span></label>
+        <div class="cp-form-group">
+            <label class="cp-form-label">用户名<span class="required">*</span></label>
             <input type="text" name="username"
-                   class="form-input"
+                   class="cp-form-input"
                    :class="{ 'error': touched.username && errors.username, 'success': touched.username && !errors.username && form.username }"
-                   placeholder="2-20 个字符，字母/数字/下划线/中文（用户名可重复）"
+                   placeholder="> 2-20 个字符，字母/数字/下划线/中文"
                    v-model="form.username"
                    @blur="touched.username = true; validateField('username')"
                    required>
-            <span class="form-error" v-if="touched.username && errors.username">{{ errors.username }}</span>
+            <span class="cp-form-error" v-if="touched.username && errors.username">{{ errors.username }}</span>
         </div>
 
         <!-- 密码 -->
-        <div class="form-group">
-            <label class="form-label">密码<span class="required">*</span></label>
+        <div class="cp-form-group">
+            <label class="cp-form-label">密码<span class="required">*</span></label>
             <input type="password" name="password"
-                   class="form-input"
+                   class="cp-form-input"
                    :class="{ 'error': touched.password && errors.password, 'success': touched.password && !errors.password }"
-                   placeholder="6-20 个字符"
+                   placeholder="> 6-20 个字符"
                    v-model="form.password"
                    @blur="touched.password = true; validateField('password')"
                    required>
-            <span class="form-error" v-if="touched.password && errors.password">{{ errors.password }}</span>
+            <span class="cp-form-error" v-if="touched.password && errors.password">{{ errors.password }}</span>
         </div>
 
         <!-- 确认密码 -->
-        <div class="form-group">
-            <label class="form-label">确认密码<span class="required">*</span></label>
+        <div class="cp-form-group">
+            <label class="cp-form-label">确认密码<span class="required">*</span></label>
             <input type="password" name="confirmPassword"
-                   class="form-input"
+                   class="cp-form-input"
                    :class="{ 'error': touched.confirmPassword && errors.confirmPassword, 'success': touched.confirmPassword && !errors.confirmPassword && form.confirmPassword }"
-                   placeholder="请再次输入密码"
+                   placeholder="> 请再次输入密码"
                    v-model="form.confirmPassword"
                    @blur="touched.confirmPassword = true; validateField('confirmPassword')"
                    required>
-            <span class="form-error" v-if="touched.confirmPassword && errors.confirmPassword">{{ errors.confirmPassword }}</span>
+            <span class="cp-form-error" v-if="touched.confirmPassword && errors.confirmPassword">{{ errors.confirmPassword }}</span>
         </div>
 
         <!-- 手机号（必填，唯一） -->
-        <div class="form-group">
-            <label class="form-label">手机号<span class="required">*</span></label>
+        <div class="cp-form-group">
+            <label class="cp-form-label">手机号<span class="required">*</span></label>
             <input type="text" name="phone"
-                   class="form-input"
+                   class="cp-form-input"
                    :class="{ 'error': touched.phone && errors.phone, 'success': touched.phone && !errors.phone && form.phone }"
-                   placeholder="11 位手机号，用于登录"
+                   placeholder="> 11 位手机号，用于登录"
                    v-model="form.phone"
                    @blur="touched.phone = true; validateField('phone')"
                    @input="onPhoneInput"
                    required>
-            <span class="check-status" :class="phoneCheck.class" v-if="form.phone && !errors.phone && phoneCheck.class !== 'idle'">
+            <span class="cp-check-status" :class="phoneCheck.class" v-if="form.phone && !errors.phone && phoneCheck.class !== 'idle'">
                 <i v-if="phoneCheck.class === 'checking'" class="fa fa-spinner fa-spin"></i>
                 <i v-else-if="phoneCheck.class === 'success'" class="fa fa-check-circle"></i>
                 <i v-else-if="phoneCheck.class === 'error'" class="fa fa-times-circle"></i>
                 {{ phoneCheck.msg }}
             </span>
-            <span class="form-error" v-else-if="touched.phone && errors.phone">{{ errors.phone }}</span>
+            <span class="cp-form-error" v-else-if="touched.phone && errors.phone">{{ errors.phone }}</span>
         </div>
 
         <!-- 邮箱（选填，唯一） -->
-        <div class="form-group">
-            <label class="form-label">邮箱<span style="color: var(--color-muted); font-weight: 400; font-size: 12px;">（选填，可用于登录）</span></label>
+        <div class="cp-form-group">
+            <label class="cp-form-label">邮箱<span style="color:var(--cp-yellow-dim);font-weight:400;font-size:10px;font-family:var(--font-mono);text-transform:lowercase;letter-spacing:0;">（选填，可用于登录）</span></label>
             <input type="email" name="email"
-                   class="form-input"
+                   class="cp-form-input"
                    :class="{ 'error': touched.email && errors.email, 'success': touched.email && !errors.email && form.email }"
-                   placeholder="example@domain.com"
+                   placeholder="> example@domain.com"
                    v-model="form.email"
                    @blur="touched.email = true; validateField('email')">
-            <span class="form-error" v-if="touched.email && errors.email">{{ errors.email }}</span>
+            <span class="cp-form-error" v-if="touched.email && errors.email">{{ errors.email }}</span>
         </div>
 
         <!-- 用户协议 -->
-        <div class="form-group">
-            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
+        <div class="cp-form-group">
+            <label class="cp-agree-label">
                 <input type="checkbox" v-model="agreed" required>
-                <span style="font-size: 14px; color: var(--color-muted);">
+                <span style="font-size:12px;color:var(--cp-text-dim);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.05em;">
                     我已阅读并同意 <a href="javascript:void(0)" @click.stop="showAgreement = true">《用户协议》</a>
                 </span>
             </label>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-lg btn-block" :disabled="loading || !agreed">
-            {{ loading ? '注册中...' : '注 册' }}
+        <button type="submit" class="cp-btn cp-btn-lg cp-btn-block" :disabled="loading || !agreed" style="margin-top:4px;">
+            {{ loading ? '// 注册中...' : '注 册' }}
         </button>
 
         <div class="auth-link">
-            已有账号？<a href="<%=ctx%>/user?action=login">立即登录</a>
+            &gt; 已有账号？<a href="<%=ctx%>/user?action=login">立即登录</a>
         </div>
     </form>
     </div><!-- /auth-main -->
@@ -246,7 +339,7 @@
                                 // 用户名必填，可重复
                                 if (!v) err = '请输入用户名';
                                 else if (v.length < 2 || v.length > 20) err = '用户名长度必须 2-20';
-                                else if (!/^[a-zA-Z0-9_\u4e00-\u9fa5]+$/.test(v)) err = '只能含字母、数字、下划线、中文';
+                                else if (!/^[a-zA-Z0-9_一-龥]+$/.test(v)) err = '只能含字母、数字、下划线、中文';
                                 break;
                             case 'password':
                                 if (!v) err = '请输入密码';

@@ -22,94 +22,70 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>拍卖结果 · 二手物品拍卖系统</title>
-    <link rel="stylesheet" href="<%=ctx%>/static/css/common.css">
+    <link rel="stylesheet" href="<%=ctx%>/static/css/cyberpunk.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
     <style>
-        body { background: var(--color-bg); }
-        .header { background: #fff; padding: 14px 0;
-                  box-shadow: var(--shadow-sm); position: sticky; top: 0; z-index: 100; }
-        .header-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px;
-                        display: flex; align-items: center; justify-content: space-between; }
-        .logo { font-size: 20px; font-weight: 700; color: var(--color-primary);
-                display: flex; align-items: center; gap: 8px; }
-        .nav { display: flex; gap: 24px; }
-        .nav a { color: var(--color-text); font-size: 14px; }
-        .nav a:hover, .nav a.active { color: var(--color-primary); }
-        .user-info { display: flex; align-items: center; gap: 12px; font-size: 13px; }
+        body { background: #0a0a0a; color: #FFEE00; font-family: 'Courier New', Consolas, 'Source Code Pro', monospace; }
 
-        .result-hero { padding: 60px 24px; text-align: center;
-                       background: linear-gradient(135deg, #fff3eb 0%, #ffe5d0 100%);
-                       border-radius: var(--radius-lg); margin-top: 20px;
-                       position: relative; overflow: hidden; }
-        .result-hero.sold { background: linear-gradient(135deg, #fff3eb 0%, #ffd4a8 100%); }
-        .result-hero.failed { background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); }
+        .cp-nav-user a { color: #00f0ff; }
+        .cp-container { max-width: 900px; margin: 0 auto; padding: 0 24px 60px; }
 
-        .result-icon { font-size: 96px; margin-bottom: 16px; display: block;
-                       color: var(--color-primary); }
-        .result-hero.failed .result-icon { color: #9ca3af; }
-        .result-title { font-size: 32px; font-weight: 700; margin-bottom: 8px;
-                        color: var(--color-text); }
-        .result-title .accent { color: var(--color-primary); }
-        .result-subtitle { font-size: 16px; color: var(--color-muted); margin-bottom: 24px; }
+        .cp-result-hero { padding: 60px 24px; text-align: center; border: 1px solid #FFEE00; margin-top: 20px; position: relative; overflow: hidden; background: #0a0a0a; }
+        .cp-result-hero.cp-sold { border-color: #FFEE00; box-shadow: 0 0 30px rgba(255,238,0,0.15); }
+        .cp-result-hero.cp-failed { border-color: #ff00ff; box-shadow: 0 0 30px rgba(255,0,255,0.1); }
+        .cp-result-icon { font-size: 96px; margin-bottom: 16px; display: block; color: #FFEE00; text-shadow: 0 0 20px #FFEE00; }
+        .cp-result-hero.cp-failed .cp-result-icon { color: #ff00ff; text-shadow: 0 0 20px #ff00ff; }
+        .cp-result-title { font-size: 32px; font-weight: 700; margin-bottom: 8px; color: #FFEE00; text-shadow: 0 0 10px #FFEE00; }
+        .cp-result-title .accent { color: #FFEE00; }
+        .cp-result-subtitle { font-size: 16px; color: #FFEE00; opacity: 0.7; margin-bottom: 24px; }
+        .cp-result-meta { display: inline-flex; gap: 32px; padding: 16px 32px; background: rgba(17,17,17,0.9); border: 1px solid #FFEE00; }
+        .cp-result-meta-item { text-align: center; }
+        .cp-result-meta-label { font-size: 12px; color: #FFEE00; opacity: 0.7; margin-bottom: 4px; }
+        .cp-result-meta-value { font-size: 22px; font-weight: 700; color: #00f0ff; text-shadow: 0 0 10px #00f0ff; }
 
-        .result-meta { display: inline-flex; gap: 32px; padding: 16px 32px;
-                       background: rgba(255,255,255,0.7); border-radius: var(--radius);
-                       backdrop-filter: blur(4px); }
-        .result-meta-item { text-align: center; }
-        .result-meta-label { font-size: 12px; color: var(--color-muted); margin-bottom: 4px; }
-        .result-meta-value { font-size: 22px; font-weight: 700; color: var(--color-primary); }
+        .cp-card { background: #111; border: 1px solid #FFEE00; padding: 24px; margin-top: 20px; }
+        .cp-section-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; color: #FFEE00; }
+        .cp-section-title::before { content: ''; display: inline-block; width: 4px; height: 18px; background: #FFEE00; box-shadow: 0 0 8px #FFEE00; }
 
-        .content-card { background: #fff; border-radius: var(--radius-lg);
-                        box-shadow: var(--shadow-sm); padding: 24px;
-                        margin-top: 20px; }
-        .section-title { font-size: 16px; font-weight: 600; margin-bottom: 16px;
-                         display: flex; align-items: center; gap: 8px; }
-        .section-title::before { content: ''; display: inline-block; width: 4px; height: 18px;
-                                  background: var(--color-primary); border-radius: 2px; }
+        .cp-winner-card { display: flex; align-items: center; gap: 16px; padding: 16px; border: 1px solid #FFEE00; background: #0a0a0a; }
+        .cp-winner-avatar { width: 56px; height: 56px; background: #FFEE00; color: #0a0a0a; display: grid; place-items: center; font-size: 22px; font-weight: 700; }
+        .cp-winner-info { flex: 1; }
+        .cp-winner-name { font-size: 18px; font-weight: 600; color: #FFEE00; }
+        .cp-winner-price { font-size: 16px; color: #00f0ff; margin-top: 4px; }
 
-        .winner-card { display: flex; align-items: center; gap: 16px; padding: 16px;
-                       background: linear-gradient(135deg, #fff3eb 0%, #ffe5d0 100%);
-                       border-radius: var(--radius); }
-        .winner-avatar { width: 56px; height: 56px; border-radius: 50%;
-                         background: var(--color-primary); color: #fff;
-                         display: grid; place-items: center; font-size: 22px;
-                         font-weight: 700; }
-        .winner-info { flex: 1; }
-        .winner-name { font-size: 18px; font-weight: 600; color: var(--color-text); }
-        .winner-price { font-size: 16px; color: var(--color-primary); margin-top: 4px; }
+        .cp-item-mini { display: flex; gap: 16px; padding: 16px; border: 1px solid #FFEE00; }
+        .cp-item-mini-cover { width: 120px; height: 120px; background: #0a0a0a center/cover no-repeat; border: 1px solid #FFEE00; flex-shrink: 0; display: grid; place-items: center; color: #FFEE00; font-size: 36px; }
+        .cp-item-mini-info { flex: 1; min-width: 0; }
+        .cp-item-mini-title { font-size: 16px; font-weight: 600; color: #FFEE00; margin-bottom: 8px; }
+        .cp-item-mini-desc { font-size: 13px; color: #FFEE00; opacity: 0.7; line-height: 1.6; }
 
-        .item-mini { display: flex; gap: 16px; padding: 16px;
-                      border: 1px solid var(--color-border); border-radius: var(--radius); }
-        .item-mini-cover { width: 120px; height: 120px; border-radius: var(--radius);
-                           background: #f3f4f6 center/cover no-repeat; flex-shrink: 0;
-                           display: grid; place-items: center; color: var(--color-muted); font-size: 36px; }
-        .item-mini-info { flex: 1; min-width: 0; }
-        .item-mini-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
-        .item-mini-desc { font-size: 13px; color: var(--color-muted); line-height: 1.6; }
+        .cp-action-bar { display: flex; gap: 12px; justify-content: center; margin-top: 24px; flex-wrap: wrap; }
+        .cp-action-bar a { text-decoration: none; }
 
-        .action-bar { display: flex; gap: 12px; justify-content: center;
-                      margin-top: 24px; flex-wrap: wrap; }
+        .cp-scanline { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); }
     </style>
 </head>
 <body>
 
+<div class="cp-scanline"></div>
+
 <!-- 顶部导航 -->
-<header class="header">
-    <div class="header-inner">
-        <a href="<%=ctx%>/index.jsp" class="logo">
+<header class="cp-nav">
+    <div class="cp-nav-inner">
+        <a href="<%=ctx%>/index.jsp" class="cp-logo">
             <i class="fa fa-gavel"></i> 二手拍卖
         </a>
-        <nav class="nav">
+        <nav class="cp-nav-menu">
             <a href="<%=ctx%>/index.jsp">首页</a>
             <a href="<%=ctx%>/item?action=list">浏览拍品</a>
             <a href="<%=ctx%>/item?action=publish-page">发布拍品</a>
             <a href="<%=ctx%>/order?action=list">我的订单</a>
         </nav>
-        <div class="user-info">
+        <div class="cp-nav-user">
             <% if (currentUser != null) { %>
                 <span>欢迎，</span>
-                <span style="color: var(--color-text); font-weight: 500;"><%= currentUser.getUsername() %></span>
-                <a href="<%=ctx%>/user?action=logout" style="color: var(--color-primary);">退出</a>
+                <span style="font-weight: 500;"><%= currentUser.getUsername() %></span>
+                <a href="<%=ctx%>/user?action=logout" style="color: #00f0ff;">退出</a>
             <% } else { %>
                 <a href="<%=ctx%>/user?action=login" class="btn btn-ghost btn-sm">登录</a>
                 <a href="<%=ctx%>/user?action=register" class="btn btn-primary btn-sm">免费注册</a>
@@ -118,48 +94,48 @@
     </div>
 </header>
 
-<div class="container" style="max-width: 900px; margin: 0 auto; padding: 0 24px 60px;">
+<div class="cp-container">
 
     <% if (item == null) { %>
-        <div class="content-card" style="text-align: center; padding: 60px;">
-            <i class="fa fa-exclamation-triangle" style="font-size: 48px; color: var(--color-muted);"></i>
-            <h3 style="margin: 16px 0 8px;">拍品不存在</h3>
+        <div class="cp-card" style="text-align: center; padding: 60px;">
+            <i class="fa fa-exclamation-triangle" style="font-size: 48px; color: #FFEE00; opacity: 0.7;"></i>
+            <h3 style="margin: 16px 0 8px; color: #FFEE00;">拍品不存在</h3>
             <a href="<%=ctx%>/item?action=list" class="btn btn-primary">返回拍品列表</a>
         </div>
     <% } else if ("sold".equals(resultType)) { %>
         <!-- 已成交 -->
-        <div class="result-hero sold">
-            <i class="fa fa-trophy result-icon"></i>
-            <div class="result-title">拍卖 <span class="accent">成交</span>！</div>
-            <div class="result-subtitle">恭喜中拍，请尽快完成付款</div>
-            <div class="result-meta">
-                <div class="result-meta-item">
-                    <div class="result-meta-label">成交价</div>
-                    <div class="result-meta-value">¥<%= winner != null && winner.getBidAmount() != null ? winner.getBidAmount().toPlainString() : "0.00" %></div>
+        <div class="cp-result-hero cp-sold">
+            <i class="fa fa-trophy cp-result-icon"></i>
+            <div class="cp-result-title">拍卖 <span class="accent">成交</span>！</div>
+            <div class="cp-result-subtitle">恭喜中拍，请尽快完成付款</div>
+            <div class="cp-result-meta">
+                <div class="cp-result-meta-item">
+                    <div class="cp-result-meta-label">成交价</div>
+                    <div class="cp-result-meta-value">¥<%= winner != null && winner.getBidAmount() != null ? winner.getBidAmount().toPlainString() : "0.00" %></div>
                 </div>
-                <div class="result-meta-item">
-                    <div class="result-meta-label">出价次数</div>
-                    <div class="result-meta-value"><%= bidCount %></div>
+                <div class="cp-result-meta-item">
+                    <div class="cp-result-meta-label">出价次数</div>
+                    <div class="cp-result-meta-value"><%= bidCount %></div>
                 </div>
-                <div class="result-meta-item">
-                    <div class="result-meta-label">出价人数</div>
-                    <div class="result-meta-value">--</div>
+                <div class="cp-result-meta-item">
+                    <div class="cp-result-meta-label">出价人数</div>
+                    <div class="cp-result-meta-value">--</div>
                 </div>
             </div>
         </div>
 
-        <div class="content-card">
-            <div class="section-title">中拍信息</div>
-            <div class="winner-card">
-                <div class="winner-avatar">
+        <div class="cp-card">
+            <div class="cp-section-title">中拍信息</div>
+            <div class="cp-winner-card">
+                <div class="cp-winner-avatar">
                     <%= winnerUser != null && winnerUser.getUsername() != null ? EscapeUtil.html(winnerUser.getUsername().substring(0, 1).toUpperCase()) : "?" %>
                 </div>
-                <div class="winner-info">
-                    <div class="winner-name"><%= winnerUser != null ? EscapeUtil.html(winnerUser.getUsername()) : "(用户已注销)" %></div>
-                    <div class="winner-price">
+                <div class="cp-winner-info">
+                    <div class="cp-winner-name"><%= winnerUser != null ? EscapeUtil.html(winnerUser.getUsername()) : "(用户已注销)" %></div>
+                    <div class="cp-winner-price">
                         <i class="fa fa-gavel"></i> 出价 ¥<%= winner != null && winner.getBidAmount() != null ? winner.getBidAmount().toPlainString() : "0.00" %>
                         <% if (winner != null && winner.getBidTime() != null) { %>
-                            <span style="color: var(--color-muted); font-size: 13px; margin-left: 12px;">
+                            <span style="color: #FFEE00; opacity: 0.7; font-size: 13px; margin-left: 12px;">
                                 <%= winner.getBidTime().toString().substring(0, 16).replace('T', ' ') %>
                             </span>
                         <% } %>
@@ -173,17 +149,17 @@
             </div>
         </div>
 
-        <div class="content-card">
-            <div class="section-title">拍品信息</div>
-            <div class="item-mini">
-                <div class="item-mini-cover" style="<%= item.getCoverImage() != null && !item.getCoverImage().isEmpty() ? "background-image: url('" + item.getCoverImage() + "');" : "" %>">
+        <div class="cp-card">
+            <div class="cp-section-title">拍品信息</div>
+            <div class="cp-item-mini">
+                <div class="cp-item-mini-cover" style="<%= item.getCoverImage() != null && !item.getCoverImage().isEmpty() ? "background-image: url('" + item.getCoverImage() + "');" : "" %>">
                     <% if (item.getCoverImage() == null || item.getCoverImage().isEmpty()) { %>
                         <i class="fa fa-image"></i>
                     <% } %>
                 </div>
-                <div class="item-mini-info">
-                    <div class="item-mini-title"><%= EscapeUtil.html(item.getTitle()) %></div>
-                    <div class="item-mini-desc">
+                <div class="cp-item-mini-info">
+                    <div class="cp-item-mini-title"><%= EscapeUtil.html(item.getTitle()) %></div>
+                    <div class="cp-item-mini-desc">
                         <%= item.getDescription() != null ? EscapeUtil.html(item.getDescription().length() > 100 ? item.getDescription().substring(0, 100) + "..." : item.getDescription()) : "" %>
                     </div>
                     <div style="margin-top: 12px;">
@@ -195,29 +171,29 @@
 
     <% } else if ("failed".equals(resultType)) { %>
         <!-- 已流拍 -->
-        <div class="result-hero failed">
-            <i class="fa fa-frown-o result-icon"></i>
-            <div class="result-title">拍卖 <span style="color: #6b7280;">流拍</span></div>
-            <div class="result-subtitle">很遗憾，本次拍卖无人出价</div>
+        <div class="cp-result-hero cp-failed">
+            <i class="fa fa-frown-o cp-result-icon"></i>
+            <div class="cp-result-title">拍卖 <span style="color: #ff00ff; text-shadow: 0 0 10px #ff00ff;">流拍</span></div>
+            <div class="cp-result-subtitle">很遗憾，本次拍卖无人出价</div>
         </div>
 
-        <div class="content-card">
-            <div class="section-title">拍品信息</div>
-            <div class="item-mini">
-                <div class="item-mini-cover" style="<%= item.getCoverImage() != null && !item.getCoverImage().isEmpty() ? "background-image: url('" + item.getCoverImage() + "');" : "" %>">
+        <div class="cp-card">
+            <div class="cp-section-title">拍品信息</div>
+            <div class="cp-item-mini">
+                <div class="cp-item-mini-cover" style="<%= item.getCoverImage() != null && !item.getCoverImage().isEmpty() ? "background-image: url('" + item.getCoverImage() + "');" : "" %>">
                     <% if (item.getCoverImage() == null || item.getCoverImage().isEmpty()) { %>
                         <i class="fa fa-image"></i>
                     <% } %>
                 </div>
-                <div class="item-mini-info">
-                    <div class="item-mini-title"><%= EscapeUtil.html(item.getTitle()) %></div>
-                    <div class="item-mini-desc">
+                <div class="cp-item-mini-info">
+                    <div class="cp-item-mini-title"><%= EscapeUtil.html(item.getTitle()) %></div>
+                    <div class="cp-item-mini-desc">
                         起拍价 ¥<%= item.getStartPrice() == null ? "0.00" : item.getStartPrice().toPlainString() %>
                         · 结束于 <%= item.getEndTime() == null ? "-" : item.getEndTime().toString().substring(0, 16).replace('T', ' ') %>
                     </div>
                 </div>
             </div>
-            <div class="action-bar">
+            <div class="cp-action-bar">
                 <a href="<%=ctx%>/item?action=list" class="btn btn-primary">看看其他拍品</a>
                 <% if (currentUser != null && item.getSellerId() != null && item.getSellerId().equals(currentUser.getId())) { %>
                     <a href="<%=ctx%>/item?action=publish-page" class="btn btn-ghost">重新发布</a>
@@ -227,10 +203,10 @@
 
     <% } else { %>
         <!-- 未知状态 -->
-        <div class="content-card">
-            <div class="section-title">拍卖状态</div>
-            <p style="color: var(--color-muted);">该拍品当前状态：<%= item.getStatus() == null ? "未知" : item.getStatus() %></p>
-            <p style="color: var(--color-muted);">结束时间：<%= item.getEndTime() == null ? "-" : item.getEndTime().toString().replace('T', ' ') %></p>
+        <div class="cp-card">
+            <div class="cp-section-title">拍卖状态</div>
+            <p style="color: #FFEE00; opacity: 0.7;">该拍品当前状态：<%= item.getStatus() == null ? "未知" : item.getStatus() %></p>
+            <p style="color: #FFEE00; opacity: 0.7;">结束时间：<%= item.getEndTime() == null ? "-" : item.getEndTime().toString().replace('T', ' ') %></p>
         </div>
     <% } %>
 

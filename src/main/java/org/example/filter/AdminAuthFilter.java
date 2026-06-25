@@ -31,9 +31,11 @@ import java.net.URLEncoder;
 @WebFilter(urlPatterns = {"/admin", "/admin/*"})
 public class AdminAuthFilter implements Filter {
 
+    // 初始化过滤器，此处不需要任何特殊初始化操作
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {}
 
+    // 执行过滤逻辑，检查用户是否已登录并有权访问管理页面
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
@@ -59,6 +61,7 @@ public class AdminAuthFilter implements Filter {
         chain.doFilter(request, response);
     }
 
+    // 销毁过滤器，此处不需要任何特殊销毁操作
     @Override
     public void destroy() {}
 }
