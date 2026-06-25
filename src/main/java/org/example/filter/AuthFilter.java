@@ -13,29 +13,77 @@ import java.util.List;
 /**
  * 登录拦截过滤器
  *
- * 放行规则（无需登录即可访问）：
- *   1. 静态资源：/static/*
- *   2. 公共页面：/index.jsp、/hello
- *   3. 用户登录注册：/user?action=login|register|check-*|logout
+ * 设计原则：
+ *   1. 打开网站默认就是首页（访客状态），登录/注册入口在右上角
+ *   2. 访客可浏览拍品（list/detail/result），但发拍品/出价/下单/看个人中心必须登录
  *
- * 其他所有 URL 必须登录后才能访问。
- * 未登录访问 → 重定向到登录页（AJAX 请求则返回 401）。
+ * 放行规则（无需登录）：
+ *   - 静态资源：/static/*
+ *   - 首页/测试：/index.jsp、/hello
+ *   - /item 浏览类：action ∈ {list, detail, result}
+ *   - /user 认证类：action ∈ {login, register, check-username, check-phone, logout}
+ *   - /bid 查询类：action ∈ {history, settle}
  *
- * 顺序：在 web.xml 中显式注册，确保在 EncodingFilter 之后执行
+ * 其余 URL 必须登录后才能访问（包括 /item 的 publish-page、/order/*、/user?action=center、/bid?action=place）
+ *
+ * 未登录访问受保护资源：
+ *   - 普通请求 → 重定向到登录页（带 returnUrl 登录后跳回）
+ *   - AJAX 请求 → 返回 401 JSON
  */
 public class AuthFilter implements Filter {
 
-    /** 完全放行的 URL 前缀 */
-    private static final List<String> PUBLIC_PREFIXES = Arrays.asList(
-            "/static/",
-            "/index.jsp",
-            "/hello"
-    );
-
-    /** Servlet action 放行（针对 /user?action=xxx 这种形式） */
+    /** 用户 Servlet 的公共 action（认证相关） */
     private static final List<String> PUBLIC_USER_ACTIONS = Arrays.asList(
             "login", "register", "check-username", "check-phone", "logout"
     );
+
+    /** 拍品 Servlet 的公共 action（浏览类，访客可访问） */
+    private static final List<String> PUBLIC_ITEM_ACTIONS = Arrays.asList(
+            "list", "detail", "result"
+    );
+
+    /** 出价 Servlet 的公共 action（仅查询类；settle 必须登录，详见 #P0-1 安全修复） */
+    private static final List<String> PUBLIC_BID_ACTIONS = Arrays.asList(
+            "history"
+    );
+
+    /** 路径前缀直接放行（首页、静态资源、admin 路径） */
+    private boolean isPublicPath(String path) {
+        // 空路径 "/" 也放行：让 Tomcat 内部按 welcome-file 自动跳转到 index.jsp
+        if (path.equals("/")
+                || path.startsWith("/static/")
+                || path.equals("/index.jsp")
+                || path.equals("/hello")) {
+            return true;
+        }
+        // /admin 和 /admin/* 都放行：admin 鉴权交给 AdminAuthFilter（它会放行 /admin/login）
+        // 这里必须先放行，否则 AuthFilter 会把未登录的 admin 访问重定向到用户登录页
+        // 注意：/admin（不带尾斜杠）和 /admin/* 是两个不同的路径，要分别匹配
+        if (path.equals("/admin") || path.startsWith("/admin/")) {
+            return true;
+        }
+        return false;
+    }
+
+    /** Servlet 路径 + action 是否在公共白名单 */
+    private boolean isPublicAction(String path, String action) {
+        if ("/user".equals(path) && action != null && PUBLIC_USER_ACTIONS.contains(action)) {
+            return true;
+        }
+        if ("/item".equals(path)) {
+            // item 没传 action 时默认为 list，也放行
+            if (action == null || PUBLIC_ITEM_ACTIONS.contains(action)) {
+                return true;
+            }
+        }
+        if ("/bid".equals(path)) {
+            // bid 没传 action 时默认为 history，也放行
+            if (action == null || PUBLIC_BID_ACTIONS.contains(action)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     @Override
     public void init(FilterConfig filterConfig) {
@@ -51,30 +99,20 @@ public class AuthFilter implements Filter {
         String uri = request.getRequestURI();
         String contextPath = request.getContextPath();
         String path = uri.substring(contextPath.length());
+        String action = request.getParameter("action");
 
-        // 1. 完全放行
-        for (String prefix : PUBLIC_PREFIXES) {
-            if (path.startsWith(prefix)) {
-                chain.doFilter(req, resp);
-                return;
-            }
+        // 1. 公共路径 / 公共 action → 直接放行
+        if (isPublicPath(path) || isPublicAction(path, action)) {
+            chain.doFilter(req, resp);
+            return;
         }
 
-        // 2. /user?action=login/register/check-* 放行（但 logout 不放行）
-        if (path.equals("/user")) {
-            String action = request.getParameter("action");
-            if (action != null && PUBLIC_USER_ACTIONS.contains(action)) {
-                chain.doFilter(req, resp);
-                return;
-            }
-        }
-
-        // 3. 检查 session
+        // 2. 其余路径检查登录状态
         HttpSession session = request.getSession(false);
         User currentUser = session == null ? null : (User) session.getAttribute("currentUser");
 
         if (currentUser == null) {
-            // 判断是否是 AJAX 请求（根据 X-Requested-With 头）
+            // AJAX 请求 → 返回 401 JSON
             String xhr = request.getHeader("X-Requested-With");
             if ("XMLHttpRequest".equals(xhr)) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -91,7 +129,7 @@ public class AuthFilter implements Filter {
             return;
         }
 
-        // 4. 已登录，放行
+        // 3. 已登录，放行
         chain.doFilter(req, resp);
     }
 

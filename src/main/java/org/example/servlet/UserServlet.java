@@ -2,10 +2,22 @@ package org.example.servlet;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.ibatis.session.SqlSession;
+import org.example.entity.Address;
+import org.example.entity.AuctionItem;
+import org.example.entity.BidRecord;
+import org.example.entity.OrderInfo;
 import org.example.entity.User;
+import org.example.mapper.AddressMapper;
+import org.example.mapper.AuctionItemMapper;
+import org.example.mapper.BidRecordMapper;
+import org.example.mapper.ComplaintMapper;
+import org.example.mapper.MessageMapper;
+import org.example.mapper.OrderMapper;
 import org.example.mapper.UserMapper;
+import org.example.mapper.WatchListMapper;
 import org.example.util.MyBatisUtil;
 import org.example.util.PasswordUtil;
+import org.example.util.ResponseUtil;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -18,6 +30,7 @@ import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -58,6 +71,9 @@ public class UserServlet extends HttpServlet {
             case "check-phone":
                 checkPhone(req, resp);
                 break;
+            case "center":
+                showCenter(req, resp);
+                break;
             default:
                 resp.sendRedirect(req.getContextPath() + "/index.jsp");
         }
@@ -65,8 +81,21 @@ public class UserServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        // POST 请求统一交给 doGet 处理（业务逻辑一致）
-        doGet(req, resp);
+        // POST 走业务逻辑：登录/注册
+        String action = req.getParameter("action");
+        if (action == null) action = "";
+
+        switch (action) {
+            case "login":
+                doLogin(req, resp);
+                break;
+            case "register":
+                doRegister(req, resp);
+                break;
+            default:
+                // 未知的 POST action：交给 doGet 兜底
+                doGet(req, resp);
+        }
     }
 
     // ============ 页面跳转 ============
@@ -87,12 +116,14 @@ public class UserServlet extends HttpServlet {
     // ============ 登录处理 ============
 
     private void doLogin(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String username = trim(req.getParameter("username"));
+        String account = trim(req.getParameter("account"));  // 手机号 或 邮箱
         String password = req.getParameter("password");
+        String returnUrl = req.getParameter("returnUrl");
 
         // 基础校验
-        if (username == null || username.isEmpty() || password == null || password.isEmpty()) {
-            req.setAttribute("error", "用户名/手机号和密码不能为空");
+        if (account == null || account.isEmpty() || password == null || password.isEmpty()) {
+            req.setAttribute("error", "请输入手机号/邮箱和密码");
+            req.setAttribute("returnUrl", returnUrl);  // 错误时也保留 returnUrl
             req.getRequestDispatcher("/WEB-INF/jsp/user/login.jsp").forward(req, resp);
             return;
         }
@@ -100,32 +131,44 @@ public class UserServlet extends HttpServlet {
         User user;
         try (SqlSession session = MyBatisUtil.openSession()) {
             UserMapper mapper = session.getMapper(UserMapper.class);
-
-            // 智能判断：纯数字当作手机号，否则当作用户名
-            if (username.matches("^1[3-9]\\d{9}$")) {
-                user = mapper.findByPhone(username);
-                if (user != null && !user.getPassword().equals(PasswordUtil.encrypt(password))) {
-                    user = null;
-                }
-            } else {
-                user = mapper.login(username, PasswordUtil.encrypt(password));
-            }
+            // 一条 SQL：按 phone 或 email 匹配 + 校验密码
+            user = mapper.loginByPhoneOrEmail(account, PasswordUtil.encrypt(password));
         } catch (Exception e) {
-            e.printStackTrace();
-            req.setAttribute("error", "登录失败：" + e.getMessage());
+            org.example.util.ResponseUtil.handleException(e, "用户登录");
+            req.setAttribute("error", "登录失败，请稍后重试");
+            req.setAttribute("returnUrl", returnUrl);
             req.getRequestDispatcher("/WEB-INF/jsp/user/login.jsp").forward(req, resp);
             return;
         }
 
         if (user == null) {
-            req.setAttribute("error", "用户名/手机号或密码错误");
+            req.setAttribute("error", "手机号/邮箱或密码错误");
+            req.setAttribute("returnUrl", returnUrl);
             req.getRequestDispatcher("/WEB-INF/jsp/user/login.jsp").forward(req, resp);
             return;
         }
 
-        // 登录成功：写入 session，更新最后登录时间
+        // 登录成功：写入 session
         req.getSession().setAttribute("currentUser", user);
-        resp.sendRedirect(req.getContextPath() + "/index.jsp");
+
+        // 登录成功后跳转：优先 returnUrl（防 open redirect 攻击），否则回首页
+        // 安全规则：returnUrl 必须以 / 开头，且不能以 // 或 /\ 开头（防外站跳转）
+        String target = req.getContextPath() + "/index.jsp";
+        if (returnUrl != null && !returnUrl.isEmpty() && isSafeRedirect(returnUrl)) {
+            target = req.getContextPath() + returnUrl;
+        }
+        resp.sendRedirect(target);
+    }
+
+    /**
+     * 检查 returnUrl 是否安全的站内跳转
+     * 安全：必须以 / 开头，且不能以 // 或 /\ 开头（防 //evil.com 这种伪协议）
+     */
+    private boolean isSafeRedirect(String url) {
+        if (url == null || url.isEmpty()) return false;
+        if (!url.startsWith("/")) return false;
+        if (url.startsWith("//") || url.startsWith("/\\")) return false;
+        return true;
     }
 
     // ============ 注册处理 ============
@@ -137,15 +180,21 @@ public class UserServlet extends HttpServlet {
         String phone    = trim(req.getParameter("phone"));
         String email    = trim(req.getParameter("email"));
 
-        // 校验
-        if (username == null || username.length() < 3 || username.length() > 20) {
-            fail(req, resp, "用户名长度必须 3-20 个字符", username, phone, email);
+        // ========== 1. 用户名校验（必填，可重复） ==========
+        if (username == null || username.isEmpty()) {
+            fail(req, resp, "用户名不能为空", username, phone, email);
+            return;
+        }
+        if (username.length() < 2 || username.length() > 20) {
+            fail(req, resp, "用户名长度必须 2-20 个字符", username, phone, email);
             return;
         }
         if (!username.matches("^[a-zA-Z0-9_\\u4e00-\\u9fa5]+$")) {
             fail(req, resp, "用户名只能包含字母、数字、下划线和中文", username, phone, email);
             return;
         }
+
+        // ========== 2. 密码校验 ==========
         if (password == null || password.length() < 6 || password.length() > 20) {
             fail(req, resp, "密码长度必须 6-20 个字符", username, phone, email);
             return;
@@ -154,34 +203,48 @@ public class UserServlet extends HttpServlet {
             fail(req, resp, "两次密码不一致", username, phone, email);
             return;
         }
-        if (phone != null && !phone.isEmpty() && !phone.matches("^1[3-9]\\d{9}$")) {
+
+        // ========== 3. 手机号校验（必填） ==========
+        if (phone == null || phone.isEmpty()) {
+            fail(req, resp, "手机号不能为空", username, phone, email);
+            return;
+        }
+        if (!phone.matches("^1[3-9]\\d{9}$")) {
             fail(req, resp, "手机号格式不正确", username, phone, email);
             return;
         }
-        if (email != null && !email.isEmpty() && !email.matches("^[\\w.+-]+@[\\w-]+\\.[a-zA-Z]{2,}$")) {
+
+        // ========== 4. 邮箱校验（选填，但格式要对） ==========
+        if (email != null && !email.isEmpty()
+                && !email.matches("^[\\w.+-]+@[\\w-]+\\.[a-zA-Z]{2,}$")) {
             fail(req, resp, "邮箱格式不正确", username, phone, email);
             return;
+        }
+        // 邮箱空字符串转 NULL（避免 UNIQUE 约束冲突）
+        if (email != null && email.isEmpty()) {
+            email = null;
         }
 
         try (SqlSession session = MyBatisUtil.openSession()) {
             UserMapper mapper = session.getMapper(UserMapper.class);
 
-            // 查重
-            if (mapper.findByUsername(username) != null) {
-                fail(req, resp, "用户名已被占用", username, phone, email);
-                return;
-            }
-            if (phone != null && !phone.isEmpty() && mapper.findByPhone(phone) != null) {
+            // ========== 5. 查重：手机号 + 邮箱 ==========
+            if (mapper.findByPhone(phone) != null) {
                 fail(req, resp, "手机号已被注册", username, phone, email);
                 return;
             }
+            if (email != null && mapper.findByEmail(email) != null) {
+                fail(req, resp, "邮箱已被注册", username, phone, email);
+                return;
+            }
+            // 用户名可以重复，不再查重
 
-            // 构造 User 插入
+            // ========== 6. 构造 User 插入 ==========
             User user = new User();
-            user.setUsername(username);
+            user.setUsername(username);              // 可为 null
             user.setPassword(PasswordUtil.encrypt(password));
-            user.setPhone(phone);
-            user.setEmail(email);
+            user.setPhone(phone);                    // 必填
+            user.setEmail(email);                    // 可为 null
             user.setCreditScore(100);
             user.setBalance(new BigDecimal("0.00"));
             user.setStatus(0);
@@ -191,15 +254,19 @@ public class UserServlet extends HttpServlet {
             session.commit();
 
             if (rows > 0) {
-                // 注册成功，直接登录跳首页
-                req.getSession().setAttribute("currentUser", user);
+                // 注册成功：先从 DB 回查拿到完整 user（含自增 id），再写 session
+                User freshUser = mapper.findById(user.getId());
+                if (freshUser == null) {
+                    freshUser = user;  // 兜底
+                }
+                req.getSession().setAttribute("currentUser", freshUser);
                 resp.sendRedirect(req.getContextPath() + "/index.jsp");
             } else {
                 fail(req, resp, "注册失败，请稍后再试", username, phone, email);
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            fail(req, resp, "注册出错：" + e.getMessage(), username, phone, email);
+            org.example.util.ResponseUtil.handleException(e, "用户注册");
+            fail(req, resp, "注册出错，请稍后重试", username, phone, email);
         }
     }
 
@@ -218,6 +285,98 @@ public class UserServlet extends HttpServlet {
         HttpSession session = req.getSession(false);
         if (session != null) session.invalidate();
         resp.sendRedirect(req.getContextPath() + "/index.jsp");
+    }
+
+    // ============ 个人中心 ============
+
+    private void showCenter(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        User currentUser = (User) req.getSession().getAttribute("currentUser");
+        if (currentUser == null) {
+            resp.sendRedirect(req.getContextPath() + "/user?action=login&returnUrl=" +
+                    java.net.URLEncoder.encode("/user?action=center", "UTF-8"));
+            return;
+        }
+
+        try (SqlSession session = MyBatisUtil.openSession()) {
+            UserMapper userMapper = session.getMapper(UserMapper.class);
+            AuctionItemMapper itemMapper = session.getMapper(AuctionItemMapper.class);
+            BidRecordMapper bidMapper = session.getMapper(BidRecordMapper.class);
+            OrderMapper orderMapper = session.getMapper(OrderMapper.class);
+
+            // 1. 刷新最新用户信息（信用分、余额可能变化）
+            User freshUser = userMapper.findById(currentUser.getId());
+            if (freshUser != null) {
+                currentUser = freshUser;
+                req.getSession().setAttribute("currentUser", freshUser);
+            }
+
+            // 2. 卖家视角：发布拍品统计
+            int itemActive = itemMapper.countBySellerAndStatus(currentUser.getId(), 1);
+            int itemSold   = itemMapper.countBySellerAndStatus(currentUser.getId(), 2);
+            int itemFailed = itemMapper.countBySellerAndStatus(currentUser.getId(), 3);
+            int itemTotal  = itemActive + itemSold + itemFailed;
+            Map<String, Integer> sellerStats = new HashMap<>();
+            sellerStats.put("total", itemTotal);
+            sellerStats.put("active", itemActive);
+            sellerStats.put("sold", itemSold);
+            sellerStats.put("failed", itemFailed);
+
+            // 3. 买家视角：订单状态计数
+            int ordersPending = orderMapper.countByBuyerAndStatus(currentUser.getId(), 0);
+            int ordersPaid    = orderMapper.countByBuyerAndStatus(currentUser.getId(), 1);
+            int ordersShipped = orderMapper.countByBuyerAndStatus(currentUser.getId(), 2);
+            int ordersDone    = orderMapper.countByBuyerAndStatus(currentUser.getId(), 3);
+
+            // 4. 买家视角：我的出价数
+            List<BidRecord> myBids = bidMapper.findByBidderId(currentUser.getId());
+            int myBidsCount = myBids == null ? 0 : myBids.size();
+
+            // 4.5 我的收藏数
+            int favoritesCount = session.getMapper(WatchListMapper.class).countByUserId(currentUser.getId());
+
+            // 4.6 我的地址数
+            int addressCount = session.getMapper(AddressMapper.class).findByUserId(currentUser.getId()).size();
+
+            // 4.7 未读消息数
+            int unreadMessageCount = session.getMapper(MessageMapper.class).countUnreadByUserId(currentUser.getId());
+
+            // 4.8 我发起的投诉数
+            int myComplaintCount = session.getMapper(ComplaintMapper.class).countMyComplaints(currentUser.getId());
+
+            // 5. 卖家视角：待发货订单数
+            Map<String, Object> sellerShipParams = new HashMap<>();
+            sellerShipParams.put("userId", currentUser.getId());
+            sellerShipParams.put("role", "seller");
+            sellerShipParams.put("status", 1);
+            int sellerOrdersToShip = orderMapper.countByCondition(sellerShipParams);
+
+            // 6. 最近发布的拍品（最多 5 个）
+            Map<String, Object> itemParams = new HashMap<>();
+            itemParams.put("sellerId", currentUser.getId());
+            itemParams.put("offset", 0);
+            itemParams.put("limit", 5);
+            List<AuctionItem> recentItems = itemMapper.findByCondition(itemParams);
+
+            req.setAttribute("user", currentUser);
+            req.setAttribute("sellerStats", sellerStats);
+            req.setAttribute("ordersPending", ordersPending);
+            req.setAttribute("ordersPaid", ordersPaid);
+            req.setAttribute("ordersShipped", ordersShipped);
+            req.setAttribute("ordersDone", ordersDone);
+            req.setAttribute("myBidsCount", myBidsCount);
+            req.setAttribute("favoritesCount", favoritesCount);
+            req.setAttribute("addressCount", addressCount);
+            req.setAttribute("unreadMessageCount", unreadMessageCount);
+            req.setAttribute("myComplaintCount", myComplaintCount);
+            req.setAttribute("sellerOrdersToShip", sellerOrdersToShip);
+            req.setAttribute("recentItems", recentItems);
+
+            req.getRequestDispatcher("/WEB-INF/jsp/user/center.jsp").forward(req, resp);
+        } catch (Exception e) {
+            org.example.util.ResponseUtil.handleException(e, "个人中心加载");
+            req.setAttribute("error", "加载个人中心失败，请稍后重试");
+            req.getRequestDispatcher("/WEB-INF/jsp/user/center.jsp").forward(req, resp);
+        }
     }
 
     // ============ AJAX 查重（返回 JSON） ============

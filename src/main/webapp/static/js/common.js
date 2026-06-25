@@ -9,30 +9,48 @@
 window.CTX = window.CTX || '';
 
 /**
- * 动态加载 Vue 3 CDN（如果已经加载过则直接返回）
+ * 推断当前 web 应用的 contextPath
+ * 通过查找已加载的 common.js script 标签的 src 反推
+ * 例：http://localhost:8080/Second_hand_auction_system_war/static/js/common.js
+ *   → http://localhost:8080/Second_hand_auction_system_war
+ */
+function getCtxPath() {
+    const scripts = document.querySelectorAll('script[src]');
+    for (const s of scripts) {
+        if (s.src.includes('common.js')) {
+            return s.src.substring(0, s.src.lastIndexOf('/static/js/common.js'));
+        }
+    }
+    return ''; // 兜底：相对路径
+}
+
+/**
+ * 动态加载 Vue 3（优先本地 static/js/vue.global.prod.js）
  * @returns {Promise<void>}
  */
 function loadVue() {
     if (window.Vue) return Promise.resolve();
     return new Promise((resolve, reject) => {
+        const ctx = getCtxPath();
         const s = document.createElement('script');
-        s.src = 'https://unpkg.com/vue@3.4.27/dist/vue.global.prod.js';
+        s.src = ctx + '/static/js/vue.global.prod.js';
         s.onload = () => resolve();
-        s.onerror = () => reject(new Error('Vue CDN 加载失败，请检查网络'));
+        s.onerror = () => reject(new Error('Vue 本地文件加载失败：' + s.src));
         document.head.appendChild(s);
     });
 }
 
 /**
- * 动态加载 axios（用于 AJAX 请求）
+ * 动态加载 axios（优先本地 static/js/axios.min.js）
  */
 function loadAxios() {
     if (window.axios) return Promise.resolve();
     return new Promise((resolve, reject) => {
+        const ctx = getCtxPath();
         const s = document.createElement('script');
-        s.src = 'https://unpkg.com/axios@1.6.7/dist/axios.min.js';
+        s.src = ctx + '/static/js/axios.min.js';
         s.onload = () => resolve();
-        s.onerror = () => reject(new Error('axios CDN 加载失败'));
+        s.onerror = () => reject(new Error('axios 本地文件加载失败：' + s.src));
         document.head.appendChild(s);
     });
 }

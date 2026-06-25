@@ -27,9 +27,12 @@ public class EncodingFilter implements Filter {
             throws IOException, ServletException {
         // 请求编码（表单 POST 中文）
         request.setCharacterEncoding(encoding);
-        // 响应编码（返回给浏览器的内容）
+        // 响应字符编码（仅设置 charset，不动 Content-Type）
+        // ⚠️ 不要在这里 setContentType("text/html...") —— 会把 CSS/JS/图片
+        //    等所有静态资源的 MIME 类型强制改成 text/html，导致浏览器拒绝解析 CSS。
+        //    MIME 类型由 JSP page directive / Servlet setContentType / Tomcat
+        //    default servlet 根据扩展名各自管理。
         response.setCharacterEncoding(encoding);
-        response.setContentType("text/html; charset=" + encoding);
 
         chain.doFilter(request, response);
     }

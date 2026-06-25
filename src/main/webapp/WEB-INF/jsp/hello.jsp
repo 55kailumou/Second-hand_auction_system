@@ -33,7 +33,6 @@
                     <th>用户名</th>
                     <th>电话</th>
                     <th>邮箱</th>
-                    <th>余额(元)</th>
                     <th>信用分</th>
                     <th>状态</th>
                     <th>注册时间</th>
@@ -46,7 +45,6 @@
                         <td>${u.username}</td>
                         <td>${u.phone}</td>
                         <td>${u.email}</td>
-                        <td>${u.balance}</td>
                         <td>${u.creditScore}</td>
                         <td class="${u.status == 0 ? 'status-0' : 'status-1'}">
                             ${u.status == 0 ? '正常' : '封禁'}
