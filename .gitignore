@@ -43,3 +43,6 @@ build/
 
 ### Mac OS ###
 .DS_Store
+# UI 设计稿和大型素材
+docs/
+preview/
