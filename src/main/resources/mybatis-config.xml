@@ -38,10 +38,20 @@ PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
     <!-- 注册 Mapper XML (逐个列出,简单清晰) -->
     <mappers>
         <mapper resource="org/example/mapper/UserMapper.xml"/>
-        <!-- 后续模块按需追加,例如:
-        <mapper resource="org/example/mapper/ItemMapper.xml"/>
-        <mapper resource="org/example/mapper/BidMapper.xml"/>
-        -->
+        <mapper resource="org/example/mapper/CategoryMapper.xml"/>
+        <mapper resource="org/example/mapper/AuctionItemMapper.xml"/>
+        <mapper resource="org/example/mapper/BidRecordMapper.xml"/>
+        <mapper resource="org/example/mapper/AddressMapper.xml"/>
+        <mapper resource="org/example/mapper/OrderMapper.xml"/>
+        <mapper resource="org/example/mapper/WatchListMapper.xml"/>
+        <mapper resource="org/example/mapper/AdminMapper.xml"/>
+        <mapper resource="org/example/mapper/CreditRecordMapper.xml"/>
+        <mapper resource="org/example/mapper/MessageMapper.xml"/>
+        <mapper resource="org/example/mapper/ComplaintMapper.xml"/>
+        <mapper resource="org/example/mapper/NoticeMapper.xml"/>
+        <mapper resource="org/example/mapper/StatsMapper.xml"/>
+        <mapper resource="org/example/mapper/ItemImageMapper.xml"/>
+        <!-- 后续模块按需追加 -->
     </mappers>
 
 </configuration>

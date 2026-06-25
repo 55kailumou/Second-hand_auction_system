@@ -67,6 +67,13 @@
             <version>2.16.1</version>
         </dependency>
 
+        <!-- Jackson JSR310 (LocalDateTime 序列化) -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>2.16.1</version>
+        </dependency>
+
         <!-- 日志 (MyBatis 运行时需要) -->
         <dependency>
             <groupId>org.slf4j</groupId>

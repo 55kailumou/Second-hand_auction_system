@@ -1,14 +1,15 @@
 # ============================================================
-#  数据库连接配置 · 模板文件
+#  Database connection configuration (template file)
 # ============================================================
-#  使用方法:
-#    1. 复制本文件为 db.properties（不要把 db.properties 推到仓库）
+#  Usage:
+#    1. Copy this file to db.properties (do NOT push db.properties to git repo)
 #       Windows PowerShell:  Copy-Item db.properties.example db.properties
 #       Linux / macOS:       cp db.properties.example db.properties
-#    2. 编辑 db.properties，把下面的占位符改成你自己的配置
+#    2. Edit db.properties, replace the placeholders below with your own config
 # ============================================================
 
 jdbc.driver=com.mysql.cj.jdbc.Driver
+# allowPublicKeyRetrieval=true fixes "Public Key Retrieval is not allowed" on MySQL 8.0
 jdbc.url=jdbc:mysql://localhost:3306/auction_db?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true&allowPublicKeyRetrieval=true
 jdbc.username=root
-jdbc.password=在这里填你的MySQL密码
+jdbc.password=your_mysql_password_here
