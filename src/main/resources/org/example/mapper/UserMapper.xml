@@ -32,11 +32,21 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         WHERE phone = #{phone}
     </select>
 
-    <!-- 3. 登录: 按用户名 + 密码 -->
-    <select id="login" parameterType="string" resultType="User">
+    <!-- 2c. 按邮箱查询 -->
+    <select id="findByEmail" parameterType="string" resultType="User">
         SELECT <include refid="userColumns"/>
         FROM user
-        WHERE username = #{username} AND password = #{password} AND status = 0
+        WHERE email = #{email}
+    </select>
+
+    <!-- 3. 登录: 按手机号或邮箱 + 密码 -->
+    <select id="loginByPhoneOrEmail" resultType="User">
+        SELECT <include refid="userColumns"/>
+        FROM user
+        WHERE (phone = #{account} OR email = #{account})
+          AND password = #{password}
+          AND status = 0
+        LIMIT 1
     </select>
 
     <!-- 4. 注册: 插入用户 -->
@@ -56,5 +66,62 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         FROM user
         ORDER BY id ASC
     </select>
+
+    <!-- 7. 调整信用分（增量更新，service 层控制 0-150 范围） -->
+    <update id="updateCreditScore">
+        UPDATE user
+        SET credit_score = GREATEST(0, LEAST(150, credit_score + #{delta}))
+        WHERE id = #{userId}
+    </update>
+
+    <!-- 8. 管理后台：按条件分页查询（status + 关键词 + 分页） -->
+    <select id="findByCondition" parameterType="map" resultType="User">
+        SELECT <include refid="userColumns"/>
+        FROM user
+        <where>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (username LIKE CONCAT('%', #{keyword}, '%')
+                  OR phone    LIKE CONCAT('%', #{keyword}, '%')
+                  OR email    LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY id DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 9. 管理后台：按条件计数（同 findByCondition 条件） -->
+    <select id="countByCondition" parameterType="map" resultType="int">
+        SELECT COUNT(*)
+        FROM user
+        <where>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (username LIKE CONCAT('%', #{keyword}, '%')
+                  OR phone    LIKE CONCAT('%', #{keyword}, '%')
+                  OR email    LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+    </select>
+
+    <!-- 10. 管理后台：单字段更新用户状态（封禁 / 解封） -->
+    <update id="updateStatusByAdmin">
+        UPDATE user
+        SET status = #{status}
+        WHERE id = #{userId}
+    </update>
+
+    <!-- 11. 管理后台：重置用户密码（service 层已 SHA-256 加密） -->
+    <update id="resetPasswordByAdmin">
+        UPDATE user
+        SET password = #{password}
+        WHERE id = #{userId}
+    </update>
 
 </mapper>

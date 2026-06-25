@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.example.mapper.AddressMapper">
+
+    <sql id="addressColumns">
+        id, user_id, receiver_name, receiver_phone, province, city, district,
+        detail_address, is_default, create_time
+    </sql>
+
+    <!-- 1. 按 ID 查询 -->
+    <select id="findById" parameterType="int" resultType="Address">
+        SELECT <include refid="addressColumns"/>
+        FROM address
+        WHERE id = #{id}
+    </select>
+
+    <!-- 2. 查询用户所有地址（默认地址优先，然后创建时间倒序） -->
+    <select id="findByUserId" parameterType="int" resultType="Address">
+        SELECT <include refid="addressColumns"/>
+        FROM address
+        WHERE user_id = #{userId}
+        ORDER BY is_default DESC, create_time DESC
+    </select>
+
+    <!-- 3. 查询用户默认地址 -->
+    <select id="findDefaultByUserId" parameterType="int" resultType="Address">
+        SELECT <include refid="addressColumns"/>
+        FROM address
+        WHERE user_id = #{userId} AND is_default = 1
+        LIMIT 1
+    </select>
+
+    <!-- 4. 新增地址 -->
+    <insert id="insert" parameterType="Address" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO address (user_id, receiver_name, receiver_phone, province, city, district, detail_address, is_default)
+        VALUES (#{userId}, #{receiverName}, #{receiverPhone}, #{province}, #{city}, #{district}, #{detailAddress}, #{isDefault})
+    </insert>
+
+    <!-- 5. 更新地址 -->
+    <update id="updateById" parameterType="Address">
+        UPDATE address
+        SET receiver_name  = #{receiverName},
+            receiver_phone = #{receiverPhone},
+            province       = #{province},
+            city           = #{city},
+            district       = #{district},
+            detail_address = #{detailAddress},
+            is_default     = #{isDefault}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 6. 删除地址 -->
+    <delete id="deleteById" parameterType="int">
+        DELETE FROM address WHERE id = #{id}
+    </delete>
+
+    <!-- 7. 清除用户所有默认地址（切换默认前调用） -->
+    <update id="clearDefaultByUserId" parameterType="int">
+        UPDATE address SET is_default = 0 WHERE user_id = #{userId}
+    </update>
+
+    <!-- 8. 设为默认 -->
+    <update id="setDefault" parameterType="int">
+        UPDATE address SET is_default = 1 WHERE id = #{id}
+    </update>
+
+</mapper>

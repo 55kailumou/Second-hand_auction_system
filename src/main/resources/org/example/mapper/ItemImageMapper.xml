@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.example.mapper.ItemImageMapper">
+
+    <resultMap id="ItemImageMap" type="org.example.entity.ItemImage">
+        <id     column="id"         property="id"/>
+        <result column="item_id"    property="itemId"/>
+        <result column="image_url"  property="imageUrl"/>
+        <result column="sort_order" property="sortOrder"/>
+    </resultMap>
+
+    <!-- 复用列：所有 SELECT 都用这段 -->
+    <sql id="Base_Column_List">
+        id, item_id, image_url, sort_order
+    </sql>
+
+    <insert id="insert" parameterType="org.example.entity.ItemImage"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `item_image` (item_id, image_url, sort_order)
+        VALUES (#{itemId}, #{imageUrl}, #{sortOrder})
+    </insert>
+
+    <update id="bindItemId">
+        UPDATE `item_image`
+           SET item_id = #{itemId}
+         WHERE id = #{id} AND item_id IS NULL
+    </update>
+
+    <select id="findTempByUrl" parameterType="java.lang.String" resultMap="ItemImageMap">
+        SELECT <include refid="Base_Column_List"/>
+          FROM `item_image`
+         WHERE image_url = #{imageUrl} AND item_id IS NULL
+         LIMIT 1
+    </select>
+
+    <delete id="deleteById" parameterType="java.lang.Integer">
+        DELETE FROM `item_image` WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteByItemId" parameterType="java.lang.Integer">
+        DELETE FROM `item_image` WHERE item_id = #{itemId}
+    </delete>
+
+    <select id="findById" parameterType="java.lang.Integer" resultMap="ItemImageMap">
+        SELECT <include refid="Base_Column_List"/>
+          FROM `item_image`
+         WHERE id = #{id}
+    </select>
+
+    <select id="findByItemId" parameterType="java.lang.Integer" resultMap="ItemImageMap">
+        SELECT <include refid="Base_Column_List"/>
+          FROM `item_image`
+         WHERE item_id = #{itemId}
+         ORDER BY sort_order ASC, id ASC
+    </select>
+
+    <select id="findCoverByItemId" parameterType="java.lang.Integer" resultMap="ItemImageMap">
+        SELECT <include refid="Base_Column_List"/>
+          FROM `item_image`
+         WHERE item_id = #{itemId} AND sort_order = 0
+         LIMIT 1
+    </select>
+
+    <select id="countByItemId" parameterType="java.lang.Integer" resultType="int">
+        SELECT COUNT(*)
+          FROM `item_image`
+         WHERE item_id = #{itemId}
+    </select>
+
+</mapper>

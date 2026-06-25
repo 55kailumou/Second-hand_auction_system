@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.example.mapper.CreditRecordMapper">
+
+    <sql id="creditColumns">
+        id, order_id, evaluator_id, target_id, role, score, content, create_time
+    </sql>
+
+    <!-- 1. 按 ID 查询 -->
+    <select id="findById" parameterType="int" resultType="CreditRecord">
+        SELECT <include refid="creditColumns"/>
+        FROM credit_record
+        WHERE id = #{id}
+    </select>
+
+    <!-- 2. 按 orderId + evaluatorId 查询 -->
+    <select id="findByOrderAndEvaluator" resultType="CreditRecord">
+        SELECT <include refid="creditColumns"/>
+        FROM credit_record
+        WHERE order_id = #{orderId} AND evaluator_id = #{evaluatorId}
+        LIMIT 1
+    </select>
+
+    <!-- 3. 新增评价 -->
+    <insert id="insert" parameterType="CreditRecord" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO credit_record (order_id, evaluator_id, target_id, role, score, content)
+        VALUES (#{orderId}, #{evaluatorId}, #{targetId}, #{role}, #{score}, #{content})
+    </insert>
+
+    <!-- 4. 评价列表 -->
+    <select id="findByCondition" parameterType="map" resultType="CreditRecord">
+        SELECT <include refid="creditColumns"/>
+        FROM credit_record
+        <where>
+            <choose>
+                <when test="type == 'sent'">
+                    AND evaluator_id = #{userId}
+                </when>
+                <when test="type == 'received'">
+                    AND target_id = #{userId}
+                </when>
+                <otherwise>
+                    AND (evaluator_id = #{userId} OR target_id = #{userId})
+                </otherwise>
+            </choose>
+        </where>
+        ORDER BY create_time DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 5. 计数 -->
+    <select id="countByCondition" parameterType="map" resultType="int">
+        SELECT COUNT(*)
+        FROM credit_record
+        <where>
+            <choose>
+                <when test="type == 'sent'">
+                    AND evaluator_id = #{userId}
+                </when>
+                <when test="type == 'received'">
+                    AND target_id = #{userId}
+                </when>
+                <otherwise>
+                    AND (evaluator_id = #{userId} OR target_id = #{userId})
+                </otherwise>
+            </choose>
+        </where>
+    </select>
+
+    <!-- 6. 收到的评价统计 -->
+    <select id="statReceivedScore" parameterType="int" resultType="map">
+        SELECT
+            COUNT(*)         AS count,
+            COALESCE(AVG(score), 0) AS avgScore
+        FROM credit_record
+        WHERE target_id = #{userId}
+    </select>
+
+</mapper>

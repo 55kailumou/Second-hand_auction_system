@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.example.mapper.AuctionItemMapper">
+
+    <sql id="itemColumns">
+        id, seller_id, category_id, title, description, brand, model,
+        condition_level, flaw_desc, cover_image, image_urls,
+        start_price, current_price, bid_increment, reserve_price,
+        start_time, end_time, status, view_count, create_time, update_time
+    </sql>
+
+    <!-- 1. 按 ID 查询 -->
+    <select id="findById" parameterType="int" resultType="AuctionItem">
+        SELECT <include refid="itemColumns"/>
+        FROM auction_item
+        WHERE id = #{id}
+    </select>
+
+    <!-- 2. 发布拍品 -->
+    <insert id="insert" parameterType="AuctionItem" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO auction_item (
+            seller_id, category_id, title, description, brand, model,
+            condition_level, flaw_desc, cover_image, image_urls,
+            start_price, current_price, bid_increment, reserve_price,
+            start_time, end_time, status
+        ) VALUES (
+            #{sellerId}, #{categoryId}, #{title}, #{description}, #{brand}, #{model},
+            #{conditionLevel}, #{flawDesc}, #{coverImage}, #{imageUrls},
+            #{startPrice}, #{currentPrice}, #{bidIncrement}, #{reservePrice},
+            #{startTime}, #{endTime}, #{status}
+        )
+    </insert>
+
+    <!-- 3. 编辑更新（不动 current_price / status / view_count） -->
+    <update id="updateById" parameterType="AuctionItem">
+        UPDATE auction_item
+        SET category_id     = #{categoryId},
+            title           = #{title},
+            description     = #{description},
+            brand           = #{brand},
+            model           = #{model},
+            condition_level = #{conditionLevel},
+            flaw_desc       = #{flawDesc},
+            cover_image     = #{coverImage},
+            image_urls      = #{imageUrls},
+            start_price     = #{startPrice},
+            bid_increment   = #{bidIncrement},
+            reserve_price   = #{reservePrice},
+            start_time      = #{startTime},
+            end_time        = #{endTime}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 3a. 卖家编辑"可改字段"——任何状态都安全 -->
+    <update id="updateEditableFieldsByOwner" parameterType="AuctionItem">
+        UPDATE auction_item
+        SET title           = #{title},
+            description     = #{description},
+            brand           = #{brand},
+            model           = #{model},
+            condition_level = #{conditionLevel},
+            flaw_desc       = #{flawDesc},
+            cover_image     = #{coverImage},
+            image_urls      = #{imageUrls}
+        WHERE id = #{id} AND seller_id = #{sellerId}
+    </update>
+
+    <!-- 3b. 卖家编辑"全部字段"——含价格时间，仅限 待审核/未开始/审核未通过 -->
+    <update id="updateAllFieldsByOwner" parameterType="AuctionItem">
+        UPDATE auction_item
+        SET category_id     = #{categoryId},
+            title           = #{title},
+            description     = #{description},
+            brand           = #{brand},
+            model           = #{model},
+            condition_level = #{conditionLevel},
+            flaw_desc       = #{flawDesc},
+            cover_image     = #{coverImage},
+            image_urls      = #{imageUrls},
+            start_price     = #{startPrice},
+            bid_increment   = #{bidIncrement},
+            reserve_price   = #{reservePrice},
+            start_time      = #{startTime},
+            end_time        = #{endTime}
+        WHERE id = #{id} AND seller_id = #{sellerId}
+    </update>
+
+    <!-- 4. 乐观锁更新当前价（出价时核心） -->
+    <update id="updatePriceOptimistic">
+        UPDATE auction_item
+        SET current_price = #{newPrice}
+        WHERE id = #{id} AND current_price = #{oldPrice}
+    </update>
+
+    <!-- 5. 自增浏览数 -->
+    <update id="incrementViewCount" parameterType="int">
+        UPDATE auction_item SET view_count = view_count + 1 WHERE id = #{id}
+    </update>
+
+    <!-- 6. 更新状态 -->
+    <update id="updateStatus">
+        UPDATE auction_item SET status = #{status} WHERE id = #{id}
+    </update>
+
+    <!-- 6b. 乐观更新状态（仅当 status=1 时），用于结算/成交/流拍 -->
+    <update id="updateStatusIfActive">
+        UPDATE auction_item SET status = #{status} WHERE id = #{id} AND status = 1
+    </update>
+
+    <!-- 7. 列表查询：动态 where + 动态排序 -->
+    <select id="findByCondition" parameterType="map" resultType="AuctionItem">
+        SELECT <include refid="itemColumns"/>
+        FROM auction_item
+        <where>
+            <if test="categoryId != null">AND category_id = #{categoryId}</if>
+            <if test="sellerId   != null">AND seller_id   = #{sellerId}</if>
+            <if test="status     != null">AND status      = #{status}</if>
+            <if test="keyword != null and keyword != ''">
+                AND title LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+            <if test="minPrice != null">AND current_price &gt;= #{minPrice}</if>
+            <if test="maxPrice != null">AND current_price &lt;= #{maxPrice}</if>
+        </where>
+        <choose>
+            <when test="sort == 'ending'">
+                ORDER BY status ASC, end_time ASC
+            </when>
+            <when test="sort == 'priceAsc'">
+                ORDER BY current_price ASC, id DESC
+            </when>
+            <when test="sort == 'priceDesc'">
+                ORDER BY current_price DESC, id DESC
+            </when>
+            <when test="sort == 'hot'">
+                ORDER BY view_count DESC, id DESC
+            </when>
+            <otherwise>
+                ORDER BY id DESC
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 8. 同条件计数 -->
+    <select id="countByCondition" parameterType="map" resultType="int">
+        SELECT COUNT(*) FROM auction_item
+        <where>
+            <if test="categoryId != null">AND category_id = #{categoryId}</if>
+            <if test="sellerId   != null">AND seller_id   = #{sellerId}</if>
+            <if test="status     != null">AND status      = #{status}</if>
+            <if test="keyword != null and keyword != ''">
+                AND title LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+            <if test="minPrice != null">AND current_price &gt;= #{minPrice}</if>
+            <if test="maxPrice != null">AND current_price &lt;= #{maxPrice}</if>
+        </where>
+    </select>
+
+    <!-- 9. 找出所有"已到期、状态还是拍卖中"的拍品，用于结算 -->
+    <select id="findEndedActiveItems" resultType="AuctionItem">
+        SELECT <include refid="itemColumns"/>
+        FROM auction_item
+        WHERE status = 1 AND end_time &lt;= NOW()
+    </select>
+
+    <!-- 10. 卖家在某状态的拍品数 -->
+    <select id="countBySellerAndStatus" resultType="int">
+        SELECT COUNT(*) FROM auction_item
+        WHERE seller_id = #{sellerId}
+        <if test="status != null">AND status = #{status}</if>
+    </select>
+
+    <!-- 11. 管理员改分类（单字段，避免覆盖其他字段的并发修改） -->
+    <update id="updateCategoryByAdmin">
+        UPDATE auction_item SET category_id = #{categoryId} WHERE id = #{id}
+    </update>
+
+</mapper>

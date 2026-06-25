@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.example.mapper.StatsMapper">
+
+    <!-- ============================================================
+         一次性聚合（用 9 个子查询拼装成 1 个 Map）
+         优点：1 次 IO 拉全部数据，前端按需渲染
+         ============================================================ -->
+    <select id="getOverview" parameterType="java.lang.Integer" resultType="java.util.LinkedHashMap">
+        SELECT
+            (SELECT COUNT(*) FROM `user`)                                                  AS userCount,
+            (SELECT COUNT(*) FROM `auction_item`)                                          AS itemCount,
+            (SELECT COUNT(*) FROM `order_info`
+              WHERE status IN (2, 3))                                                      AS completedOrderCount,
+            (SELECT IFNULL(SUM(final_price), 0) FROM `order_info`
+              WHERE status IN (2, 3, 4, 5))                                                AS gmv,
+            (SELECT COUNT(*) FROM `order_info`)                                            AS totalOrderCount,
+            (SELECT COUNT(*) FROM `bid_record`)                                            AS totalBidCount,
+            (SELECT COUNT(*) FROM `auction_item` WHERE status = 1)                         AS activeItemCount,
+            (SELECT COUNT(*) FROM `order_info` WHERE status = 4)                           AS pendingRefundCount
+    </select>
+
+    <!-- ============================================================
+         KPI 单独方法（备用）
+         ============================================================ -->
+    <select id="countUsers" resultType="int">
+        SELECT COUNT(*) FROM `user`
+    </select>
+
+    <select id="countItems" resultType="int">
+        SELECT COUNT(*) FROM `auction_item`
+    </select>
+
+    <select id="countCompletedOrders" resultType="int">
+        SELECT COUNT(*) FROM `order_info` WHERE status IN (2, 3)
+    </select>
+
+    <select id="sumGmv" resultType="java.lang.Double">
+        SELECT IFNULL(SUM(final_price), 0)
+          FROM `order_info`
+         WHERE status IN (2, 3, 4, 5)
+    </select>
+
+    <!-- ============================================================
+         用户增长趋势（最近 N 天，按天聚合）
+         返回：[{date: '06-01', count: 10}, ...]
+         ============================================================ -->
+    <select id="userTrend" parameterType="java.lang.Integer" resultType="java.util.LinkedHashMap">
+        SELECT DATE_FORMAT(register_time, '%m-%d') AS date,
+               COUNT(*)                              AS cnt
+          FROM `user`
+         WHERE register_time &gt;= DATE_SUB(CURDATE(), INTERVAL #{days} DAY)
+         GROUP BY DATE_FORMAT(register_time, '%m-%d')
+         ORDER BY MIN(register_time)
+    </select>
+
+    <!-- ============================================================
+         拍品状态分布
+         返回：[{status: 0, cnt: 12}, ...]
+         ============================================================ -->
+    <select id="itemStatusDistribution" resultType="java.util.LinkedHashMap">
+        SELECT status, COUNT(*) AS cnt
+          FROM `auction_item`
+         GROUP BY status
+         ORDER BY status
+    </select>
+
+    <!-- ============================================================
+         拍品分类分布（按一级分类聚合，Top N）
+         返回：[{category: '数码电子', cnt: 45}, ...]
+         ============================================================ -->
+    <select id="categoryDistribution" parameterType="java.lang.Integer" resultType="java.util.LinkedHashMap">
+        SELECT c.category_name AS category,
+               COUNT(*)         AS cnt
+          FROM `auction_item` i
+          JOIN `category` c ON i.category_id = c.id
+         WHERE c.parent_id IS NOT NULL
+         GROUP BY c.id, c.category_name
+         ORDER BY cnt DESC
+         LIMIT #{limit}
+    </select>
+
+    <!-- ============================================================
+         订单趋势（最近 N 天，按天聚合：数量 + 金额）
+         返回：[{date: '06-01', cnt: 5, amount: 2300.50}, ...]
+         ============================================================ -->
+    <select id="orderTrend" parameterType="java.lang.Integer" resultType="java.util.LinkedHashMap">
+        SELECT DATE_FORMAT(create_time, '%m-%d') AS date,
+               COUNT(*)                           AS cnt,
+               IFNULL(SUM(final_price), 0)        AS amount
+          FROM `order_info`
+         WHERE create_time &gt;= DATE_SUB(CURDATE(), INTERVAL #{days} DAY)
+         GROUP BY DATE_FORMAT(create_time, '%m-%d')
+         ORDER BY MIN(create_time)
+    </select>
+
+    <!-- ============================================================
+         订单状态分布
+         返回：[{status: 0, cnt: 5}, ...]
+         ============================================================ -->
+    <select id="orderStatusDistribution" resultType="java.util.LinkedHashMap">
+        SELECT status, COUNT(*) AS cnt
+          FROM `order_info`
+         GROUP BY status
+         ORDER BY status
+    </select>
+
+    <!-- ============================================================
+         热门拍品 Top N（按 view_count 降序）
+         返回：[{title: 'iPhone 13...', view_count: 234, category: '数码电子'}, ...]
+         ============================================================ -->
+    <select id="topItemsByViews" parameterType="java.lang.Integer" resultType="java.util.LinkedHashMap">
+        SELECT i.title,
+               i.view_count,
+               c.category_name AS category
+          FROM `auction_item` i
+          LEFT JOIN `category` c ON i.category_id = c.id
+         ORDER BY i.view_count DESC, i.id DESC
+         LIMIT #{limit}
+    </select>
+
+</mapper>

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.example.mapper.CategoryMapper">
+
+    <sql id="categoryColumns">
+        id, category_name, parent_id, sort_order, icon, status, create_time
+    </sql>
+
+    <!-- 1. 按 ID 查询 -->
+    <select id="findById" parameterType="int" resultType="Category">
+        SELECT <include refid="categoryColumns"/>
+        FROM category
+        WHERE id = #{id}
+    </select>
+
+    <!-- 2. 查询所有一级分类 -->
+    <select id="findTopLevel" resultType="Category">
+        SELECT <include refid="categoryColumns"/>
+        FROM category
+        WHERE parent_id = 0
+        ORDER BY sort_order ASC, id ASC
+    </select>
+
+    <!-- 3. 查询所有分类（按 sort_order 升序） -->
+    <select id="findAll" resultType="Category">
+        SELECT <include refid="categoryColumns"/>
+        FROM category
+        ORDER BY parent_id ASC, sort_order ASC, id ASC
+    </select>
+
+    <!-- 4. 按 parentId 查询子分类 -->
+    <select id="findByParentId" parameterType="int" resultType="Category">
+        SELECT <include refid="categoryColumns"/>
+        FROM category
+        WHERE parent_id = #{parentId}
+        ORDER BY sort_order ASC, id ASC
+    </select>
+
+    <!-- 5. 新增分类 -->
+    <insert id="insert" parameterType="Category" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO category (category_name, parent_id, sort_order, icon)
+        VALUES (#{categoryName}, #{parentId}, #{sortOrder}, #{icon})
+    </insert>
+
+    <!-- 6. 按 ID 删除 -->
+    <delete id="deleteById" parameterType="int">
+        DELETE FROM category WHERE id = #{id}
+    </delete>
+
+    <!-- 7. 按 ID 更新 -->
+    <update id="updateById" parameterType="Category">
+        UPDATE category
+        SET category_name = #{categoryName},
+            parent_id     = #{parentId},
+            sort_order    = #{sortOrder},
+            icon          = #{icon}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 8. 统计某分类下的拍品数（含所有子分类：暂不递归，简单按当前 ID） -->
+    <select id="countItemsByCategory" parameterType="int" resultType="int">
+        SELECT COUNT(*) FROM auction_item WHERE category_id = #{categoryId}
+    </select>
+
+    <!-- 9. 管理后台：单字段更新分类启用/禁用状态 -->
+    <update id="updateStatusByAdmin">
+        UPDATE category
+        SET status = #{status}
+        WHERE id = #{categoryId}
+    </update>
+
+</mapper>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.example.mapper.BidRecordMapper">
+
+    <sql id="bidColumns">
+        id, item_id, bidder_id, bid_amount, is_winning, is_proxy, bid_time
+    </sql>
+
+    <!-- 1. 插入 -->
+    <insert id="insert" parameterType="BidRecord" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO bid_record (item_id, bidder_id, bid_amount, is_winning, is_proxy, bid_time)
+        VALUES (#{itemId}, #{bidderId}, #{bidAmount}, #{isWinning}, #{isProxy}, #{bidTime})
+    </insert>
+
+    <!-- 2. 按 ID -->
+    <select id="findById" parameterType="int" resultType="BidRecord">
+        SELECT <include refid="bidColumns"/>
+        FROM bid_record
+        WHERE id = #{id}
+    </select>
+
+    <!-- 3. 重置某拍品的 is_winning 为 0 -->
+    <update id="resetWinningByItem" parameterType="int">
+        UPDATE bid_record SET is_winning = 0 WHERE item_id = #{itemId}
+    </update>
+
+    <!-- 4. 把某条记录置为 winning=1 -->
+    <update id="setWinning" parameterType="int">
+        UPDATE bid_record SET is_winning = 1 WHERE id = #{id}
+    </update>
+
+    <!-- 5. 某拍品的全部出价，按金额倒序 -->
+    <select id="findByItemIdOrderByAmountDesc" parameterType="int" resultType="BidRecord">
+        SELECT <include refid="bidColumns"/>
+        FROM bid_record
+        WHERE item_id = #{itemId}
+        ORDER BY bid_amount DESC, bid_time DESC
+    </select>
+
+    <!-- 6. 当前最高出价 -->
+    <select id="findCurrentWinning" parameterType="int" resultType="BidRecord">
+        SELECT <include refid="bidColumns"/>
+        FROM bid_record
+        WHERE item_id = #{itemId} AND is_winning = 1
+        LIMIT 1
+    </select>
+
+    <!-- 7. 某用户的全部出价 -->
+    <select id="findByBidderId" parameterType="int" resultType="BidRecord">
+        SELECT <include refid="bidColumns"/>
+        FROM bid_record
+        WHERE bidder_id = #{bidderId}
+        ORDER BY bid_time DESC
+    </select>
+
+    <!-- 8. 出价人数（去重） -->
+    <select id="countBiddersByItem" parameterType="int" resultType="int">
+        SELECT COUNT(DISTINCT bidder_id) FROM bid_record WHERE item_id = #{itemId}
+    </select>
+
+</mapper>

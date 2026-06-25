@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.example.mapper.NoticeMapper">
+
+    <sql id="noticeColumns">
+        id, admin_id, title, content, is_top, status, publish_time, create_time
+    </sql>
+
+    <!-- 1. 按 ID 查询 -->
+    <select id="findById" parameterType="int" resultType="Notice">
+        SELECT <include refid="noticeColumns"/>
+        FROM notice
+        WHERE id = #{id}
+    </select>
+
+    <!-- 2. 管理后台：按条件分页查询 -->
+    <select id="findByCondition" parameterType="map" resultType="Notice">
+        SELECT <include refid="noticeColumns"/>
+        FROM notice
+        <where>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (title LIKE CONCAT('%', #{keyword}, '%')
+                  OR content LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY is_top DESC, publish_time DESC, id DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 3. 管理后台：按条件计数 -->
+    <select id="countByCondition" parameterType="map" resultType="int">
+        SELECT COUNT(*)
+        FROM notice
+        <where>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (title LIKE CONCAT('%', #{keyword}, '%')
+                  OR content LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+    </select>
+
+    <!-- 4. 前台展示：按状态查询已发布的公告（最多 limit 条） -->
+    <select id="findPublished" parameterType="int" resultType="Notice">
+        SELECT <include refid="noticeColumns"/>
+        FROM notice
+        WHERE status = 1
+        ORDER BY is_top DESC, publish_time DESC, id DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 5. 新增公告 -->
+    <insert id="insert" parameterType="Notice" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO notice (admin_id, title, content, is_top, status, publish_time)
+        VALUES (#{adminId}, #{title}, #{content}, #{isTop}, #{status}, #{publishTime})
+    </insert>
+
+    <!-- 6. 按 ID 更新 -->
+    <update id="updateById" parameterType="Notice">
+        UPDATE notice
+        SET title        = #{title},
+            content      = #{content},
+            is_top       = #{isTop},
+            status       = #{status},
+            publish_time = #{publishTime}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 7. 管理后台：单字段更新状态（发布/撤回），同时设置 publish_time -->
+    <update id="updateStatusByAdmin">
+        UPDATE notice
+        SET status = #{status},
+            publish_time = #{publishTime}
+        WHERE id = #{noticeId}
+    </update>
+
+    <!-- 8. 管理后台：单字段更新置顶 -->
+    <update id="updateTopByAdmin">
+        UPDATE notice
+        SET is_top = #{isTop}
+        WHERE id = #{noticeId}
+    </update>
+
+    <!-- 9. 按 ID 删除 -->
+    <delete id="deleteById" parameterType="int">
+        DELETE FROM notice WHERE id = #{id}
+    </delete>
+
+</mapper>

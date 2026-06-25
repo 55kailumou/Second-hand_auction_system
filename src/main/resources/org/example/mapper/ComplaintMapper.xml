@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.example.mapper.ComplaintMapper">
+
+    <sql id="complaintColumns">
+        id, order_id, complainant_id, respondent_id, reason, evidence,
+        status, handler_id, handle_result, create_time, handle_time
+    </sql>
+
+    <!-- 1. 按 ID 查询 -->
+    <select id="findById" parameterType="int" resultType="Complaint">
+        SELECT <include refid="complaintColumns"/>
+        FROM complaint
+        WHERE id = #{id}
+    </select>
+
+    <!-- 2. 提交投诉 -->
+    <insert id="insert" parameterType="Complaint" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO complaint (order_id, complainant_id, respondent_id, reason, evidence, status)
+        VALUES (#{orderId}, #{complainantId}, #{respondentId}, #{reason}, #{evidence}, 0)
+    </insert>
+
+    <!-- 3. 条件查询 -->
+    <select id="findByCondition" parameterType="map" resultType="Complaint">
+        SELECT <include refid="complaintColumns"/>
+        FROM complaint
+        <where>
+            <choose>
+                <when test="role == 'complainant'">
+                    AND complainant_id = #{userId}
+                </when>
+                <when test="role == 'respondent'">
+                    AND respondent_id = #{userId}
+                </when>
+                <otherwise>
+                    <if test="userId != null">
+                        AND (complainant_id = #{userId} OR respondent_id = #{userId})
+                    </if>
+                </otherwise>
+            </choose>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND reason LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+        ORDER BY create_time DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 4. 计数 -->
+    <select id="countByCondition" parameterType="map" resultType="int">
+        SELECT COUNT(*)
+        FROM complaint
+        <where>
+            <choose>
+                <when test="role == 'complainant'">
+                    AND complainant_id = #{userId}
+                </when>
+                <when test="role == 'respondent'">
+                    AND respondent_id = #{userId}
+                </when>
+                <otherwise>
+                    <if test="userId != null">
+                        AND (complainant_id = #{userId} OR respondent_id = #{userId})
+                    </if>
+                </otherwise>
+            </choose>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND reason LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+    </select>
+
+    <!-- 5. 待处理投诉数（admin 角标） -->
+    <select id="countPending" resultType="int">
+        SELECT COUNT(*) FROM complaint WHERE status = 0
+    </select>
+
+    <!-- 5.1 我发起的投诉数 -->
+    <select id="countMyComplaints" parameterType="int" resultType="int">
+        SELECT COUNT(*) FROM complaint WHERE complainant_id = #{userId}
+    </select>
+
+    <!-- 6. 同一订单同一投诉人只能一次（防重复） -->
+    <select id="findByOrderAndComplainant" resultType="Complaint">
+        SELECT <include refid="complaintColumns"/>
+        FROM complaint
+        WHERE order_id = #{orderId} AND complainant_id = #{complainantId}
+        LIMIT 1
+    </select>
+
+    <!-- 7. 管理员处理（同意 status=2 / 驳回 status=3） -->
+    <update id="processComplaint">
+        UPDATE complaint
+        SET status = #{status},
+            handler_id = #{handlerId},
+            handle_result = #{handleResult},
+            handle_time = NOW()
+        WHERE id = #{id} AND status IN (0, 1)
+    </update>
+
+</mapper>

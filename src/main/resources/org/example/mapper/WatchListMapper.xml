@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.example.mapper.WatchListMapper">
+
+    <sql id="watchListColumns">
+        id, user_id, item_id, add_time
+    </sql>
+
+    <!-- 1. 按 ID 查询 -->
+    <select id="findById" parameterType="int" resultType="WatchList">
+        SELECT <include refid="watchListColumns"/>
+        FROM watch_list
+        WHERE id = #{id}
+    </select>
+
+    <!-- 2. 按 userId + itemId 查询（详情页判断是否已收藏） -->
+    <select id="findByUserAndItem" resultType="WatchList">
+        SELECT <include refid="watchListColumns"/>
+        FROM watch_list
+        WHERE user_id = #{userId} AND item_id = #{itemId}
+        LIMIT 1
+    </select>
+
+    <!-- 3. 查询某用户的所有收藏（按收藏时间倒序） -->
+    <select id="findByUserId" parameterType="int" resultType="WatchList">
+        SELECT <include refid="watchListColumns"/>
+        FROM watch_list
+        WHERE user_id = #{userId}
+        ORDER BY add_time DESC
+    </select>
+
+    <!-- 4. 收藏数 -->
+    <select id="countByUserId" parameterType="int" resultType="int">
+        SELECT COUNT(*) FROM watch_list WHERE user_id = #{userId}
+    </select>
+
+    <!-- 5. 新增收藏 -->
+    <insert id="insert" parameterType="WatchList" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO watch_list (user_id, item_id)
+        VALUES (#{userId}, #{itemId})
+    </insert>
+
+    <!-- 6. 按 userId + itemId 取消收藏 -->
+    <delete id="deleteByUserAndItem">
+        DELETE FROM watch_list
+        WHERE user_id = #{userId} AND item_id = #{itemId}
+    </delete>
+
+    <!-- 7. 按 ID 删除 -->
+    <delete id="deleteById" parameterType="int">
+        DELETE FROM watch_list WHERE id = #{id}
+    </delete>
+
+</mapper>
