@@ -43,6 +43,9 @@ build/
 
 ### Mac OS ###
 .DS_Store
-# UI ��Ƹ�ʹ����ز�
+# UI 设计与素材相关(本地参考,不进仓库)
 docs/
 preview/
+
+### 中文字体(单文件 ~15MB,三个合计 ~42MB,本地自行下载,详见 README 字体说明) ###
+src/main/webapp/static/fonts/

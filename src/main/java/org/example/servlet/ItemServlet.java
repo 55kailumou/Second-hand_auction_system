@@ -729,10 +729,13 @@ public class ItemServlet extends HttpServlet {
             }
 
             // 根据 scope 决定调用哪个 update
-            // cover_image 不在表单里读，统一由 syncItemImages 解析 imageUrls 后回填（取第一条）
+            // cover_image 不在表单里读，由 syncItemImages 解析 imageUrls 后回填（取第一条）
+            // 但 updateEditableFieldsByOwner / updateAllFieldsByOwner 的 SQL 都包含 cover_image 字段，
+            // update 对象必须先保留原值，否则会被写成 null
             AuctionItem update = new AuctionItem();
             update.setId(id);
             update.setSellerId(user.getId());
+            update.setCoverImage(origin.getCoverImage());   // 关键：先保留原值
             update.setTitle(title);
             update.setDescription(description);
             update.setBrand(brand);

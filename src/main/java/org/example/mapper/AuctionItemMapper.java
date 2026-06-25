@@ -81,4 +81,14 @@ public interface AuctionItemMapper {
 
     /** 管理员修改拍品分类（单字段更新，避免覆盖其他并发改动） */
     int updateCategoryByAdmin(@Param("id") Integer id, @Param("categoryId") Integer categoryId);
+
+    /**
+     * 首页用：某一级分类（含其下所有二级分类）下，拍卖中、按热度（view_count）排序的 top N 拍品
+     * 用于首页 5 个分类色块的"每个分类展示 3 个拍品"
+     *
+     * @param topCategoryId 一级分类 ID
+     * @param limit         取多少条
+     */
+    List<AuctionItem> findHotByTopCategory(@Param("topCategoryId") Integer topCategoryId,
+                                          @Param("limit") Integer limit);
 }
