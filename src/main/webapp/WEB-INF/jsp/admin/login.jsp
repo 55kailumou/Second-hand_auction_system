@@ -15,98 +15,86 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>管理后台登录 · 二手物品拍卖系统</title>
+    <link rel="stylesheet" href="<%=ctx%>/static/css/cyberpunk.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
     <style>
-        /* ============================================================
-         * 管理后台登录 v1 · 暗色系
-         * - 居中卡片
-         * - 渐变背景
-         * - 简洁表单
-         * ============================================================ */
-        * { box-sizing: border-box; }
         body {
             margin: 0; min-height: 100vh;
-            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            background: #000;
             display: flex; align-items: center; justify-content: center;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+            font-family: var(--font-display);
+            position: relative;
         }
         .login-card {
-            background: #fff; border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            width: 100%; max-width: 400px; padding: 40px 36px;
+            background: #000;
+            border: 1.5px solid var(--cp-yellow);
+            clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
+            box-shadow: 0 0 48px rgba(255,238,0,0.2);
+            width: 100%; max-width: 420px; padding: 40px 36px;
+            position: relative; z-index: 3;
         }
         .login-logo {
             display: flex; align-items: center; justify-content: center;
             gap: 10px; margin-bottom: 8px;
         }
         .login-logo-icon {
-            width: 48px; height: 48px; background: linear-gradient(135deg, #1f2937, #374151);
-            color: #fff; border-radius: 8px; display: grid; place-items: center;
-            font-size: 22px;
+            width: 48px; height: 48px;
+            background: var(--cp-yellow); color: #000;
+            clip-path: polygon(20% 0, 100% 0, 80% 100%, 0 100%);
+            display: grid; place-items: center;
+            font-size: 22px; font-weight: 900;
         }
         .login-title {
-            font-size: 22px; font-weight: 800; color: #1f2937;
+            font-size: 22px; font-weight: 900; font-style: italic;
+            color: var(--cp-yellow); text-shadow: 0 0 12px rgba(255,238,0,0.4);
+            text-transform: uppercase;
         }
         .login-sub {
-            text-align: center; color: #6b7280; font-size: 13px;
+            text-align: center;
+            font-family: var(--font-mono);
+            color: var(--cp-yellow-dim); font-size: 11px;
+            text-transform: uppercase; letter-spacing: 0.1em;
             margin-bottom: 28px;
         }
-        .form-group { margin-bottom: 16px; }
-        .form-label {
-            display: block; font-size: 13px; color: #374151;
-            margin-bottom: 6px; font-weight: 500;
-        }
-        .form-input-wrap {
-            position: relative;
-        }
-        .form-input-wrap i {
-            position: absolute; left: 12px; top: 50%;
-            transform: translateY(-50%); color: #9ca3af;
-        }
-        .form-input {
-            width: 100%; padding: 11px 14px 11px 38px;
-            border: 1.5px solid #e5e7eb; border-radius: 6px;
-            font-size: 14px; outline: none; transition: all 0.15s;
-        }
-        .form-input:focus {
-            border-color: #1f2937;
-            box-shadow: 0 0 0 3px rgba(31,41,55,0.1);
-        }
-        .btn-submit {
-            width: 100%; padding: 12px; background: #1f2937; color: #fff;
-            border: none; border-radius: 6px; font-size: 15px;
-            font-weight: 600; cursor: pointer; transition: all 0.15s;
-            margin-top: 8px;
-        }
-        .btn-submit:hover:not(:disabled) { background: #111827; }
-        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
-
         .alert {
-            padding: 10px 14px; border-radius: 6px;
-            font-size: 13px; margin-bottom: 16px;
+            padding: 10px 14px; font-family: var(--font-mono); font-size: 11px;
+            margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.05em;
         }
-        .alert-error { background: #fee2e2; color: #b91c1c; }
-        .alert-info  { background: #dbeafe; color: #1e40af; }
-
+        .alert-error {
+            background: rgba(255,0,60,0.15); color: var(--cp-red);
+            border: 1px solid var(--cp-red);
+        }
+        .alert-info {
+            background: rgba(0,240,255,0.15); color: var(--cp-cyan);
+            border: 1px solid var(--cp-cyan);
+        }
         .login-tip {
-            text-align: center; font-size: 12px; color: #9ca3af;
+            text-align: center;
+            font-family: var(--font-mono); font-size: 10px;
+            color: var(--cp-text-dim);
             margin-top: 20px; padding-top: 16px;
-            border-top: 1px solid #f3f4f6;
+            border-top: 1px solid rgba(255,238,0,0.15);
             line-height: 1.7;
+            text-transform: uppercase; letter-spacing: 0.05em;
         }
         .login-tip code {
-            background: #f3f4f6; color: #1f2937;
-            padding: 2px 6px; border-radius: 3px; font-size: 12px;
+            background: rgba(255,238,0,0.1); color: var(--cp-yellow);
+            padding: 2px 6px; font-size: 10px; font-family: var(--font-mono);
         }
         .login-footer {
             position: fixed; bottom: 16px; left: 0; right: 0;
-            text-align: center; color: #6b7280; font-size: 12px;
+            text-align: center;
+            font-family: var(--font-mono); font-size: 10px;
+            color: var(--cp-text-dim); z-index: 3;
         }
     </style>
 </head>
 <body>
 
+<div class="scanline" style="z-index: 2;"></div>
+
 <div class="login-card">
+    <div class="module-tag" style="justify-content: center;">管理后台 · 身份验证</div>
     <div class="login-logo">
         <div class="login-logo-icon"><i class="fa fa-gavel"></i></div>
         <div class="login-title">管理后台</div>
@@ -116,21 +104,19 @@
     <div id="alertBox"></div>
 
     <form id="loginForm">
-        <div class="form-group">
-            <label class="form-label">登录账号</label>
-            <div class="form-input-wrap">
-                <i class="fa fa-user-o"></i>
-                <input type="text" name="account" class="form-input" placeholder="admin" required>
+        <div class="cp-form-group">
+            <label class="cp-form-label">登录账号</label>
+            <div class="cp-form-input-wrap">
+                <input type="text" name="account" class="cp-form-input" placeholder="admin" required>
             </div>
         </div>
-        <div class="form-group">
-            <label class="form-label">登录密码</label>
-            <div class="form-input-wrap">
-                <i class="fa fa-lock"></i>
-                <input type="password" name="password" class="form-input" placeholder="••••••" required>
+        <div class="cp-form-group">
+            <label class="cp-form-label">登录密码</label>
+            <div class="cp-form-input-wrap">
+                <input type="password" name="password" class="cp-form-input" placeholder="••••••" required>
             </div>
         </div>
-        <button type="submit" class="btn-submit" id="submitBtn">
+        <button type="submit" class="cp-btn cp-btn-block" id="submitBtn">
             <i class="fa fa-sign-in"></i> 登录
         </button>
     </form>
@@ -142,7 +128,7 @@
 </div>
 
 <div class="login-footer">
-    © 2025 二手物品拍卖系统 · JSP + Servlet + MyBatis
+    &copy; 2025 二手物品拍卖系统 · JSP + Servlet + MyBatis
 </div>
 
 <script src="<%=ctx%>/static/js/axios.min.js"></script>

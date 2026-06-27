@@ -36,229 +36,375 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的收藏 · 二手物品拍卖系统</title>
-    <link rel="stylesheet" href="<%=ctx%>/static/css/common.css">
+    <link rel="stylesheet" href="<%=ctx%>/static/css/cyberpunk.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
     <style>
         /* ============================================================
-         * 我的收藏 v1 · 仿闲鱼
-         * - 顶 nav 统一
-         * - 标题栏 + 统计
-         * - 6 列卡片网格
-         * - 分页
+         * Cyberpunk 2077 · 我的收藏
+         * - Dark neon theme #000 / #FFEE00 / #00FFFF / #FF00FF
+         * - Clip-path polygons, monospace fonts
          * ============================================================ */
-        body { background: #f5f5f5; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            background: #000;
+            color: #FFEE00;
+            font-family: 'Courier New', 'Consolas', 'Share Tech Mono', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            position: relative;
+            overflow-x: hidden;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0,255,255,0.03) 0px,
+                rgba(0,255,255,0.03) 1px,
+                transparent 1px,
+                transparent 3px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+        a { color: #00FFFF; text-decoration: none; transition: color 0.2s; }
+        a:hover { color: #FF00FF; text-shadow: 0 0 8px #FF00FF; }
+        ::-webkit-scrollbar { width: 8px; background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #FFEE00; border-radius: 0; }
 
-        /* ---------- 顶 nav（与 center.jsp 保持一致） ---------- */
-        .header { background: #fff; height: 60px; position: sticky; top: 0; z-index: 100;
-                  box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
-        .header-inner { max-width: 1200px; margin: 0 auto; padding: 0 16px; height: 100%;
-                        display: flex; align-items: center; gap: 20px; }
-        .logo { font-size: 20px; font-weight: 800; color: var(--color-primary);
-                display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-        .logo-icon { width: 30px; height: 30px; background: var(--color-primary);
-                     color: #fff; border-radius: 4px; display: grid; place-items: center;
-                     font-size: 14px; }
-        .nav { display: flex; gap: 24px; }
-        .nav a { color: var(--color-text); font-size: 14px; font-weight: 500;
-                 padding: 0 4px; height: 60px; display: flex; align-items: center;
-                 position: relative; transition: color 0.2s; }
-        .nav a:hover, .nav a.active { color: var(--color-primary); }
-        .nav a.active::after {
-            content: ''; position: absolute;
-            bottom: 8px; left: 4px; right: 4px;
-            height: 2px; background: var(--color-primary); border-radius: 2px;
-        }
-        .nav-search {
-            flex: 0 1 380px;
-            display: flex; background: #fff7ed;
-            border: 2px solid var(--color-primary);
-            border-radius: 20px; overflow: hidden; height: 36px;
-        }
-        .nav-search input {
-            flex: 1; padding: 0 14px; border: none; outline: none;
-            background: transparent; font-size: 13px; color: var(--color-text);
-        }
-        .nav-search input::placeholder { color: #9ca3af; }
-        .nav-search button {
-            background: var(--color-primary); color: #fff;
-            font-size: 13px; font-weight: 600; padding: 0 18px;
-            display: flex; align-items: center; gap: 5px;
-        }
-        .nav-search button:hover { background: var(--color-primary-hover); }
-        .user-info { display: flex; align-items: center; gap: 8px; font-size: 14px; flex-shrink: 0; margin-left: auto; }
-        .user-info .avatar {
-            width: 32px; height: 32px; border-radius: 50%;
-            background: linear-gradient(135deg, var(--color-primary), #ffaa80);
-            color: #fff; display: grid; place-items: center;
-            font-size: 13px; font-weight: 600;
-        }
-        .user-name-link { color: var(--color-text); font-weight: 500; }
+        /* ---------- Navigation ---------- */
 
-        /* ---------- 主体 ---------- */
-        .fav-wrap { max-width: 1200px; margin: 12px auto 0; padding: 0 16px 60px; }
+        .cp-logo .logo-icon {
+            width: 30px;
+            height: 30px;
+            background: #FFEE00;
+            color: #000;
+            display: grid;
+            place-items: center;
+            font-size: 14px;
+            clip-path: polygon(10% 0, 90% 0, 100% 10%, 100% 90%, 90% 100%, 10% 100%, 0 90%, 0 10%);
+        }
 
-        /* 标题栏 */
+        .cp-nav-search button:hover {
+            background: #00FFFF;
+            color: #000;
+        }
+
+        .cp-nav-user .user-name-link {
+            color: #FFEE00;
+            font-weight: 600;
+        }
+        .cp-nav-user .user-name-link:hover {
+            color: #00FFFF;
+            text-shadow: 0 0 8px #00FFFF;
+        }
+
+        /* ---------- Container ---------- */
+        .cp-container {
+            max-width: 1200px;
+            margin: 12px auto 0;
+            padding: 0 16px 60px;
+        }
+
+        /* ---------- Head ---------- */
         .fav-head {
-            background: #fff; border-radius: 8px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+            background: #0d0d0d;
+            border: 1px solid #FFEE00;
+            clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
             padding: 20px 24px;
-            display: flex; align-items: center; gap: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
         }
         .fav-head-icon {
-            width: 48px; height: 48px; border-radius: 8px;
-            background: var(--color-primary-light); color: var(--color-primary);
-            display: grid; place-items: center; font-size: 22px;
+            width: 48px;
+            height: 48px;
+            background: #111;
+            border: 1px solid #FF00FF;
+            color: #FF00FF;
+            display: grid;
+            place-items: center;
+            font-size: 22px;
+            clip-path: polygon(10% 0, 90% 0, 100% 10%, 100% 90%, 90% 100%, 10% 100%, 0 90%, 0 10%);
         }
         .fav-head-info { flex: 1; min-width: 0; }
-        .fav-head-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
-        .fav-head-sub { font-size: 12px; color: var(--color-muted); }
+        .fav-head-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #FF00FF;
+            text-shadow: 0 0 6px #FF00FF;
+            margin-bottom: 4px;
+        }
+        .fav-head-sub { font-size: 12px; color: #666; }
         .fav-head-actions { display: flex; gap: 8px; }
-        .fav-head-actions a {
-            padding: 8px 16px; border-radius: 6px;
-            font-size: 13px; text-decoration: none;
-            display: flex; align-items: center; gap: 5px;
+
+        /* ---------- Buttons ---------- */
+        .cp-btn {
+            padding: 8px 16px;
+            background: transparent;
+            color: #FFEE00;
+            border: 1px solid #FFEE00;
+            clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
             transition: all 0.15s;
+            cursor: pointer;
+            font-family: inherit;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
-        .btn-ghost {
-            background: #fff; color: var(--color-text);
-            border: 1px solid var(--color-border);
+        .cp-btn:hover {
+            background: #FFEE00;
+            color: #000;
+            box-shadow: 0 0 12px #FFEE00;
         }
-        .btn-ghost:hover { border-color: var(--color-primary); color: var(--color-primary); }
-        .btn-primary {
-            background: var(--color-primary); color: #fff; border: 1px solid var(--color-primary);
+        .cp-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
         }
-        .btn-primary:hover { background: var(--color-primary-hover); border-color: var(--color-primary-hover); }
+        .cp-btn-sm {
+            padding: 5px 10px;
+            font-size: 11px;
+        }
+        .cp-btn-outline {
+            background: transparent;
+            border: 1px solid #00FFFF;
+            color: #00FFFF;
+        }
+        .cp-btn-outline:hover {
+            background: #00FFFF;
+            color: #000;
+            box-shadow: 0 0 12px #00FFFF;
+        }
 
-        /* 错误条 */
-        .alert { padding: 10px 16px; border-radius: 8px; margin-top: 12px; font-size: 13px; }
-        .alert-warning { background: #fef3c7; color: #b45309; }
+        /* ---------- Alert ---------- */
+        .alert {
+            padding: 10px 16px;
+            margin-top: 12px;
+            font-size: 13px;
+            border: 1px solid;
+        }
+        .alert-warning {
+            background: #1a0a00;
+            color: #FF8800;
+            border-color: #FF8800;
+        }
 
-        /* 卡片网格 */
-        .fav-grid {
-            display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px;
+        /* ---------- Goods Grid ---------- */
+        .cp-goods-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
             margin-top: 12px;
         }
-        @media (max-width: 1200px) { .fav-grid { grid-template-columns: repeat(5, 1fr); } }
-        @media (max-width: 1024px) { .fav-grid { grid-template-columns: repeat(4, 1fr); } }
-        @media (max-width: 768px)  { .fav-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 1200px) { .cp-goods-grid { grid-template-columns: repeat(5, 1fr); } }
+        @media (max-width: 1024px) { .cp-goods-grid { grid-template-columns: repeat(4, 1fr); } }
+        @media (max-width: 768px)  { .cp-goods-grid { grid-template-columns: repeat(3, 1fr); } }
 
-        .fav-card {
-            background: #fff; border: 1px solid transparent;
-            border-radius: 4px; overflow: hidden;
-            position: relative; cursor: pointer;
-            transition: all 0.15s; text-decoration: none; color: inherit;
+        .cp-goods-card {
+            background: #0d0d0d;
+            border: 1px solid #222;
+            clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: inherit;
         }
-        .fav-card:hover {
-            border-color: var(--color-primary);
+        .cp-goods-card:hover {
+            border-color: #00FFFF;
             transform: translateY(-2px);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            box-shadow: 0 0 14px rgba(0,255,255,0.15);
         }
-        .fav-card-cover {
-            width: 100%; aspect-ratio: 1; background: #fff7ed;
-            position: relative; display: grid; place-items: center; overflow: hidden;
-        }
-        .fav-card-cover img { width: 100%; height: 100%; object-fit: cover; }
-        .fav-card-cover i { font-size: 32px; color: rgba(255,107,53,0.4); }
-
-        /* 状态徽章 */
-        .fav-card-cover .status-tag {
-            position: absolute; inset: 0;
-            background: rgba(0,0,0,0.4);
-            display: grid; place-items: center;
-            color: #fff; font-size: 14px; font-weight: 700;
-            letter-spacing: 0.1em;
-        }
-        .fav-card-cover .status-tag.gray { background: rgba(107,114,128,0.7); }
-
-        /* 取消收藏小按钮 */
-        .fav-remove {
-            position: absolute; top: 6px; right: 6px;
-            width: 28px; height: 28px; border-radius: 50%;
-            background: rgba(0,0,0,0.55); color: #fff;
-            display: grid; place-items: center;
-            font-size: 12px; cursor: pointer; opacity: 0;
-            transition: opacity 0.15s, background 0.15s;
-            border: none; z-index: 2;
-        }
-        .fav-card:hover .fav-remove { opacity: 1; }
-        .fav-remove:hover { background: var(--color-danger); }
-
-        .fav-card-body { padding: 8px 10px 10px; }
-        .fav-card-title {
-            font-size: 12px; line-height: 1.4; min-height: 32px;
-            color: var(--color-text);
-            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+        .cp-goods-cover {
+            width: 100%;
+            aspect-ratio: 1;
+            background: #111;
+            position: relative;
+            display: grid;
+            place-items: center;
             overflow: hidden;
         }
-        .fav-card-price {
-            margin-top: 4px;
-            font-size: 14px; font-weight: 700; color: var(--color-primary);
+        .cp-goods-cover img { width: 100%; height: 100%; object-fit: cover; }
+        .cp-goods-cover i { font-size: 32px; color: rgba(255,238,0,0.2); }
+
+        /* 状态徽章 */
+        .cp-goods-cover .status-tag {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            display: grid;
+            place-items: center;
+            color: #FFEE00;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
         }
-        .fav-card-price small { font-size: 10px; margin-right: 1px; }
-        .fav-card-time {
-            font-size: 11px; color: var(--color-muted);
+        .cp-goods-cover .status-tag.gray { background: rgba(50,50,50,0.8); color: #888; }
+
+        /* 取消收藏按钮 */
+        .fav-remove {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 28px;
+            height: 28px;
+            background: rgba(0,0,0,0.7);
+            border: 1px solid #FF00FF;
+            color: #FF00FF;
+            display: grid;
+            place-items: center;
+            font-size: 12px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s, background 0.2s;
+            z-index: 2;
+            font-family: inherit;
+        }
+        .cp-goods-card:hover .fav-remove { opacity: 1; }
+        .fav-remove:hover {
+            background: #FF00FF;
+            color: #000;
+        }
+
+        .cp-goods-body { padding: 8px 10px 10px; }
+        .cp-goods-title {
+            font-size: 12px;
+            line-height: 1.4;
+            min-height: 32px;
+            color: #ccc;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .cp-goods-price {
+            margin-top: 4px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #FFEE00;
+        }
+        .cp-goods-price small { font-size: 10px; margin-right: 1px; }
+        .cp-goods-time {
+            font-size: 11px;
+            color: #555;
             margin-top: 2px;
         }
 
-        /* 空状态 */
-        .empty-state {
-            background: #fff; border-radius: 8px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        /* ---------- Empty State ---------- */
+        .cp-empty {
+            background: #0d0d0d;
+            border: 1px solid #333;
+            clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
             margin-top: 12px;
-            text-align: center; padding: 80px 20px;
-            color: var(--color-muted); font-size: 13px;
+            text-align: center;
+            padding: 80px 20px;
+            color: #555;
+            font-size: 13px;
         }
-        .empty-state i { font-size: 48px; opacity: 0.3; margin-bottom: 12px; display: block; }
-        .empty-state a { color: var(--color-primary); text-decoration: none; font-weight: 600; }
-        .empty-state a:hover { text-decoration: underline; }
+        .cp-empty i {
+            font-size: 48px;
+            color: #333;
+            margin-bottom: 12px;
+            display: block;
+        }
+        .cp-empty a {
+            color: #00FFFF;
+            font-weight: 600;
+        }
+        .cp-empty a:hover {
+            color: #FF00FF;
+            text-shadow: 0 0 8px #FF00FF;
+        }
 
-        /* 分页 */
+        /* ---------- Pagination ---------- */
         .pager {
-            margin-top: 20px; display: flex; justify-content: center; gap: 6px;
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 6px;
         }
         .pager a, .pager span {
-            padding: 6px 12px; border: 1px solid var(--color-border);
-            border-radius: 4px; font-size: 13px; color: var(--color-text-sub);
-            text-decoration: none; min-width: 32px; text-align: center;
-            background: #fff;
+            padding: 6px 12px;
+            border: 1px solid #333;
+            font-size: 13px;
+            color: #888;
+            text-decoration: none;
+            min-width: 32px;
+            text-align: center;
+            background: #0d0d0d;
+            transition: all 0.15s;
+            font-family: inherit;
         }
-        .pager a:hover { border-color: var(--color-primary); color: var(--color-primary); }
-        .pager .active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
-        .pager .disabled { color: var(--color-placeholder); cursor: not-allowed; background: var(--color-bg); }
+        .pager a:hover {
+            border-color: #00FFFF;
+            color: #00FFFF;
+        }
+        .pager .active {
+            background: #FFEE00;
+            color: #000;
+            border-color: #FFEE00;
+            font-weight: 700;
+        }
+        .pager .disabled {
+            color: #333;
+            cursor: not-allowed;
+            background: #050505;
+        }
 
-        /* 页脚 */
+        /* ---------- Footer ---------- */
         .fav-footer {
-            background: #1f2937; color: #d1d5db;
-            margin-top: 32px; padding: 32px 16px 16px;
-            text-align: center; font-size: 12px;
+            background: #050505;
+            border-top: 1px solid #FFEE00;
+            margin-top: 32px;
+            padding: 32px 16px 16px;
+            text-align: center;
+            font-size: 12px;
         }
-        .fav-footer-inner { max-width: 1200px; margin: 0 auto; color: #6b7280; }
+        .fav-footer-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            color: #444;
+        }
+
+        [v-cloak] { display: none; }
     </style>
 </head>
 <body>
 
-<!-- ========== 顶 nav ========== -->
-<header class="header">
-    <div class="header-inner">
-        <a href="<%=ctx%>/index.jsp" class="logo">
+<!-- Scanline overlay -->
+<div class="scanline" style="position:fixed;inset:0;pointer-events:none;z-index:9999;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,255,0.02) 2px,rgba(0,255,255,0.02) 4px);"></div>
+
+<!-- ========== Navigation ========== -->
+<header class="cp-nav">
+    <div class="cp-nav-inner">
+        <a href="<%=ctx%>/index.jsp" class="cp-logo">
             <span class="logo-icon"><i class="fa fa-gavel"></i></span>
             <span>二手拍卖</span>
         </a>
-        <nav class="nav">
+        <nav class="cp-nav-menu">
             <a href="<%=ctx%>/index.jsp">首页</a>
             <a href="<%=ctx%>/item?action=list">浏览拍品</a>
             <a href="<%=ctx%>/item?action=publish-page">发布拍品</a>
             <a href="<%=ctx%>/order?action=list">我的订单</a>
             <a href="<%=ctx%>/user?action=center">个人中心</a>
         </nav>
-        <form action="<%=ctx%>/item" method="get" class="nav-search">
+        <form action="<%=ctx%>/item" method="get" class="cp-nav-search">
             <input type="hidden" name="action" value="list">
             <input type="text" name="keyword" placeholder="搜索拍品 · 数码 / 服饰 / 书籍 ...">
             <button type="submit"><i class="fa fa-search"></i> 搜索</button>
         </form>
-        <div class="user-info">
+        <div class="cp-nav-user">
             <a href="<%=ctx%>/user?action=center" class="user-name-link"><%= currentUser.getUsername() %></a>
-            <a href="<%=ctx%>/user?action=logout" style="font-size: 12px; color: var(--color-muted);">退出</a>
+            <a href="<%=ctx%>/user?action=logout" style="font-size: 12px; color: #555;">退出</a>
             <a href="<%=ctx%>/user?action=center" class="avatar">
                 <%= currentUser.getUsername() != null && !currentUser.getUsername().isEmpty()
                     ? currentUser.getUsername().substring(0, 1).toUpperCase() : "?" %>
@@ -267,17 +413,17 @@
     </div>
 </header>
 
-<div class="fav-wrap" id="app" v-cloak>
+<div class="cp-container" id="app" v-cloak>
 
     <!-- 标题栏 -->
     <div class="fav-head">
         <div class="fav-head-icon"><i class="fa fa-heart"></i></div>
         <div class="fav-head-info">
-            <div class="fav-head-title">我的收藏</div>
+            <div class="fav-head-title">> 我的收藏</div>
             <div class="fav-head-sub">共 {{ total }} 件拍品 · 按收藏时间倒序</div>
         </div>
         <div class="fav-head-actions">
-            <a href="<%=ctx%>/item?action=list" class="btn-ghost">
+            <a href="<%=ctx%>/item?action=list" class="cp-btn cp-btn-outline cp-btn-sm">
                 <i class="fa fa-search"></i> 去逛逛
             </a>
         </div>
@@ -290,24 +436,24 @@
     <% } %>
 
     <!-- 列表 -->
-    <div v-if="items.length > 0" class="fav-grid">
-        <div v-for="item in items" :key="item.favoriteId" class="fav-card"
+    <div v-if="items.length > 0" class="cp-goods-grid">
+        <div v-for="item in items" :key="item.favoriteId" class="cp-goods-card"
              @click="goDetail(item)">
             <button class="fav-remove" @click.stop="removeFav(item)" title="取消收藏">
                 <i class="fa fa-times"></i>
             </button>
-            <div class="fav-card-cover" :style="item.coverImage ? 'background-image:url(' + item.coverImage + '); background-size:cover; background-position:center;' : ''">
+            <div class="cp-goods-cover" :style="item.coverImage ? 'background-image:url(' + item.coverImage + '); background-size:cover; background-position:center;' : ''">
                 <i v-if="!item.coverImage" class="fa fa-image"></i>
                 <div v-if="item.status === 2" class="status-tag">已成交</div>
                 <div v-else-if="item.status === 3" class="status-tag gray">已流拍</div>
                 <div v-else-if="item.status === 4" class="status-tag gray">已下架</div>
             </div>
-            <div class="fav-card-body">
-                <div class="fav-card-title">{{ item.title || '（已删除）' }}</div>
-                <div class="fav-card-price">
+            <div class="cp-goods-body">
+                <div class="cp-goods-title">{{ item.title || '（已删除）' }}</div>
+                <div class="cp-goods-price">
                     <small>¥</small>{{ formatPrice(item.currentPrice) }}
                 </div>
-                <div class="fav-card-time">
+                <div class="cp-goods-time">
                     <i class="fa fa-clock-o"></i> 收藏于 {{ formatTime(item.addTime) }}
                 </div>
             </div>
@@ -315,7 +461,7 @@
     </div>
 
     <!-- 空状态 -->
-    <div v-if="items.length === 0" class="empty-state">
+    <div v-if="items.length === 0" class="cp-empty">
         <i class="fa fa-heart-o"></i>
         <p>还没有收藏的拍品</p>
         <p style="margin-top: 8px;">

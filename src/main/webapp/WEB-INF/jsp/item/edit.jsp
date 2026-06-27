@@ -66,376 +66,447 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>发布拍品 · 二手物品拍卖系统</title>
-    <link rel="stylesheet" href="<%=ctx%>/static/css/common.css">
+    <title>编辑拍品 · 二手物品拍卖系统</title>
+    <link rel="stylesheet" href="<%=ctx%>/static/css/cyberpunk.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
     <style>
         /* ============================================================
-         * 发布拍品页 v2
-         * - 顶 nav 统一（白底 + 搜索框 + 用户区）
-         * - 单卡加宽 960px，4 个分组大标题
-         * - 字段两两并排 / 实时图片预览 / 快捷金额+时长按钮
-         * - 底部提交 sticky 跟随
-         * - 保留所有 Vue 接管、Servlet 提交、URL 跳转
+         * Cyberpunk 2077 — 编辑拍品页
+         * - 黑底黄字，霓虹点缀
+         * - 扫描线 / 故障特效
+         * - 所有类名 cp-* 前缀
          * ============================================================ */
-        body { background: #f5f5f5; }
 
-        /* ---------- 顶 nav（与首页/列表页统一） ---------- */
-        .header { background: #fff; height: 60px; position: sticky; top: 0; z-index: 100;
-                  box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
-        .header-inner { max-width: 1200px; margin: 0 auto; padding: 0 16px; height: 100%;
-                        display: flex; align-items: center; gap: 20px; }
-        .logo { font-size: 20px; font-weight: 800; color: var(--color-primary);
-                display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-        .logo-icon { width: 30px; height: 30px; background: var(--color-primary);
-                     color: #fff; border-radius: 4px; display: grid; place-items: center;
-                     font-size: 14px; }
-        .nav { display: flex; gap: 24px; }
-        .nav a { color: var(--color-text); font-size: 14px; font-weight: 500;
-                 padding: 0 4px; height: 60px; display: flex; align-items: center;
-                 position: relative; transition: color 0.2s; }
-        .nav a:hover, .nav a.active { color: var(--color-primary); }
-        .nav a.active::after {
-            content: ''; position: absolute;
-            bottom: 8px; left: 4px; right: 4px;
-            height: 2px; background: var(--color-primary); border-radius: 2px;
+        /* ---------- 全局 ---------- */
+        * { box-sizing: border-box; }
+        body {
+            background: #0a0a0a;
+            color: #FFEE00;
+            font-family: 'Courier New', Consolas, 'Source Code Pro', monospace;
+            margin: 0; padding: 0;
+            min-height: 100vh;
         }
-        .nav-search {
-            flex: 0 1 380px;
-            display: flex; background: #fff7ed;
-            border: 2px solid var(--color-primary);
-            border-radius: 20px; overflow: hidden; height: 36px;
-        }
-        .nav-search input {
-            flex: 1; padding: 0 14px; border: none; outline: none;
-            background: transparent; font-size: 13px; color: var(--color-text);
-        }
-        .nav-search input::placeholder { color: #9ca3af; }
-        .nav-search button {
-            background: var(--color-primary); color: #fff;
-            font-size: 13px; font-weight: 600; padding: 0 18px;
-            display: flex; align-items: center; gap: 5px;
-        }
-        .nav-search button:hover { background: var(--color-primary-hover); }
-        .nav-tags { display: flex; gap: 12px; font-size: 12px; color: var(--color-muted);
-                    flex: 1; min-width: 0; overflow: hidden; }
-        .nav-tags-label { flex-shrink: 0; }
-        .nav-tag { white-space: nowrap; transition: color 0.15s; }
-        .nav-tag:hover { color: var(--color-primary); }
-        .nav-tag.hot { color: var(--color-danger); font-weight: 600; }
-        .user-info { display: flex; align-items: center; gap: 8px; font-size: 14px; flex-shrink: 0; margin-left: auto; }
-        .user-info .avatar {
-            width: 32px; height: 32px; border-radius: 50%;
-            background: linear-gradient(135deg, var(--color-primary), #ffaa80);
-            color: #fff; display: grid; place-items: center;
-            font-size: 13px; font-weight: 600;
-        }
-        .user-name-link { color: var(--color-text); font-weight: 500; }
+        a { color: #FFEE00; text-decoration: none; }
+        a:hover { text-shadow: 0 0 8px #FFEE00; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #FFEE00; border: 1px solid #0a0a0a; }
+        ::-webkit-scrollbar-thumb:hover { background: #00f0ff; }
 
-        /* ---------- 主体 ---------- */
-        .publish-wrap { max-width: 960px; margin: 24px auto 120px; padding: 0 16px; }
-        .publish-card {
-            background: #fff; border-radius: 12px;
-            padding: 36px 44px 28px; box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        /* ---------- 顶 nav（cyberpunk 风格） ---------- */
+
+        .cp-nav-search button:hover {
+            background: #fff;
+            box-shadow: 0 0 15px rgba(255,238,0,0.5);
         }
-        .publish-head { margin-bottom: 28px; padding-bottom: 20px;
-                        border-bottom: 1px solid var(--color-border-soft); }
-        .publish-title {
-            font-size: 24px; font-weight: 700; color: var(--color-text);
+
+        .cp-nav-tag:hover { color: #fff; text-shadow: 0 0 8px #FFEE00; }
+
+        .cp-nav-user-name {
+            color: #FFEE00; font-weight: 500;
+            text-shadow: 0 0 5px rgba(255,238,0,0.2);
+        }
+        .cp-avatar {
+            width: 32px; height: 32px;
+            background: #FFEE00; color: #0a0a0a;
+            display: grid; place-items: center;
+            font-size: 13px; font-weight: 700;
+            box-shadow: 0 0 10px rgba(255,238,0,0.3);
+        }
+        
+        .cp-logout-link:hover { color: #ff00ff; text-shadow: 0 0 8px #ff00ff; }
+
+        /* ---------- 主体容器 ---------- */
+        .cp-container-sm {
+            max-width: 960px; margin: 24px auto 120px; padding: 0 16px;
+        }
+        .cp-card {
+            background: #111;
+            border: 1px solid #FFEE00;
+            border-radius: 0;
+            box-shadow: 0 0 20px rgba(255,238,0,0.1), inset 0 0 30px rgba(255,238,0,0.02);
+            padding: 36px 44px 28px;
+        }
+        .cp-card-header {
+            margin-bottom: 28px; padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255,238,0,0.2);
+        }
+        .cp-card-title {
+            font-size: 24px; font-weight: 700; color: #FFEE00;
+            text-shadow: 0 0 10px #FFEE00, 0 0 30px rgba(255,238,0,0.15);
             display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
-        .publish-title-icon {
-            width: 36px; height: 36px; border-radius: 8px;
-            background: var(--color-primary-light); color: var(--color-primary);
-            display: grid; place-items: center; font-size: 18px;
+        .cp-card-title-icon {
+            width: 36px; height: 36px;
+            background: rgba(255,238,0,0.1);
+            color: #FFEE00;
+            display: grid; place-items: center;
+            font-size: 18px;
+            border: 1px solid rgba(255,238,0,0.3);
         }
-        .publish-sub { color: var(--color-muted); font-size: 13px; }
+        .cp-card-sub {
+            color: #665f00; font-size: 13px;
+        }
+        .cp-card-sub .cp-required { color: #ff00ff; text-shadow: 0 0 5px #ff00ff; }
 
         /* ---------- 分组 ---------- */
-        .section-block { margin-bottom: 32px; }
-        .section-block:last-of-type { margin-bottom: 0; }
-        .section-head {
+        .cp-section { margin-bottom: 32px; }
+        .cp-section:last-of-type { margin-bottom: 0; }
+        .cp-section-head {
             display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px;
         }
-        .section-num {
-            width: 26px; height: 26px; border-radius: 6px;
-            background: var(--color-primary); color: #fff;
+        .cp-section-num {
+            width: 26px; height: 26px;
+            background: #FFEE00; color: #0a0a0a;
             display: grid; place-items: center;
             font-size: 13px; font-weight: 700; flex-shrink: 0;
+            box-shadow: 0 0 8px rgba(255,238,0,0.4);
         }
-        .section-title { font-size: 16px; font-weight: 600; color: var(--color-text); }
-        .section-tip { color: var(--color-muted); font-size: 12px; margin-left: auto; }
+        .cp-section-title {
+            font-size: 16px; font-weight: 600; color: #FFEE00;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .cp-section-tip {
+            color: #665f00; font-size: 12px; margin-left: auto;
+        }
 
         /* ---------- 表单字段 ---------- */
-        .form-group { margin-bottom: 16px; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+        .cp-form-group { margin-bottom: 16px; }
+        .cp-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .cp-form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
         @media (max-width: 600px) {
-            .form-row, .form-row-3 { grid-template-columns: 1fr; }
+            .cp-form-row, .cp-form-row-3 { grid-template-columns: 1fr; }
         }
-        .form-label {
-            display: block; font-size: 13px; color: var(--color-text);
-            margin-bottom: 6px; font-weight: 500;
+        .cp-form-label {
+            display: block; font-size: 13px; font-weight: 500;
+            color: #FFEE00;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
-        .form-label .required { color: var(--color-danger); margin-left: 2px; }
-        .form-input {
+        .cp-form-label .required { color: #ff00ff; margin-left: 2px; text-shadow: 0 0 5px #ff00ff; }
+
+        .cp-form-input {
             width: 100%; padding: 10px 12px;
-            border: 1.5px solid var(--color-border);
-            border-radius: 6px; font-size: 14px; color: var(--color-text);
-            background: #fff; transition: border-color 0.15s, box-shadow 0.15s;
+            border: 1px solid #FFEE00;
+            background: #0a0a0a;
+            color: #FFEE00;
             font-family: inherit;
+            font-size: 14px;
+            transition: border-color 0.15s, box-shadow 0.15s;
         }
-        .form-input:hover { border-color: #cbd5e1; }
-        .form-input:focus {
-            outline: none; border-color: var(--color-primary);
-            box-shadow: 0 0 0 3px rgba(255,107,53,0.12);
+        .cp-form-input:hover {
+            border-color: #fff;
         }
-        .form-input.error { border-color: var(--color-danger); }
-        .form-input.error:focus { box-shadow: 0 0 0 3px rgba(239,68,68,0.12); }
-        textarea.form-input { resize: vertical; min-height: 90px; line-height: 1.6; }
-        .form-hint { font-size: 12px; color: var(--color-muted); margin-top: 4px; }
-        .form-error { font-size: 12px; color: var(--color-danger); margin-top: 4px; min-height: 16px; }
+        .cp-form-input:focus {
+            outline: none;
+            border-color: #00f0ff;
+            box-shadow: 0 0 10px rgba(0,240,255,0.3);
+        }
+        .cp-form-input.error { border-color: #ff00ff; box-shadow: 0 0 8px rgba(255,0,255,0.3); }
+        .cp-form-input.error:focus { border-color: #ff00ff; box-shadow: 0 0 12px rgba(255,0,255,0.5); }
+        textarea.cp-form-input { resize: vertical; min-height: 90px; line-height: 1.6; }
+        select.cp-form-input option { background: #0a0a0a; color: #FFEE00; }
+
+        /* 禁用态 */
+        .cp-form-input:disabled, .cp-form-input.disabled {
+            background: #1a1a1a; color: #666; border-color: #333;
+            cursor: not-allowed;
+        }
+        .cp-form-input:disabled::placeholder { color: #444; }
+        .cp-form-input.disabled::placeholder { color: #444; }
+
+        .cp-form-hint {
+            font-size: 12px; color: #665f00; margin-top: 4px;
+        }
+        .cp-form-hint code {
+            background: rgba(255,238,0,0.1);
+            padding: 1px 4px;
+            color: #FFEE00;
+        }
+        .cp-form-error {
+            font-size: 12px; color: #ff00ff;
+            text-shadow: 0 0 5px #ff00ff;
+            margin-top: 4px; min-height: 16px;
+        }
 
         /* ---------- 快捷按钮（起拍价 / 拍卖时长） ---------- */
-        .quick-row {
+        .cp-quick-row {
             display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
             margin-top: 8px;
         }
-        .quick-row-label {
-            font-size: 12px; color: var(--color-muted);
+        .cp-quick-row-label {
+            font-size: 12px; color: #665f00;
             margin-right: 2px; flex-shrink: 0;
         }
-        .quick-btn {
+        .cp-quick-btn {
             padding: 4px 12px; font-size: 12px;
-            background: var(--color-primary-light); color: var(--color-primary);
-            border: 1px solid transparent; border-radius: 14px;
-            cursor: pointer; transition: all 0.15s; font-weight: 500;
+            border: 1px solid #FFEE00;
+            color: #FFEE00;
+            background: transparent;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.15s;
         }
-        .quick-btn:hover {
-            background: var(--color-primary); color: #fff;
-            transform: translateY(-1px);
+        .cp-quick-btn:hover {
+            background: #FFEE00; color: #0a0a0a;
+            box-shadow: 0 0 10px rgba(255,238,0,0.4);
         }
 
         /* ---------- 图片预览 ---------- */
-        .image-row { display: grid; grid-template-columns: 1fr 120px; gap: 16px; align-items: start; }
-        .cover-preview {
-            width: 120px; height: 120px; border-radius: 8px;
-            background: var(--color-primary-soft);
+        .cp-image-row { display: grid; grid-template-columns: 1fr 120px; gap: 16px; align-items: start; }
+        .cp-cover-preview {
+            width: 120px; height: 120px;
+            background: #0a0a0a;
             display: grid; place-items: center;
-            border: 1.5px dashed #fed7aa; overflow: hidden;
-            color: var(--color-placeholder); font-size: 12px;
+            border: 1px solid #FFEE00;
+            overflow: hidden;
+            color: #665f00; font-size: 12px;
         }
-        .cover-preview img { width: 100%; height: 100%; object-fit: cover; }
-        .cover-preview .ph-icon { font-size: 28px; color: rgba(255,107,53,0.4); }
-        .cover-preview .ph-text { display: block; margin-top: 4px; }
+        .cp-cover-preview img { width: 100%; height: 100%; object-fit: cover; }
 
-        .image-thumbs {
+        .cp-image-grid {
             display: grid; grid-template-columns: repeat(5, 1fr);
             gap: 6px; margin-top: 10px;
         }
-        .image-thumb {
+        .cp-image-thumb {
             position: relative;
-            aspect-ratio: 1; background: var(--color-primary-soft);
-            border-radius: 6px; overflow: hidden;
-            border: 1.5px dashed #fed7aa;
+            aspect-ratio: 1; background: #0a0a0a;
+            overflow: hidden;
+            border: 1px solid #FFEE00;
             display: grid; place-items: center;
-            color: var(--color-placeholder);
+            color: #665f00;
+            box-shadow: 0 0 4px rgba(255,238,0,0.08);
         }
-        .image-thumb img { width: 100%; height: 100%; object-fit: cover; }
-        .image-thumb.empty i { font-size: 18px; color: rgba(255,107,53,0.35); }
-        .image-thumb.cover {
-            border: 2px solid var(--color-primary);
-            box-shadow: 0 0 0 3px rgba(255,107,53,0.18);
+        .cp-image-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .cp-image-thumb.empty i { font-size: 18px; color: rgba(255,238,0,0.2); }
+        .cp-image-thumb.cover {
+            border: 2px solid #00f0ff;
+            box-shadow: 0 0 10px rgba(0,240,255,0.25);
         }
-        .thumb-actions {
-            position: absolute; inset: auto 0 0 0;
-            display: flex; justify-content: center; gap: 4px;
-            padding: 4px;
-            background: linear-gradient(transparent, rgba(0,0,0,0.55));
-            opacity: 0; transition: opacity 0.15s;
-        }
-        .image-thumb:hover .thumb-actions { opacity: 1; }
-        .thumb-btn {
-            width: 26px; height: 26px; padding: 0;
-            border: none; border-radius: 4px; cursor: pointer;
-            background: rgba(255,255,255,0.92); color: var(--color-text-sub);
-            font-size: 12px; display: grid; place-items: center;
-        }
-        .thumb-btn:hover { background: #fff; color: var(--color-primary); }
-        .thumb-btn.danger:hover { color: var(--color-danger); }
-        .thumb-btn.cover-tag {
-            background: var(--color-primary); color: #fff; cursor: default;
-        }
-        .thumb-btn.cover-tag:hover { background: var(--color-primary); color: #fff; }
-
-        /* 上传按钮条 */
-        .upload-bar { display: flex; align-items: center; gap: 8px; }
-        .upload-btn {
-            display: inline-flex; align-items: center; gap: 8px;
-            padding: 9px 18px;
-            background: var(--color-primary); color: #fff;
-            border-radius: 6px; cursor: pointer;
-            font-size: 13px; font-weight: 600;
-            transition: background 0.15s;
-        }
-        .upload-btn:hover { background: var(--color-primary-hover, #e85a25); }
-        .upload-btn:has(input:disabled) { opacity: 0.6; cursor: not-allowed; }
 
         /* ---------- 错误条 ---------- */
-        .alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; }
-        .alert-error { background: #fee2e2; color: var(--color-danger); }
+        .cp-alert { padding: 12px 16px; margin-bottom: 16px; font-size: 13px; border: 1px solid; }
+        .cp-alert-error {
+            background: rgba(255,0,255,0.1);
+            border: 1px solid #ff00ff;
+            color: #ff00ff;
+            text-shadow: 0 0 5px rgba(255,0,255,0.3);
+        }
 
         /* ---------- 提交按钮（sticky 在底部） ---------- */
-        .submit-bar {
+        .cp-submit-bar {
             position: sticky; bottom: 0; z-index: 50;
             margin: 0 -44px -28px; padding: 16px 44px;
-            background: #fff;
-            border-top: 1px solid var(--color-border-soft);
-            border-radius: 0 0 12px 12px;
+            background: #111;
+            border-top: 1px solid #FFEE00;
             display: flex; align-items: center; justify-content: flex-end; gap: 12px;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
         }
-        .submit-bar .draft-hint {
-            margin-right: auto; font-size: 12px; color: var(--color-muted);
+        .cp-submit-bar .cp-draft-hint {
+            margin-right: auto; font-size: 12px; color: #665f00;
         }
-        .submit-bar .draft-hint i { color: var(--color-success); }
-        .btn-publish {
-            padding: 11px 32px; background: var(--color-primary); color: #fff;
-            font-size: 15px; font-weight: 600; border-radius: 6px;
+        .cp-submit-bar .cp-draft-hint i { color: #00f0ff; text-shadow: 0 0 5px rgba(0,240,255,0.3); }
+        .cp-btn {
+            padding: 11px 32px; background: #FFEE00; color: #0a0a0a;
+            font-size: 15px; font-weight: 700;
+            font-family: inherit;
             display: inline-flex; align-items: center; gap: 6px;
-            transition: background 0.15s, transform 0.15s;
-            border: none; cursor: pointer;
-        }
-        .btn-publish:hover:not(:disabled) {
-            background: var(--color-primary-hover); transform: translateY(-1px);
-        }
-        .btn-publish:disabled { opacity: 0.6; cursor: not-allowed; }
-        .btn-cancel {
-            padding: 11px 24px; color: var(--color-text-sub);
-            font-size: 14px; border-radius: 6px;
-            border: 1px solid var(--color-border); background: #fff;
-            transition: all 0.15s; cursor: pointer;
-        }
-        .btn-cancel:hover { border-color: var(--color-primary); color: var(--color-primary); }
-        .btn-offline {
-            padding: 11px 22px; background: #fff; color: var(--color-danger);
-            font-size: 14px; font-weight: 600; border-radius: 6px;
-            border: 1.5px solid var(--color-danger); cursor: pointer;
             transition: all 0.15s;
+            border: none; cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
-        .btn-offline:hover { background: var(--color-danger); color: #fff; }
-
-        /* 禁用态：所有可禁用字段 */
-        .form-input:disabled, .form-input.disabled {
-            background: #f9fafb; color: var(--color-muted);
-            cursor: not-allowed; border-color: var(--color-border-soft);
+        .cp-btn:hover:not(:disabled) {
+            background: #fff;
+            box-shadow: 0 0 20px rgba(255,238,0,0.5);
         }
-        .form-input:disabled::placeholder { color: #d1d5db; }
-
-        /* 状态 badge */
-        .status-badge {
-            margin-left: 12px; padding: 4px 12px; border-radius: 12px;
-            background: rgba(255,107,53,0.1); color: var(--color-primary);
-            font-size: 12px; font-weight: 600;
+        .cp-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .cp-btn-outline {
+            padding: 11px 24px;
+            background: transparent;
+            border: 1px solid #FFEE00;
+            color: #FFEE00;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.15s;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .cp-btn-outline:hover {
+            background: #FFEE00; color: #0a0a0a;
+            box-shadow: 0 0 12px rgba(255,238,0,0.3);
+        }
+        .cp-btn-sm { padding: 10px 22px; font-size: 13px; }
+        .cp-btn-danger {
+            padding: 11px 24px;
+            background: transparent;
+            border: 1px solid #ff00ff;
+            color: #ff00ff;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.15s;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .cp-btn-danger:hover {
+            background: #ff00ff; color: #0a0a0a;
+            box-shadow: 0 0 15px rgba(255,0,255,0.4);
         }
 
         /* ---------- 页脚 ---------- */
-        .publish-footer {
-            background: #1f2937; color: #d1d5db;
+        .cp-footer {
+            background: #0a0a0a;
+            border-top: 1px solid #FFEE00;
+            color: #FFEE00;
             padding: 24px 16px; text-align: center;
-            font-size: 12px; color: #6b7280;
+            font-size: 12px;
+        }
+
+        /* ---------- Badge ---------- */
+        .cp-badge {
+            border: 1px solid #FFEE00;
+            color: #FFEE00;
+            padding: 4px 12px;
+            font-size: 12px;
+            display: inline-block;
+            margin-left: 12px;
+        }
+
+        /* ---------- Loading ---------- */
+        .cp-loading {
+            padding: 60px 20px; text-align: center;
+            color: #665f00; font-size: 14px;
         }
 
         /* ---------- 响应式 ---------- */
         @media (max-width: 1024px) {
-            .nav-tags { display: none; }
-            .nav-search { flex: 0 1 280px; }
+
         }
         @media (max-width: 768px) {
-            .header-inner { gap: 8px; padding: 0 12px; }
-            .nav { display: none; }
-            .nav-search { flex: 1; }
-            .publish-card { padding: 24px 20px 20px; }
-            .submit-bar { margin: 0 -20px -20px; padding: 14px 20px; }
-            .image-row { grid-template-columns: 1fr; }
-            .image-thumbs { grid-template-columns: repeat(4, 1fr); }
+
+            .cp-card { padding: 24px 20px 20px; }
+            .cp-submit-bar { margin: 0 -20px -20px; padding: 14px 20px; }
+            .cp-image-row { grid-template-columns: 1fr; }
+            .cp-image-grid { grid-template-columns: repeat(4, 1fr); }
         }
 
         [v-cloak] { display: none; }
-        .loading-placeholder { padding: 60px 20px; text-align: center; color: var(--color-muted); font-size: 14px; }
+
+        /* ---------- Glitch 故障效果 ---------- */
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-1px, 1px); }
+            40% { transform: translate(1px, -1px); }
+            60% { transform: translate(-1px, -1px); }
+            80% { transform: translate(1px, 1px); }
+            100% { transform: translate(0); }
+        }
+        .glitch {
+            animation: glitch 0.3s infinite;
+            position: relative;
+        }
+        .glitch::before,
+        .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            opacity: 0.7;
+        }
+        .glitch::before {
+            color: #00f0ff;
+            z-index: -1;
+            animation: glitch 0.4s infinite reverse;
+            clip: rect(0, 900px, 0, 0);
+        }
+        .glitch::after {
+            color: #ff00ff;
+            z-index: -2;
+            animation: glitch 0.25s infinite;
+            clip: rect(0, 0, 0, 0);
+        }
     </style>
 </head>
 <body>
 
+<!-- ========== Cyberpunk Scanline Overlay ========== -->
+<div class="cp-scanline"></div>
+
 <!-- ========== 顶 nav ========== -->
-<header class="header">
-    <div class="header-inner">
-        <a href="<%=ctx%>/index.jsp" class="logo">
-            <span class="logo-icon"><i class="fa fa-gavel"></i></span>
+<header class="cp-nav">
+    <div class="cp-nav-inner">
+        <a href="<%=ctx%>/index.jsp" class="cp-logo">
+            <span class="cp-logo-icon"><i class="fa fa-gavel"></i></span>
             <span>二手拍卖</span>
         </a>
-        <nav class="nav">
+        <nav class="cp-nav-menu">
             <a href="<%=ctx%>/index.jsp">首页</a>
             <a href="<%=ctx%>/item?action=list">浏览拍品</a>
             <a href="<%=ctx%>/item?action=publish-page" class="active">发布拍品</a>
             <a href="javascript:void(0)" onclick="go('<%=ctx%>/item?action=list&sort=hot')">热门拍品</a>
             <a href="javascript:void(0)" onclick="go('<%=ctx%>/user?action=center')">个人中心</a>
         </nav>
-        <form action="<%=ctx%>/item" method="get" class="nav-search">
+        <form action="<%=ctx%>/item" method="get" class="cp-nav-search">
             <input type="hidden" name="action" value="list">
             <input type="text" name="keyword" placeholder="搜索拍品 · 数码 / 服饰 / 书籍 ...">
             <button type="submit"><i class="fa fa-search"></i> 搜索</button>
         </form>
-        <div class="nav-tags">
-            <span class="nav-tags-label">热搜：</span>
-            <a href="<%=ctx%>/item/list?keyword=iPhone" class="nav-tag hot">iPhone 15</a>
-            <a href="<%=ctx%>/item/list?keyword=相机" class="nav-tag">佳能相机</a>
-            <a href="<%=ctx%>/item/list?keyword=球鞋" class="nav-tag">球鞋</a>
-            <a href="<%=ctx%>/item/list?keyword=茅台" class="nav-tag hot">茅台</a>
+        <div class="cp-nav-tags">
+            <span class="cp-nav-tags-label">热搜：</span>
+            <a href="<%=ctx%>/item/list?keyword=iPhone" class="cp-nav-tag hot">iPhone 15</a>
+            <a href="<%=ctx%>/item/list?keyword=相机" class="cp-nav-tag">佳能相机</a>
+            <a href="<%=ctx%>/item/list?keyword=球鞋" class="cp-nav-tag">球鞋</a>
+            <a href="<%=ctx%>/item/list?keyword=茅台" class="cp-nav-tag hot">茅台</a>
         </div>
-        <div class="user-info">
-            <a href="javascript:void(0)" onclick="go('<%=ctx%>/user?action=center')" class="user-name-link"><%= currentUser.getUsername() %></a>
-            <a href="javascript:void(0)" onclick="go('<%=ctx%>/user?action=logout')" style="font-size: 12px; color: var(--color-muted);">退出</a>
-            <span class="avatar"><%= currentUser.getUsername().substring(0, 1).toUpperCase() %></span>
+        <div class="cp-nav-user">
+            <a href="javascript:void(0)" onclick="go('<%=ctx%>/user?action=center')" class="cp-nav-user-name"><%= currentUser.getUsername() %></a>
+            <a href="javascript:void(0)" onclick="go('<%=ctx%>/user?action=logout')" class="cp-logout-link">退出</a>
+            <span class="cp-avatar"><%= currentUser.getUsername().substring(0, 1).toUpperCase() %></span>
         </div>
     </div>
 </header>
 
-<div class="publish-wrap">
-    <div id="app" class="publish-card">
+<div class="cp-container-sm">
+    <div id="app" class="cp-card">
         <!-- 页面头 -->
-        <div class="publish-head">
-            <div class="publish-title">
-                <span class="publish-title-icon"><i class="fa fa-plus"></i></span>
+        <div class="cp-card-header">
+            <div class="cp-card-title glitch" data-text="编辑拍品">
+                <span class="cp-card-title-icon"><i class="fa fa-pencil"></i></span>
                 <span>编辑拍品</span>
-                <span class="status-badge">状态：<%= statusText %></span>
+                <span class="cp-badge">状态：<%= statusText %></span>
             </div>
-            <p class="publish-sub">
+            <p class="cp-card-sub">
                 <% if (scope.editableHardFields) { %>
                     全字段可编辑（价格/时间/分类也可改）。
                 <% } else if (scope.editableSoftFields) { %>
-                    <span style="color: var(--color-warning); font-weight: 600;">⚠ 拍卖已开始</span>，只能编辑"描述/瑕疵/图片"等软信息；价格、时间、分类已锁定（保护已出价者信任）。
+                    <span style="color: #FFEE00; font-weight: 600;">&#9888; 拍卖已开始</span>，只能编辑"描述/瑕疵/图片"等软信息；价格、时间、分类已锁定（保护已出价者信任）。
                 <% } else { %>
                     当前状态不允许编辑。
                 <% } %>
             </p>
         </div>
 
-        <div v-if="serverError" class="alert alert-error">{{ serverError }}</div>
+        <div v-if="serverError" class="cp-alert cp-alert-error">{{ serverError }}</div>
 
         <form action="<%=ctx%>/item?action=edit&id=<%= preItemId %>" method="post"
               @submit.prevent="handleSubmit($event)" novalidate>
 
             <!-- ========== 分组 1：基本信息 ========== -->
-            <div class="section-block">
-                <div class="section-head">
-                    <span class="section-num">1</span>
-                    <span class="section-title">基本信息</span>
-                    <span class="section-tip">分类 + 标题 + 详细描述</span>
+            <div class="cp-section">
+                <div class="cp-section-head">
+                    <span class="cp-section-num">1</span>
+                    <span class="cp-section-title">基本信息</span>
+                    <span class="cp-section-tip">分类 + 标题 + 详细描述</span>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">分类<span class="required">*</span></label>
-                    <select name="categoryId" class="form-input" v-model.number="form.categoryId"
+                <div class="cp-form-group">
+                    <label class="cp-form-label">分类<span class="required">*</span></label>
+                    <select name="categoryId" class="cp-form-input" v-model.number="form.categoryId"
                             :disabled="!editable.editableHardFields"
                             :class="{ error: touched.categoryId && errors.categoryId, disabled: !editable.editableHardFields }">
                         <option :value="null">请选择分类</option>
@@ -446,55 +517,55 @@
                             &nbsp;&nbsp;&nbsp;&nbsp;{{ c ? c.categoryName : '' }}
                         </option>
                     </select>
-                    <span class="form-error" v-if="touched.categoryId && errors.categoryId">{{ errors.categoryId }}</span>
+                    <span class="cp-form-error" v-if="touched.categoryId && errors.categoryId">{{ errors.categoryId }}</span>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">标题<span class="required">*</span></label>
-                    <input type="text" name="title" class="form-input" maxlength="100"
+                <div class="cp-form-group">
+                    <label class="cp-form-label">标题<span class="required">*</span></label>
+                    <input type="text" name="title" class="cp-form-input" maxlength="100"
                            v-model="form.title" placeholder="5-100 字，例如：iPhone 14 Pro 256G 深空黑 99新"
                            @blur="touched.title = true; validateField('title')"
                            :class="{ error: touched.title && errors.title }">
-                    <span class="form-hint">好的标题能吸引更多出价者 · 已输入 {{ form.title.length || 0 }} / 100 字</span>
-                    <span class="form-error" v-if="touched.title && errors.title">{{ errors.title }}</span>
+                    <span class="cp-form-hint">好的标题能吸引更多出价者 · 已输入 {{ form.title.length || 0 }} / 100 字</span>
+                    <span class="cp-form-error" v-if="touched.title && errors.title">{{ errors.title }}</span>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">详细描述<span class="required">*</span></label>
-                    <textarea name="description" class="form-input" rows="5"
+                <div class="cp-form-group">
+                    <label class="cp-form-label">详细描述<span class="required">*</span></label>
+                    <textarea name="description" class="cp-form-input" rows="5"
                               v-model="form.description"
                               placeholder="请详细描述商品情况：购买时间、使用频率、配件是否齐全、转手原因 ..."
                               @blur="touched.description = true; validateField('description')"
                               :class="{ error: touched.description && errors.description }"></textarea>
-                    <span class="form-error" v-if="touched.description && errors.description">{{ errors.description }}</span>
+                    <span class="cp-form-error" v-if="touched.description && errors.description">{{ errors.description }}</span>
                 </div>
             </div>
 
             <!-- ========== 分组 2：规格参数 ========== -->
-            <div class="section-block">
-                <div class="section-head">
-                    <span class="section-num">2</span>
-                    <span class="section-title">规格参数</span>
-                    <span class="section-tip">品牌 / 型号 / 新旧 / 瑕疵（选填）</span>
+            <div class="cp-section">
+                <div class="cp-section-head">
+                    <span class="cp-section-num">2</span>
+                    <span class="cp-section-title">规格参数</span>
+                    <span class="cp-section-tip">品牌 / 型号 / 新旧 / 瑕疵（选填）</span>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">品牌</label>
-                        <input type="text" name="brand" class="form-input" maxlength="50"
+                <div class="cp-form-row">
+                    <div class="cp-form-group">
+                        <label class="cp-form-label">品牌</label>
+                        <input type="text" name="brand" class="cp-form-input" maxlength="50"
                                v-model="form.brand" placeholder="如：Apple / 华为">
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">型号</label>
-                        <input type="text" name="model" class="form-input" maxlength="50"
+                    <div class="cp-form-group">
+                        <label class="cp-form-label">型号</label>
+                        <input type="text" name="model" class="cp-form-input" maxlength="50"
                                v-model="form.model" placeholder="如：iPhone 14 Pro">
                     </div>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">新旧程度<span class="required">*</span></label>
-                        <select name="conditionLevel" class="form-input" v-model="form.conditionLevel">
+                <div class="cp-form-row">
+                    <div class="cp-form-group">
+                        <label class="cp-form-label">新旧程度<span class="required">*</span></label>
+                        <select name="conditionLevel" class="cp-form-input" v-model="form.conditionLevel">
                             <option value="全新">全新</option>
                             <option value="99新">99新</option>
                             <option value="9.9新">9.9新</option>
@@ -505,142 +576,142 @@
                             <option value="7成新">7成新</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">瑕疵说明</label>
-                        <input type="text" name="flawDesc" class="form-input" maxlength="255"
+                    <div class="cp-form-group">
+                        <label class="cp-form-label">瑕疵说明</label>
+                        <input type="text" name="flawDesc" class="cp-form-input" maxlength="255"
                                v-model="form.flawDesc" placeholder="无明显瑕疵可留空">
                     </div>
                 </div>
             </div>
 
             <!-- ========== 分组 3：拍品图片 ========== -->
-            <div class="section-block">
-                <div class="section-head">
-                    <span class="section-num">3</span>
-                    <span class="section-title">拍品图片</span>
-                    <span class="section-tip">每行一个远程 URL，最多 5 张，第一行作为封面</span>
+            <div class="cp-section">
+                <div class="cp-section-head">
+                    <span class="cp-section-num">3</span>
+                    <span class="cp-section-title">拍品图片</span>
+                    <span class="cp-section-tip">每行一个远程 URL，最多 5 张，第一行作为封面</span>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">图片 URL<span class="required">*</span></label>
-                    <textarea name="imageUrls" class="form-input" rows="5"
+                <div class="cp-form-group">
+                    <label class="cp-form-label">图片 URL<span class="required">*</span></label>
+                    <textarea name="imageUrls" class="cp-form-input" rows="5"
                               v-model="form.imageUrls"
                               @blur="touched.imageUrls = true; validateField('imageUrls')"
                               :class="{ error: touched.imageUrls && errors.imageUrls }"
                               placeholder="每行一个远程图片 URL，例如：&#10;https://example.com/iphone-1.jpg&#10;https://example.com/iphone-2.jpg"></textarea>
-                    <span class="form-hint">
+                    <span class="cp-form-hint">
                         仅支持远程 URL（以 <code>http://</code> 或 <code>https://</code> 开头），每行一个，最多 5 张，第一行作为封面。
                     </span>
-                    <span class="form-error" v-if="touched.imageUrls && errors.imageUrls">{{ errors.imageUrls }}</span>
+                    <span class="cp-form-error" v-if="touched.imageUrls && errors.imageUrls">{{ errors.imageUrls }}</span>
                 </div>
 
                 <!-- URL 预览（仅当 URL 是 webapp 内可访问时显示） -->
-                <div v-if="imageUrlList.length > 0" class="image-thumbs">
+                <div v-if="imageUrlList.length > 0" class="cp-image-grid">
                     <div v-for="(u, idx) in imageUrlList" :key="idx"
-                         class="image-thumb" :class="{ cover: idx === 0 }">
+                         class="cp-image-thumb" :class="{ cover: idx === 0 }">
                         <img :src="u" @error="onImgError($event)" :alt="'图' + (idx+1)">
                     </div>
                     <div v-for="i in (5 - imageUrlList.length)" :key="'empty'+i"
-                         v-if="imageUrlList.length < 5" class="image-thumb empty">
+                         v-if="imageUrlList.length < 5" class="cp-image-thumb empty">
                         <i class="fa fa-plus"></i>
                     </div>
                 </div>
             </div>
 
             <!-- ========== 分组 4：价格与拍卖时间 ========== -->
-            <div class="section-block">
-                <div class="section-head">
-                    <span class="section-num">4</span>
-                    <span class="section-title">价格与拍卖时间</span>
-                    <span class="section-tip">起拍价 / 加价幅度 / 保留价 / 起止时间</span>
+            <div class="cp-section">
+                <div class="cp-section-head">
+                    <span class="cp-section-num">4</span>
+                    <span class="cp-section-title">价格与拍卖时间</span>
+                    <span class="cp-section-tip">起拍价 / 加价幅度 / 保留价 / 起止时间</span>
                 </div>
 
-                <div class="form-row-3">
-                    <div class="form-group">
-                        <label class="form-label">起拍价 (元)<span class="required">*</span></label>
-                        <input type="number" name="startPrice" class="form-input" min="0.01" step="0.01"
+                <div class="cp-form-row-3">
+                    <div class="cp-form-group">
+                        <label class="cp-form-label">起拍价 (元)<span class="required">*</span></label>
+                        <input type="number" name="startPrice" class="cp-form-input" min="0.01" step="0.01"
                                v-model.number="form.startPrice"
                                :disabled="!editable.editableHardFields"
                                @blur="touched.startPrice = true; validateField('startPrice')"
                                :class="{ error: touched.startPrice && errors.startPrice, disabled: !editable.editableHardFields }">
-                        <div class="quick-row" v-if="editable.editableHardFields">
-                            <span class="quick-row-label">快捷：</span>
-                            <span class="quick-btn" @click="form.startPrice = 10">¥10</span>
-                            <span class="quick-btn" @click="form.startPrice = 50">¥50</span>
-                            <span class="quick-btn" @click="form.startPrice = 100">¥100</span>
-                            <span class="quick-btn" @click="form.startPrice = 500">¥500</span>
-                            <span class="quick-btn" @click="form.startPrice = 1000">¥1000</span>
+                        <div class="cp-quick-row" v-if="editable.editableHardFields">
+                            <span class="cp-quick-row-label">快捷：</span>
+                            <span class="cp-quick-btn" @click="form.startPrice = 10">¥10</span>
+                            <span class="cp-quick-btn" @click="form.startPrice = 50">¥50</span>
+                            <span class="cp-quick-btn" @click="form.startPrice = 100">¥100</span>
+                            <span class="cp-quick-btn" @click="form.startPrice = 500">¥500</span>
+                            <span class="cp-quick-btn" @click="form.startPrice = 1000">¥1000</span>
                         </div>
-                        <span class="form-error" v-if="touched.startPrice && errors.startPrice">{{ errors.startPrice }}</span>
+                        <span class="cp-form-error" v-if="touched.startPrice && errors.startPrice">{{ errors.startPrice }}</span>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">加价幅度 (元)<span class="required">*</span></label>
-                        <input type="number" name="bidIncrement" class="form-input" min="0.01" step="0.01"
+                    <div class="cp-form-group">
+                        <label class="cp-form-label">加价幅度 (元)<span class="required">*</span></label>
+                        <input type="number" name="bidIncrement" class="cp-form-input" min="0.01" step="0.01"
                                v-model.number="form.bidIncrement"
                                :disabled="!editable.editableHardFields"
                                @blur="touched.bidIncrement = true; validateField('bidIncrement')"
                                :class="{ error: touched.bidIncrement && errors.bidIncrement, disabled: !editable.editableHardFields }">
-                        <div class="quick-row" v-if="editable.editableHardFields">
-                            <span class="quick-row-label">快捷：</span>
-                            <span class="quick-btn" @click="form.bidIncrement = 1">¥1</span>
-                            <span class="quick-btn" @click="form.bidIncrement = 5">¥5</span>
-                            <span class="quick-btn" @click="form.bidIncrement = 10">¥10</span>
-                            <span class="quick-btn" @click="form.bidIncrement = 50">¥50</span>
+                        <div class="cp-quick-row" v-if="editable.editableHardFields">
+                            <span class="cp-quick-row-label">快捷：</span>
+                            <span class="cp-quick-btn" @click="form.bidIncrement = 1">¥1</span>
+                            <span class="cp-quick-btn" @click="form.bidIncrement = 5">¥5</span>
+                            <span class="cp-quick-btn" @click="form.bidIncrement = 10">¥10</span>
+                            <span class="cp-quick-btn" @click="form.bidIncrement = 50">¥50</span>
                         </div>
-                        <span class="form-hint">默认 1.00 元</span>
-                        <span class="form-error" v-if="touched.bidIncrement && errors.bidIncrement">{{ errors.bidIncrement }}</span>
+                        <span class="cp-form-hint">默认 1.00 元</span>
+                        <span class="cp-form-error" v-if="touched.bidIncrement && errors.bidIncrement">{{ errors.bidIncrement }}</span>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">保留价 (元)</label>
-                        <input type="number" name="reservePrice" class="form-input" min="0" step="0.01"
+                    <div class="cp-form-group">
+                        <label class="cp-form-label">保留价 (元)</label>
+                        <input type="number" name="reservePrice" class="cp-form-input" min="0" step="0.01"
                                v-model.number="form.reservePrice" placeholder="选填"
                                :disabled="!editable.editableHardFields"
                                :class="{ disabled: !editable.editableHardFields }">
-                        <span class="form-hint">不到保留价可流拍</span>
+                        <span class="cp-form-hint">不到保留价可流拍</span>
                     </div>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">开始时间<span class="required">*</span></label>
-                        <input type="datetime-local" name="startTime" class="form-input"
+                <div class="cp-form-row">
+                    <div class="cp-form-group">
+                        <label class="cp-form-label">开始时间<span class="required">*</span></label>
+                        <input type="datetime-local" name="startTime" class="cp-form-input"
                                v-model="form.startTime"
                                :disabled="!editable.editableHardFields"
                                @blur="touched.startTime = true; validateField('startTime')"
                                :class="{ error: touched.startTime && errors.startTime, disabled: !editable.editableHardFields }">
-                        <span class="form-error" v-if="touched.startTime && errors.startTime">{{ errors.startTime }}</span>
+                        <span class="cp-form-error" v-if="touched.startTime && errors.startTime">{{ errors.startTime }}</span>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">结束时间<span class="required">*</span></label>
-                        <input type="datetime-local" name="endTime" class="form-input"
+                    <div class="cp-form-group">
+                        <label class="cp-form-label">结束时间<span class="required">*</span></label>
+                        <input type="datetime-local" name="endTime" class="cp-form-input"
                                v-model="form.endTime"
                                :disabled="!editable.editableHardFields"
                                @blur="touched.endTime = true; validateField('endTime')"
                                :class="{ error: touched.endTime && errors.endTime, disabled: !editable.editableHardFields }">
-                        <div class="quick-row" v-if="editable.editableHardFields">
-                            <span class="quick-row-label">时长：</span>
-                            <span class="quick-btn" @click="setEndTime(1)">1 天</span>
-                            <span class="quick-btn" @click="setEndTime(3)">3 天</span>
-                            <span class="quick-btn" @click="setEndTime(7)">7 天</span>
-                            <span class="quick-btn" @click="setEndTime(14)">14 天</span>
+                        <div class="cp-quick-row" v-if="editable.editableHardFields">
+                            <span class="cp-quick-row-label">时长：</span>
+                            <span class="cp-quick-btn" @click="setEndTime(1)">1 天</span>
+                            <span class="cp-quick-btn" @click="setEndTime(3)">3 天</span>
+                            <span class="cp-quick-btn" @click="setEndTime(7)">7 天</span>
+                            <span class="cp-quick-btn" @click="setEndTime(14)">14 天</span>
                         </div>
-                        <span class="form-error" v-if="touched.endTime && errors.endTime">{{ errors.endTime }}</span>
+                        <span class="cp-form-error" v-if="touched.endTime && errors.endTime">{{ errors.endTime }}</span>
                     </div>
                 </div>
             </div>
 
             <!-- 提交按钮 sticky 底部 -->
-            <div class="submit-bar">
-                <span class="draft-hint" v-if="draftSaved">
+            <div class="cp-submit-bar">
+                <span class="cp-draft-hint" v-if="draftSaved">
                     <i class="fa fa-check-circle"></i> 草稿已自动保存
                 </span>
-                <a href="<%=ctx%>/item?action=detail&id=<%= preItemId %>" class="btn-cancel">取消</a>
+                <a href="<%=ctx%>/item?action=detail&id=<%= preItemId %>" class="cp-btn-outline cp-btn-sm">取消</a>
                 <% if (scope.canOffline) { %>
-                    <button type="button" class="btn-offline" @click="offlineItem">
+                    <button type="button" class="cp-btn-danger" @click="offlineItem">
                         <i class="fa fa-trash-o"></i> 撤拍
                     </button>
                 <% } %>
-                <button type="submit" class="btn-publish" :disabled="submitting">
+                <button type="submit" class="cp-btn" :disabled="submitting">
                     <i class="fa fa-save"></i>
                     {{ submitting ? '保存中...' : '保存修改' }}
                 </button>
@@ -649,8 +720,8 @@
     </div>
 </div>
 
-<footer class="publish-footer">
-    © 2025 二手物品拍卖系统 · Powered by JSP + Servlet + MyBatis + Vue
+<footer class="cp-footer">
+    &copy; 2025 二手物品拍卖系统 · Powered by JSP + Servlet + MyBatis + Vue
 </footer>
 
 <script src="<%=ctx%>/static/js/vue.global.prod.js"></script>
@@ -688,7 +759,7 @@
     function bootVue() {
         if (!window.Vue) {
             console.error('[publish] Vue 全局对象未找到，请检查 vue.global.prod.js 是否加载成功');
-            document.getElementById('app').innerHTML = '<div class="alert alert-error">Vue 加载失败，请刷新页面重试</div>';
+            document.getElementById('app').innerHTML = '<div class="cp-alert cp-alert-error">Vue 加载失败，请刷新页面重试</div>';
             return;
         }
         try {
@@ -891,7 +962,7 @@
             console.log('[publish] Vue 挂载成功，分类数:', categories.length);
         } catch (err) {
             console.error('[publish] Vue 挂载失败:', err);
-            document.getElementById('app').innerHTML = '<div class="alert alert-error">页面初始化失败：' + err.message + '<br>请按 F12 查看 Console 详情</div>';
+            document.getElementById('app').innerHTML = '<div class="cp-alert cp-alert-error">页面初始化失败：' + err.message + '<br>请按 F12 查看 Console 详情</div>';
         }
     }
 
@@ -901,7 +972,7 @@
         bootVue();
     } else {
         console.error('[publish] Vue 加载函数不存在，且 window.Vue 也未定义');
-        document.getElementById('app').innerHTML = '<div class="alert alert-error">JS 加载异常，请刷新页面重试</div>';
+        document.getElementById('app').innerHTML = '<div class="cp-alert cp-alert-error">JS 加载异常，请刷新页面重试</div>';
     }
 </script>
 </body>

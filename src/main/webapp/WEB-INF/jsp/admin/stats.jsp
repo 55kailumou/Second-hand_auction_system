@@ -15,87 +15,75 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>数据统计 · 管理后台</title>
-    <link rel="stylesheet" href="<%=ctx%>/static/css/common.css">
+    <link rel="stylesheet" href="<%=ctx%>/static/css/cyberpunk.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
     <style>
-        body { background: #f5f5f5; margin: 0; }
-        .admin-header { background: #1f2937; color: #d1d5db; height: 56px;
-                        position: sticky; top: 0; z-index: 100; }
-        .admin-header-inner { max-width: 1400px; margin: 0 auto; padding: 0 20px; height: 100%;
-                              display: flex; align-items: center; gap: 20px; }
-        .admin-logo { display: flex; align-items: center; gap: 8px;
-                      font-size: 16px; font-weight: 700; color: #fff;
-                      text-decoration: none; }
-        .admin-logo-icon { width: 28px; height: 28px; background: #f59e0b; color: #1f2937;
-                           border-radius: 4px; display: grid; place-items: center;
-                           font-size: 14px; font-weight: 700; }
-        .admin-nav { display: flex; gap: 4px; margin-left: 20px; }
-        .admin-nav a { padding: 8px 14px; color: #d1d5db; font-size: 13px;
-                       border-radius: 4px; text-decoration: none; transition: all 0.15s; }
-        .admin-nav a:hover { background: rgba(255,255,255,0.1); color: #fff; }
-        .admin-nav a.active { background: rgba(245,158,11,0.2); color: #fbbf24; }
-        .admin-user { margin-left: auto; display: flex; align-items: center; gap: 12px; font-size: 13px; }
-        .admin-user .role-tag { padding: 2px 8px; background: #374151; color: #fbbf24;
-                                border-radius: 3px; font-size: 11px; font-weight: 600; }
-        .admin-user a { color: #9ca3af; text-decoration: none; font-size: 12px; }
-        .admin-user a:hover { color: #fff; }
+        .admin-main { max-width: 1400px; margin: 24px auto 0; padding: 0 24px 60px; position: relative; z-index: 3; }
 
-        .admin-main { max-width: 1400px; margin: 16px auto 0; padding: 0 20px 60px; }
+        .admin-main .cp-page-head { margin: 0 0 16px; }
 
-        .page-head { background: #fff; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-                     padding: 20px 24px; display: flex; align-items: center; gap: 16px; }
-        .page-head-icon { width: 48px; height: 48px; border-radius: 8px;
-                          background: linear-gradient(135deg, #6366f1, #8b5cf6);
-                          color: #fff;
-                          display: grid; place-items: center; font-size: 22px; }
-        .page-head-info { flex: 1; }
-        .page-head-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
-        .page-head-sub { font-size: 12px; color: var(--color-muted); }
         .page-head-toolbar { display: flex; gap: 8px; }
-        .page-head-toolbar button { padding: 6px 14px; border: 1px solid var(--color-border);
-                                    border-radius: 4px; font-size: 12px; cursor: pointer;
-                                    background: #fff; color: var(--color-text-sub); }
-        .page-head-toolbar button:hover { border-color: var(--color-primary); color: var(--color-primary); }
-        .page-head-toolbar button.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
-
-        /* KPI 卡片 */
-        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 12px; }
-        .kpi-card { background: #fff; border-radius: 8px; padding: 20px;
-                    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-                    display: flex; align-items: center; gap: 16px; }
-        .kpi-icon { width: 56px; height: 56px; border-radius: 12px;
-                    display: grid; place-items: center; font-size: 24px; color: #fff; flex-shrink: 0; }
-        .kpi-icon.k1 { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
-        .kpi-icon.k2 { background: linear-gradient(135deg, #10b981, #047857); }
-        .kpi-icon.k3 { background: linear-gradient(135deg, #f59e0b, #d97706); }
-        .kpi-icon.k4 { background: linear-gradient(135deg, #ef4444, #b91c1c); }
-        .kpi-info { flex: 1; min-width: 0; }
-        .kpi-label { font-size: 12px; color: var(--color-muted); margin-bottom: 4px; }
-        .kpi-value { font-size: 26px; font-weight: 700; color: var(--color-text); line-height: 1.2; }
-        .kpi-value .unit { font-size: 13px; color: var(--color-muted); font-weight: 500; margin-left: 4px; }
-        .kpi-sub { font-size: 11px; color: var(--color-muted); margin-top: 4px; }
+        .page-head-toolbar button {
+            padding: 6px 14px;
+            font-size: 11px;
+            color: var(--cp-text-dim);
+            font-family: var(--font-mono);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: all 0.15s;
+            clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+            border: 1.5px solid var(--cp-yellow-dim);
+            background: #000;
+            font-weight: 700;
+        }
+        .page-head-toolbar button:hover { color: var(--cp-yellow); border-color: var(--cp-yellow); }
+        .page-head-toolbar button.active { background: var(--cp-yellow); color: #000; border-color: var(--cp-yellow); }
 
         /* 图表网格 */
         .chart-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 12px; }
-        .chart-card { background: #fff; border-radius: 8px; padding: 18px 20px;
-                      box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+        .chart-card {
+            background: #000;
+            border: 1.5px solid var(--cp-yellow);
+            clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+            box-shadow: 0 0 24px rgba(255,238,0,0.1);
+            padding: 18px 20px;
+        }
         .chart-card.span2 { grid-column: span 2; }
         .chart-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-        .chart-title { font-size: 14px; font-weight: 600; color: var(--color-text);
-                       display: flex; align-items: center; gap: 8px; }
-        .chart-title i { color: var(--color-primary); font-size: 13px; }
-        .chart-meta { font-size: 11px; color: var(--color-muted); }
+        .chart-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--cp-yellow);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: flex; align-items: center; gap: 8px;
+            font-family: var(--font-mono);
+        }
+        .chart-title i { color: var(--cp-yellow); font-size: 12px; }
+        .chart-meta {
+            font-size: 10px;
+            font-family: var(--font-mono);
+            color: var(--cp-text-dim);
+            text-transform: uppercase;
+        }
         .chart-canvas-wrap { position: relative; height: 280px; }
         .chart-canvas-wrap.tall { height: 320px; }
 
         /* loading / empty */
-        .loading-mask { text-align: center; padding: 60px 20px; color: var(--color-muted); font-size: 14px; }
-        .loading-mask i { font-size: 32px; margin-bottom: 12px; display: block; }
-        .empty-mini { text-align: center; padding: 40px 20px; color: var(--color-muted); font-size: 12px; }
+        .loading-mask {
+            text-align: center; padding: 60px 20px;
+            font-family: var(--font-mono); font-size: 12px;
+            color: var(--cp-text-dim);
+            background: #000;
+            border: 1.5px solid var(--cp-yellow);
+            clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+            margin-top: 12px;
+        }
+        .loading-mask i { font-size: 32px; margin-bottom: 12px; display: block; color: var(--cp-yellow-dim); }
 
         @media (max-width: 980px) {
-            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
             .chart-grid { grid-template-columns: 1fr; }
             .chart-card.span2 { grid-column: span 1; }
         }
@@ -103,13 +91,10 @@
 </head>
 <body>
 
-<header class="admin-header">
-    <div class="admin-header-inner">
-        <a href="<%=ctx%>/admin" class="admin-logo">
-            <span class="admin-logo-icon">A</span>
-            <span>管理后台</span>
-        </a>
-        <nav class="admin-nav">
+<header class="cp-nav">
+    <div class="cp-nav-inner">
+        <a href="<%=ctx%>/admin" class="cp-logo">管理后台</a>
+        <nav class="cp-nav-menu">
             <a href="<%=ctx%>/admin"><i class="fa fa-dashboard"></i> 概览</a>
             <a href="<%=ctx%>/admin/refund?action=list"><i class="fa fa-undo"></i> 退款审批</a>
             <a href="<%=ctx%>/admin/complaint?action=list"><i class="fa fa-flag"></i> 投诉审批</a>
@@ -119,22 +104,21 @@
             <a href="<%=ctx%>/admin/announcement?action=list"><i class="fa fa-bullhorn"></i> 公告</a>
             <a href="<%=ctx%>/admin/stats" class="active"><i class="fa fa-bar-chart"></i> 数据统计</a>
         </nav>
-        <div class="admin-user">
-            <i class="fa fa-user-circle-o"></i>
-            <span><%= EscapeUtil.html(admin.getAdminName()) %></span>
-            <span class="role-tag"><%= admin.getRole() == null ? "admin" : admin.getRole() %></span>
-            <a href="<%=ctx%>/admin/login?action=logout"><i class="fa fa-sign-out"></i> 退出</a>
+        <div class="cp-nav-user">
+            <i class="fa fa-user-circle-o" style="color: var(--cp-yellow-dim);"></i>
+            <span style="font-size: 12px; color: var(--cp-text-dim); font-family: var(--font-mono);"><%= EscapeUtil.html(admin.getAdminName()) %></span>
+            <span style="padding: 2px 6px; background: rgba(255,238,0,0.1); color: var(--cp-yellow-dim); font-size: 9px; font-family: var(--font-mono); text-transform: uppercase; border: 1px solid var(--cp-yellow-dim);"><%= admin.getRole() == null ? "admin" : admin.getRole() %></span>
+            <a href="<%=ctx%>/admin/login?action=logout" class="icon-btn"><i class="fa fa-sign-out"></i></a>
         </div>
     </div>
 </header>
 
 <div class="admin-main" id="app" v-cloak>
 
-    <div class="page-head">
-        <div class="page-head-icon"><i class="fa fa-bar-chart"></i></div>
-        <div class="page-head-info">
-            <div class="page-head-title">数据统计</div>
-            <div class="page-head-sub">系统核心指标可视化。点击上方时间范围切换趋势统计天数。</div>
+    <div class="cp-page-head">
+        <div>
+            <div class="cp-page-title">数据统计</div>
+            <div class="cp-page-sub">系统核心指标可视化。点击上方时间范围切换趋势统计天数。</div>
         </div>
         <div class="page-head-toolbar">
             <button @click="changeDays(7)" :class="{ active: trendDays === 7 }">7 天</button>
@@ -145,43 +129,43 @@
     </div>
 
     <!-- KPI 卡片 -->
-    <div v-if="stats" class="kpi-grid">
-        <div class="kpi-card">
-            <div class="kpi-icon k1"><i class="fa fa-users"></i></div>
-            <div class="kpi-info">
-                <div class="kpi-label">注册用户</div>
-                <div class="kpi-value">{{ formatNumber(stats.overview.userCount) }}<span class="unit">人</span></div>
-                <div class="kpi-sub">总用户数</div>
+    <div v-if="stats" class="cp-kpi-grid">
+        <div class="cp-kpi-card">
+            <div class="cp-kpi-icon k1"><i class="fa fa-users"></i></div>
+            <div class="cp-kpi-info">
+                <div class="cp-kpi-label">注册用户</div>
+                <div class="cp-kpi-value">{{ formatNumber(stats.overview.userCount) }}<span class="unit">人</span></div>
+                <div style="font-size: 10px; font-family: var(--font-mono); color: var(--cp-text-dim);">总用户数</div>
             </div>
         </div>
-        <div class="kpi-card">
-            <div class="kpi-icon k2"><i class="fa fa-gavel"></i></div>
-            <div class="kpi-info">
-                <div class="kpi-label">拍品总数</div>
-                <div class="kpi-value">{{ formatNumber(stats.overview.itemCount) }}<span class="unit">件</span></div>
-                <div class="kpi-sub">拍卖中 {{ stats.overview.activeItemCount }} 件</div>
+        <div class="cp-kpi-card">
+            <div class="cp-kpi-icon k2"><i class="fa fa-gavel"></i></div>
+            <div class="cp-kpi-info">
+                <div class="cp-kpi-label">拍品总数</div>
+                <div class="cp-kpi-value">{{ formatNumber(stats.overview.itemCount) }}<span class="unit">件</span></div>
+                <div style="font-size: 10px; font-family: var(--font-mono); color: var(--cp-text-dim);">拍卖中 {{ stats.overview.activeItemCount }} 件</div>
             </div>
         </div>
-        <div class="kpi-card">
-            <div class="kpi-icon k3"><i class="fa fa-shopping-cart"></i></div>
-            <div class="kpi-info">
-                <div class="kpi-label">已成交订单</div>
-                <div class="kpi-value">{{ formatNumber(stats.overview.completedOrderCount) }}<span class="unit">单</span></div>
-                <div class="kpi-sub">总订单 {{ stats.overview.totalOrderCount }} 单</div>
+        <div class="cp-kpi-card">
+            <div class="cp-kpi-icon k3"><i class="fa fa-shopping-cart"></i></div>
+            <div class="cp-kpi-info">
+                <div class="cp-kpi-label">已成交订单</div>
+                <div class="cp-kpi-value">{{ formatNumber(stats.overview.completedOrderCount) }}<span class="unit">单</span></div>
+                <div style="font-size: 10px; font-family: var(--font-mono); color: var(--cp-text-dim);">总订单 {{ stats.overview.totalOrderCount }} 单</div>
             </div>
         </div>
-        <div class="kpi-card">
-            <div class="kpi-icon k4"><i class="fa fa-cny"></i></div>
-            <div class="kpi-info">
-                <div class="kpi-label">总成交额 (GMV)</div>
-                <div class="kpi-value">¥{{ formatMoney(stats.overview.gmv) }}</div>
-                <div class="kpi-sub">退款中 {{ stats.overview.pendingRefundCount }} 单</div>
+        <div class="cp-kpi-card">
+            <div class="cp-kpi-icon k4"><i class="fa fa-cny"></i></div>
+            <div class="cp-kpi-info">
+                <div class="cp-kpi-label">总成交额 (GMV)</div>
+                <div class="cp-kpi-value">¥{{ formatMoney(stats.overview.gmv) }}</div>
+                <div style="font-size: 10px; font-family: var(--font-mono); color: var(--cp-text-dim);">退款中 {{ stats.overview.pendingRefundCount }} 单</div>
             </div>
         </div>
     </div>
 
     <!-- 加载中 -->
-    <div v-if="loading" class="loading-mask" style="background: #fff; border-radius: 8px; margin-top: 12px;">
+    <div v-if="loading" class="loading-mask">
         <i class="fa fa-spinner fa-spin"></i>
         正在加载统计数据...
     </div>

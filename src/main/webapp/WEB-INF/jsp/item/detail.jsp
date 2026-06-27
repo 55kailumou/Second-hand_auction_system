@@ -35,124 +35,110 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>拍品详情 · 二手物品拍卖系统</title>
-    <link rel="stylesheet" href="<%=ctx%>/static/css/common.css">
+    <link rel="stylesheet" href="<%=ctx%>/static/css/cyberpunk.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
     <style>
         /* ============================================================
-         * 拍品详情 v2 · 仿闲鱼
-         * - 顶 nav 统一
-         * - 卖家信息横条
-         * - 主体：左侧图廊 + 右侧信息（出价 sticky）
-         * - 下方：为你推荐 6 列网格
-         * - 保留所有 Vue 接管（出价、倒计时、刷新历史）
+         * CYBERPUNK 2077 — 拍品详情
+         * 暗黑霓虹主题 / 黄 / 青 / 红 三色
          * ============================================================ */
-        body { background: #f5f5f5; }
 
-        /* ---------- 顶 nav ---------- */
-        .header { background: #fff; height: 60px; position: sticky; top: 0; z-index: 100;
-                  box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
-        .header-inner { max-width: 1200px; margin: 0 auto; padding: 0 16px; height: 100%;
-                        display: flex; align-items: center; gap: 20px; }
-        .logo { font-size: 20px; font-weight: 800; color: var(--color-primary);
-                display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-        .logo-icon { width: 30px; height: 30px; background: var(--color-primary);
-                     color: #fff; border-radius: 4px; display: grid; place-items: center;
-                     font-size: 14px; }
-        .nav { display: flex; gap: 24px; }
-        .nav a { color: var(--color-text); font-size: 14px; font-weight: 500;
-                 padding: 0 4px; height: 60px; display: flex; align-items: center;
-                 position: relative; transition: color 0.2s; }
-        .nav a:hover, .nav a.active { color: var(--color-primary); }
-        .nav a.active::after {
-            content: ''; position: absolute;
-            bottom: 8px; left: 4px; right: 4px;
-            height: 2px; background: var(--color-primary); border-radius: 2px;
+        /* ---------- 全局 ---------- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #000;
+            color: #FFEE00;
+            font-family: 'Courier New', Consolas, 'Source Code Pro', monospace;
+            line-height: 1.5;
+            min-height: 100vh;
         }
-        .nav-search {
-            flex: 0 1 380px;
-            display: flex; background: #fff7ed;
-            border: 2px solid var(--color-primary);
-            border-radius: 20px; overflow: hidden; height: 36px;
+        a { color: #00F0FF; text-decoration: none; transition: color 0.15s; }
+        a:hover { color: #FFEE00; text-shadow: 0 0 6px #FFEE00; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #00F0FF; border-radius: 3px; }
+
+        /* ---------- 扫描线 ---------- */
+        .scanline {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 9999;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent, transparent 2px,
+                rgba(0, 240, 255, 0.03) 2px, rgba(0, 240, 255, 0.03) 4px
+            );
         }
-        .nav-search input {
-            flex: 1; padding: 0 14px; border: none; outline: none;
-            background: transparent; font-size: 13px; color: var(--color-text);
-        }
-        .nav-search input::placeholder { color: #9ca3af; }
-        .nav-search button {
-            background: var(--color-primary); color: #fff;
-            font-size: 13px; font-weight: 600; padding: 0 18px;
-            display: flex; align-items: center; gap: 5px;
-        }
-        .nav-search button:hover { background: var(--color-primary-hover); }
-        .nav-tags { display: flex; gap: 12px; font-size: 12px; color: var(--color-muted);
-                    flex: 1; min-width: 0; overflow: hidden; }
+
+        /* ---------- Nav ---------- */
+
+        .cp-logo:hover { color: #FFEE00; text-shadow: 0 0 10px #FFEE00; }
+
+        .cp-nav-search button:hover { background: #FFEE00; color: #000; }
+
         .nav-tags-label { flex-shrink: 0; }
-        .nav-tag { white-space: nowrap; transition: color 0.15s; }
-        .nav-tag:hover { color: var(--color-primary); }
-        .nav-tag.hot { color: var(--color-danger); font-weight: 600; }
-        .user-info { display: flex; align-items: center; gap: 8px; font-size: 14px; flex-shrink: 0; margin-left: auto; }
-        .user-info .avatar {
-            width: 32px; height: 32px; border-radius: 50%;
-            background: linear-gradient(135deg, var(--color-primary), #ffaa80);
-            color: #fff; display: grid; place-items: center;
-            font-size: 13px; font-weight: 600; cursor: pointer;
-        }
-        .user-name-link { color: var(--color-text); font-weight: 500; }
+        
+        .cp-nav-tag:hover { color: #00F0FF; text-shadow: 0 0 6px #00F0FF; }
+        .cp-nav-tag-hot { color: #FF003C; font-weight: 700; }
+        .cp-nav-tag-hot:hover { color: #FF003C; text-shadow: 0 0 8px #FF003C; }
 
-        /* ---------- 主体 ---------- */
+        .cp-nav-user .user-name-link { color: #00F0FF; font-weight: 500; }
+        .cp-nav-user .user-name-link:hover { color: #FFEE00; }
+
+        /* ---------- 主体包装 ---------- */
         .detail-wrap { max-width: 1200px; margin: 12px auto 0; padding: 0 16px; }
 
-        /* 卖家信息条（横条，仿闲鱼） */
+        /* ---------- 卖家信息条 ---------- */
         .seller-bar {
-            background: #fff; border-radius: 8px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+            background: #0d0d0d; border-radius: 2px;
+            border: 1px solid rgba(0, 240, 255, 0.15);
             padding: 14px 20px;
             display: flex; align-items: center; gap: 14px;
             margin-bottom: 12px;
         }
         .seller-bar-avatar {
-            width: 48px; height: 48px; border-radius: 50%;
-            background: var(--color-primary-light); color: var(--color-primary);
+            width: 48px; height: 48px; border-radius: 2px;
+            background: rgba(0, 240, 255, 0.1); color: #00F0FF;
+            border: 1px solid rgba(0, 240, 255, 0.3);
             display: grid; place-items: center;
-            font-size: 20px; font-weight: 600; flex-shrink: 0;
+            font-size: 20px; font-weight: 700; flex-shrink: 0;
         }
         .seller-bar-info { flex: 1; min-width: 0; }
         .seller-bar-name {
-            font-size: 15px; font-weight: 600; color: var(--color-text);
+            font-size: 15px; font-weight: 600; color: #FFEE00;
             margin-bottom: 4px;
             display: flex; align-items: center; gap: 6px;
         }
-        .seller-bar-name .name-link { color: var(--color-text); }
-        .seller-bar-name .name-link:hover { color: var(--color-primary); }
+        .seller-bar-name .name-link { color: #00F0FF; }
+        .seller-bar-name .name-link:hover { color: #FFEE00; text-shadow: 0 0 6px #FFEE00; }
         .seller-bar-name .credit-tag {
             font-size: 11px; padding: 1px 6px;
-            background: var(--color-primary-light); color: var(--color-primary);
+            background: rgba(0, 240, 255, 0.1); color: #00F0FF;
+            border: 1px solid rgba(0, 240, 255, 0.3);
             border-radius: 2px; font-weight: 500;
         }
         .seller-bar-meta {
-            display: flex; gap: 14px; font-size: 12px; color: var(--color-muted);
+            display: flex; gap: 14px; font-size: 12px; color: rgba(255, 238, 0, 0.5);
         }
         .seller-bar-meta span { display: flex; align-items: center; gap: 3px; }
-        .seller-bar-meta .sep { color: #e5e7eb; }
+        .seller-bar-meta .sep { color: rgba(0, 240, 255, 0.2); }
         .seller-bar-actions { display: flex; gap: 8px; flex-shrink: 0; }
         .btn-chat {
-            padding: 8px 18px; background: #fff7ed; color: var(--color-primary);
-            border: 1px solid #fed7aa; border-radius: 6px;
+            padding: 8px 18px; background: rgba(0, 240, 255, 0.08); color: #00F0FF;
+            border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 2px;
             font-size: 13px; font-weight: 600; cursor: pointer;
             display: flex; align-items: center; gap: 5px;
-            transition: all 0.15s;
+            transition: all 0.15s; font-family: 'Courier New', Consolas, monospace;
         }
-        .btn-chat:hover { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+        .btn-chat:hover { background: #00F0FF; color: #000; border-color: #00F0FF; }
         .btn-follow {
-            padding: 8px 18px; background: #fff; color: var(--color-text);
-            border: 1px solid var(--color-border); border-radius: 6px;
+            padding: 8px 18px; background: transparent; color: #00F0FF;
+            border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 2px;
             font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 5px;
-            transition: all 0.15s;
+            transition: all 0.15s; font-family: 'Courier New', Consolas, monospace;
         }
-        .btn-follow:hover { border-color: var(--color-primary); color: var(--color-primary); }
+        .btn-follow:hover { border-color: #FFEE00; color: #FFEE00; }
 
-        /* 主体两栏：左图廊 + 右信息 */
+        /* ---------- 主体两栏：左图廊 + 右信息 ---------- */
         .detail-layout {
             display: grid; grid-template-columns: 1fr 460px; gap: 16px;
             align-items: start;
@@ -162,348 +148,372 @@
         }
 
         /* ---------- 左侧：图廊 + 描述 + 规格 ---------- */
-        .gallery-card {
-            background: #fff; border-radius: 8px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-            padding: 16px; display: grid;
-            grid-template-columns: 80px 1fr; gap: 12px;
-        }
-        .gallery-thumbs {
+        .cp-gallery-thumbs {
             display: flex; flex-direction: column; gap: 6px;
             max-height: 500px; overflow-y: auto;
         }
-        .gallery-thumbs::-webkit-scrollbar { width: 4px; }
-        .gallery-thumbs::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 2px; }
-        .gallery-thumb {
-            width: 72px; height: 72px; border-radius: 4px;
-            background: #f3f4f6; cursor: pointer; overflow: hidden;
-            border: 2px solid transparent;
+        .cp-gallery-thumbs::-webkit-scrollbar { width: 4px; }
+        .cp-gallery-thumbs::-webkit-scrollbar-thumb { background: rgba(0, 240, 255, 0.2); border-radius: 2px; }
+        .cp-gallery-thumb {
+            width: 72px; height: 72px; border-radius: 2px;
+            background: #0a0a0a; cursor: pointer; overflow: hidden;
+            border: 1px solid rgba(0, 240, 255, 0.12);
             display: grid; place-items: center; flex-shrink: 0;
             transition: border-color 0.15s;
         }
-        .gallery-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .gallery-thumb i { font-size: 22px; color: #cbd5e1; }
-        .gallery-thumb.active { border-color: var(--color-primary); }
-        .gallery-main {
-            aspect-ratio: 1; background: #f3f4f6;
-            border-radius: 6px; overflow: hidden;
+        .cp-gallery-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .cp-gallery-thumb i { font-size: 22px; color: rgba(0, 240, 255, 0.2); }
+        .cp-gallery-thumb.active { border-color: #00F0FF; box-shadow: 0 0 8px rgba(0, 240, 255, 0.2); }
+
+        .cp-gallery-main {
+            aspect-ratio: 1; background: #0a0a0a;
+            border-radius: 2px; overflow: hidden;
             display: grid; place-items: center;
             position: relative;
         }
-        .gallery-main img { width: 100%; height: 100%; object-fit: contain; display: block; }
-        .gallery-main i { font-size: 80px; color: rgba(255,107,53,0.3); }
-        .gallery-main .placeholder-text {
+        .cp-gallery-main img { width: 100%; height: 100%; object-fit: contain; display: block; }
+        .cp-gallery-main i { font-size: 80px; color: rgba(0, 240, 255, 0.12); }
+        .cp-gallery-main .placeholder-text {
             position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
-            color: var(--color-muted); font-size: 13px;
+            color: rgba(255, 238, 0, 0.4); font-size: 13px;
         }
-        .gallery-main .watermark {
+        .cp-watermark {
             position: absolute; bottom: 30px; right: 16px;
-            display: flex; gap: 12px; font-size: 12px; color: var(--color-muted);
+            display: flex; gap: 12px; font-size: 12px; color: rgba(255, 238, 0, 0.4);
         }
-        .gallery-main .watermark a { color: var(--color-muted); }
-        .gallery-main .watermark a:hover { color: var(--color-primary); }
+        .cp-watermark a { color: rgba(255, 238, 0, 0.5); }
+        .cp-watermark a:hover { color: #00F0FF; }
 
-        /* 描述卡 */
-        .section-card {
-            background: #fff; border-radius: 8px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-            padding: 20px 24px; margin-top: 12px;
+        /* ---------- 通用卡片 ---------- */
+        .cp-card {
+            background: #0d0d0d; border-radius: 2px;
+            border: 1px solid rgba(0, 240, 255, 0.12);
+            padding: 20px 24px;
         }
-        .section-card-title {
+
+        /* 图廊卡（特殊布局：左缩略 + 右大图） */
+        .cp-card.gallery-card {
+            display: grid;
+            grid-template-columns: 80px 1fr; gap: 12px;
+            padding: 16px;
+        }
+
+        /* ---------- 描述卡 ---------- */
+        .cp-card-title {
             font-size: 15px; font-weight: 600;
             margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+            color: #FFEE00;
         }
-        .section-card-title::before {
+        .cp-card-title::before {
             content: ''; display: inline-block; width: 3px; height: 16px;
-            background: var(--color-primary); border-radius: 2px;
+            background: #00F0FF; border-radius: 2px;
+            box-shadow: 0 0 6px #00F0FF;
         }
-        .section-card-content { font-size: 14px; line-height: 1.8; color: var(--color-text);
-                                white-space: pre-wrap; }
-        .spec-table {
+        .cp-card-content { font-size: 14px; line-height: 1.8; color: #FFEE00; white-space: pre-wrap; }
+
+        .cp-spec-table {
             display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px;
             font-size: 13px;
         }
-        .spec-row { display: flex; gap: 8px; }
-        .spec-key { color: var(--color-muted); flex-shrink: 0; min-width: 70px; }
-        .spec-val { color: var(--color-text); }
+        .cp-spec-row { display: flex; gap: 8px; }
+        .cp-spec-key { color: rgba(255, 238, 0, 0.45); flex-shrink: 0; min-width: 70px; }
+        .cp-spec-val { color: #FFEE00; }
 
         /* ---------- 右侧：信息区（sticky） ---------- */
-        .info-col { position: sticky; top: 72px; display: flex; flex-direction: column; gap: 12px; }
-        @media (max-width: 1024px) { .info-col { position: static; } }
+        .cp-info-col { position: sticky; top: 72px; display: flex; flex-direction: column; gap: 12px; }
+        @media (max-width: 1024px) { .cp-info-col { position: static; } }
 
-        .info-card {
-            background: #fff; border-radius: 8px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-            padding: 20px 22px;
+        /*
+         * 以下 .badge / .badge-* 由 Vue computed 属性 statusBadgeClass 直接返回类名字符串，
+         * 故保留原类名，仅覆盖为赛博朋克配色。
+         */
+        .badge {
+            padding: 3px 10px; border-radius: 2px; font-size: 12px; font-weight: 600;
+            display: inline-flex; align-items: center; gap: 4px;
+            border: 1px solid; letter-spacing: 0.3px;
         }
-        .info-status-row {
+        .badge-primary { background: rgba(0, 240, 255, 0.1); color: #00F0FF; border-color: rgba(0, 240, 255, 0.3); }
+        .badge-success { background: rgba(0, 255, 65, 0.1);  color: #00FF41; border-color: rgba(0, 255, 65, 0.3); }
+        .badge-warning { background: rgba(255, 238, 0, 0.1); color: #FFEE00; border-color: rgba(255, 238, 0, 0.3); }
+        .badge-danger  { background: rgba(255, 0, 60, 0.1);  color: #FF003C; border-color: rgba(255, 0, 60, 0.3); }
+        .badge-info    { background: rgba(0, 240, 255, 0.08); color: #00F0FF; border-color: rgba(0, 240, 255, 0.2); }
+
+        .cp-info-status-row {
             display: flex; align-items: center; justify-content: space-between;
             margin-bottom: 12px;
         }
-        .info-status-row .left { display: flex; gap: 6px; align-items: center; }
-        .badge {
-            padding: 3px 10px; border-radius: 3px; font-size: 12px; font-weight: 500;
-            display: inline-flex; align-items: center; gap: 4px;
-        }
-        .badge-primary { background: var(--color-primary-light); color: var(--color-primary); }
-        .badge-success { background: #d1fae5; color: #059669; }
-        .badge-warning { background: #fef3c7; color: #b45309; }
-        .badge-danger  { background: #fee2e2; color: var(--color-danger); }
-        .badge-info    { background: #dbeafe; color: #1d4ed8; }
-        .info-meta-right { font-size: 12px; color: var(--color-muted); }
-        .info-meta-right i { margin-right: 3px; }
+        .cp-info-status-row .left { display: flex; gap: 6px; align-items: center; }
 
-        .price-row {
+        .cp-info-meta-right { font-size: 12px; color: rgba(255, 238, 0, 0.45); }
+        .cp-info-meta-right i { margin-right: 3px; }
+
+        .cp-price-row {
             display: flex; align-items: baseline; gap: 10px;
             margin-bottom: 8px;
         }
-        .price-current {
-            font-size: 32px; font-weight: 800; color: var(--color-primary); line-height: 1;
+        .cp-price-current {
+            font-size: 32px; font-weight: 800; color: #00F0FF; line-height: 1;
         }
-        .price-current small { font-size: 16px; font-weight: 600; margin-right: 2px; }
-        .price-tag {
+        .cp-price-current small { font-size: 16px; font-weight: 600; margin-right: 2px; }
+        .cp-price-tag {
             padding: 2px 8px; font-size: 11px;
-            background: #fff7ed; color: var(--color-primary);
-            border: 1px solid #fed7aa; border-radius: 3px;
+            background: rgba(0, 240, 255, 0.08); color: #00F0FF;
+            border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 2px;
         }
 
-        .info-title {
+        .cp-info-title {
             font-size: 16px; font-weight: 500; line-height: 1.6;
-            color: var(--color-text); margin: 12px 0 14px;
+            color: #FFEE00; margin: 12px 0 14px;
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
             overflow: hidden;
         }
 
-        /* 规格简表（在右侧出价区上方） */
-        .spec-compact {
+        /* 规格简表 */
+        .cp-spec-compact {
             display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px;
             font-size: 12px; margin-bottom: 14px;
-            padding: 12px 14px; background: #f9fafb; border-radius: 6px;
+            padding: 12px 14px; background: #0a0a0a; border-radius: 2px;
+            border: 1px solid rgba(0, 240, 255, 0.08);
         }
-        .spec-compact .spec-row .spec-key { min-width: 50px; }
-        .spec-compact .spec-row .spec-val { color: var(--color-text); font-weight: 500; }
+        .cp-spec-compact .cp-spec-key { min-width: 50px; }
+        .cp-spec-compact .cp-spec-val { color: #00F0FF; font-weight: 500; }
 
         /* 倒计时 */
-        .countdown-block {
-            background: #fff7ed; border: 1.5px dashed #fed7aa;
-            border-radius: 6px; padding: 12px 16px; margin-bottom: 12px;
+        .cp-countdown-block {
+            background: rgba(0, 240, 255, 0.04); border: 1px dashed rgba(0, 240, 255, 0.25);
+            border-radius: 2px; padding: 12px 16px; margin-bottom: 12px;
             text-align: center;
         }
-        .countdown-block.urgent { border-color: var(--color-danger); background: #fee2e2; }
-        .countdown-block.ended { border-color: #d1d5db; background: #f3f4f6; }
-        .countdown-label { font-size: 12px; color: var(--color-muted); margin-bottom: 4px; }
-        .countdown-time {
-            font-size: 22px; font-weight: 700; color: var(--color-primary);
-            font-family: "Consolas", "Monaco", monospace; letter-spacing: 1px;
+        .cp-countdown-block.urgent { border-color: #FF003C; background: rgba(255, 0, 60, 0.08); }
+        .cp-countdown-block.ended { border-color: rgba(255, 238, 0, 0.15); background: rgba(40, 40, 40, 0.5); }
+        .cp-countdown-label { font-size: 12px; color: rgba(255, 238, 0, 0.45); margin-bottom: 4px; }
+        .cp-countdown-time {
+            font-size: 22px; font-weight: 700; color: #00F0FF;
+            font-family: 'Courier New', Consolas, monospace; letter-spacing: 2px;
         }
-        .countdown-block.urgent .countdown-time { color: var(--color-danger); }
-        .countdown-block.ended .countdown-time { color: var(--color-muted); font-size: 16px; }
+        .cp-countdown-block.urgent .cp-countdown-time { color: #FF003C; text-shadow: 0 0 8px #FF003C; }
+        .cp-countdown-block.ended .cp-countdown-time { color: rgba(255, 238, 0, 0.3); font-size: 16px; }
 
         /* 出价区 */
-        .bid-area { margin-bottom: 12px; }
-        .bid-label { font-size: 12px; color: var(--color-muted); margin-bottom: 6px; }
-        .bid-row { display: flex; gap: 8px; align-items: stretch; }
-        .bid-input {
+        .cp-bid-area { margin-bottom: 12px; }
+        .cp-bid-label { font-size: 12px; color: rgba(255, 238, 0, 0.5); margin-bottom: 6px; }
+        .cp-bid-row { display: flex; gap: 8px; align-items: stretch; }
+        .cp-bid-input {
             flex: 1; padding: 11px 14px;
-            border: 1.5px solid var(--color-border);
-            border-radius: 6px; font-size: 16px; outline: none;
-            transition: border-color 0.15s; background: #fff; min-width: 0;
+            border: 1px solid rgba(0, 240, 255, 0.25);
+            border-radius: 2px; font-size: 16px; outline: none;
+            transition: border-color 0.15s; background: #0a0a0a;
+            min-width: 0; color: #00F0FF;
+            font-family: 'Courier New', Consolas, monospace;
         }
-        .bid-input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(255,107,53,0.1); }
-        .btn-bid {
-            padding: 11px 22px; background: var(--color-primary); color: #fff;
-            font-size: 14px; font-weight: 600; border-radius: 6px;
-            border: none; cursor: pointer; transition: all 0.15s;
-            white-space: nowrap;
-        }
-        .btn-bid:hover:not(:disabled) { background: var(--color-primary-hover); }
-        .btn-bid:disabled { opacity: 0.6; cursor: not-allowed; }
-        .bid-hint { font-size: 11px; color: var(--color-muted); margin-top: 4px; }
-        .bid-shortcut { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
-        .bid-shortcut-btn {
-            padding: 2px 8px; font-size: 11px;
-            background: #f3f4f6; color: var(--color-text-sub);
-            border: 1px solid var(--color-border); border-radius: 3px;
-            cursor: pointer; transition: all 0.15s;
-        }
-        .bid-shortcut-btn:hover { background: var(--color-primary-light); color: var(--color-primary); border-color: var(--color-primary); }
+        .cp-bid-input:focus { border-color: #00F0FF; box-shadow: 0 0 8px rgba(0, 240, 255, 0.15); }
+        .cp-bid-input::placeholder { color: rgba(0, 240, 255, 0.25); }
 
-        .bid-action-row {
+        .cp-btn {
+            padding: 11px 22px; background: #00F0FF; color: #000;
+            font-size: 14px; font-weight: 700; border-radius: 2px;
+            border: 1px solid #00F0FF; cursor: pointer; transition: all 0.15s;
+            white-space: nowrap; font-family: 'Courier New', Consolas, monospace;
+        }
+        .cp-btn:hover:not(:disabled) { background: #FFEE00; border-color: #FFEE00; color: #000; }
+        .cp-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .cp-bid-hint { font-size: 11px; color: rgba(255, 238, 0, 0.4); margin-top: 4px; }
+        .cp-bid-shortcut { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+
+        .cp-btn-sm {
+            padding: 2px 8px; font-size: 11px;
+            background: transparent; color: #00F0FF;
+            border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 2px;
+            cursor: pointer; transition: all 0.15s;
+            font-family: 'Courier New', Consolas, monospace;
+        }
+        .cp-btn-sm:hover { background: rgba(0, 240, 255, 0.1); color: #FFEE00; border-color: #00F0FF; }
+
+        .cp-bid-action-row {
             display: flex; gap: 8px; margin-top: 8px;
         }
-        .btn-secondary {
-            flex: 1; padding: 10px 0; background: #fff; color: var(--color-text);
-            border: 1px solid var(--color-border); border-radius: 6px;
+        .cp-btn-secondary {
+            flex: 1; padding: 10px 0; background: transparent; color: #00F0FF;
+            border: 1px solid rgba(0, 240, 255, 0.2); border-radius: 2px;
             font-size: 13px; cursor: pointer; transition: all 0.15s;
             display: flex; align-items: center; justify-content: center; gap: 5px;
+            font-family: 'Courier New', Consolas, monospace;
         }
-        .btn-secondary:hover { border-color: var(--color-primary); color: var(--color-primary); }
-        .btn-secondary.danger:hover { border-color: var(--color-danger); color: var(--color-danger); }
+        .cp-btn-secondary:hover { border-color: #00F0FF; color: #FFEE00; }
+        .cp-btn-secondary.danger:hover { border-color: #FF003C; color: #FF003C; }
 
-        .info-footer {
+        .cp-info-footer {
             margin-top: 14px; padding-top: 12px;
-            border-top: 1px solid var(--color-border-soft);
+            border-top: 1px solid rgba(0, 240, 255, 0.1);
             display: flex; align-items: center; gap: 12px;
-            font-size: 12px; color: var(--color-muted);
+            font-size: 12px; color: rgba(255, 238, 0, 0.45);
         }
-        .info-footer a { color: var(--color-muted); }
-        .info-footer a:hover { color: var(--color-primary); }
+        .cp-info-footer a { color: rgba(255, 238, 0, 0.5); }
+        .cp-info-footer a:hover { color: #00F0FF; }
 
         /* 出价历史卡 */
-        .bids-card { padding: 20px 24px; }
-        .bids-head {
+        .cp-bids-head {
             display: flex; align-items: center; justify-content: space-between;
             margin-bottom: 14px;
         }
-        .bids-list { max-height: 360px; overflow-y: auto; }
-        .bids-list::-webkit-scrollbar { width: 4px; }
-        .bids-list::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 2px; }
-        .bid-row-item {
+        .cp-bids-list { max-height: 360px; overflow-y: auto; }
+        .cp-bids-list::-webkit-scrollbar { width: 4px; }
+        .cp-bids-list::-webkit-scrollbar-thumb { background: rgba(0, 240, 255, 0.2); border-radius: 2px; }
+        .cp-bid-row-item {
             display: flex; align-items: center; gap: 10px;
-            padding: 10px 0; border-bottom: 1px solid var(--color-border-soft);
+            padding: 10px 0; border-bottom: 1px solid rgba(0, 240, 255, 0.06);
         }
-        .bid-row-item:last-child { border-bottom: none; }
-        .bid-rank {
+        .cp-bid-row-item:last-child { border-bottom: none; }
+
+        .cp-bid-rank {
             display: inline-grid; place-items: center;
-            width: 22px; height: 22px; border-radius: 50%;
-            background: #e5e7eb; color: #6b7280;
+            width: 22px; height: 22px; border-radius: 2px;
+            background: rgba(255, 238, 0, 0.08); color: rgba(255, 238, 0, 0.5);
             font-size: 11px; font-weight: 700; flex-shrink: 0;
         }
-        .bid-rank.gold   { background: #fbbf24; color: #fff; }
-        .bid-rank.silver { background: #d1d5db; color: #fff; }
-        .bid-rank.bronze { background: #d97706; color: #fff; }
-        .bid-user { flex: 1; min-width: 0; font-size: 13px; }
-        .bid-user .u-name {
+        .cp-bid-rank.gold   { background: #FFEE00; color: #000; }
+        .cp-bid-rank.silver { background: rgba(255, 238, 0, 0.2); color: #FFEE00; }
+        .cp-bid-rank.bronze { background: rgba(255, 0, 60, 0.25); color: #FF003C; }
+
+        .cp-bid-user { flex: 1; min-width: 0; font-size: 13px; }
+        .cp-bid-user .u-name {
             display: flex; align-items: center; gap: 4px;
         }
-        .bid-user .u-name .crown { color: #f59e0b; font-size: 12px; }
-        .bid-user .u-time { font-size: 11px; color: var(--color-muted); margin-top: 2px; }
-        .bid-amount {
-            font-size: 15px; font-weight: 700; color: var(--color-primary);
+        .cp-bid-user .u-name .crown { color: #FFEE00; font-size: 12px; text-shadow: 0 0 4px #FFEE00; }
+        .cp-bid-user .u-time { font-size: 11px; color: rgba(255, 238, 0, 0.4); margin-top: 2px; }
+        .cp-bid-amount {
+            font-size: 15px; font-weight: 700; color: #00F0FF;
             text-align: right; flex-shrink: 0;
         }
-        .bids-empty {
-            text-align: center; padding: 30px; color: var(--color-muted); font-size: 13px;
-        }
-        .bids-empty i { font-size: 32px; opacity: 0.3; margin-bottom: 6px; display: block; }
 
-        /* 错误 / 提示条 */
-        .info-note {
-            padding: 10px 14px; border-radius: 6px;
+        .cp-bids-empty {
+            text-align: center; padding: 30px; color: rgba(255, 238, 0, 0.35); font-size: 13px;
+        }
+        .cp-bids-empty i { font-size: 32px; opacity: 0.2; margin-bottom: 6px; display: block; }
+
+        /* 提示条 */
+        .cp-info-note {
+            padding: 10px 14px; border-radius: 2px;
             font-size: 13px; margin-bottom: 12px;
             display: flex; align-items: center; gap: 8px;
+            border: 1px solid;
         }
-        .info-note-warning { background: #fef3c7; color: #b45309; }
-        .info-note-info    { background: #dbeafe; color: #1d4ed8; }
+        .cp-info-note-warning { background: rgba(255, 238, 0, 0.06); color: #FFEE00; border-color: rgba(255, 238, 0, 0.2); }
+        .cp-info-note-info    { background: rgba(0, 240, 255, 0.06); color: #00F0FF; border-color: rgba(0, 240, 255, 0.2); }
 
         /* 卖家专属操作按钮 */
-        .owner-actions { display: flex; gap: 8px; margin-top: 10px; }
-        .owner-btn {
-            flex: 1; padding: 10px 16px; border-radius: 6px;
+        .cp-owner-actions { display: flex; gap: 8px; margin-top: 10px; }
+        .cp-owner-btn {
+            flex: 1; padding: 10px 16px; border-radius: 2px;
             font-size: 13px; font-weight: 600; cursor: pointer;
             text-decoration: none; text-align: center;
             display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-            transition: all 0.15s; border: 1.5px solid transparent;
+            transition: all 0.15s; border: 1px solid transparent;
+            font-family: 'Courier New', Consolas, monospace;
         }
-        .owner-btn-edit { background: #fff; color: var(--color-primary); border-color: var(--color-primary); }
-        .owner-btn-edit:hover { background: var(--color-primary); color: #fff; }
-        .owner-btn-offline { background: #fff; color: var(--color-danger); border-color: var(--color-danger); }
-        .owner-btn-offline:hover { background: var(--color-danger); color: #fff; }
+        .cp-owner-btn-edit { background: transparent; color: #00F0FF; border-color: #00F0FF; }
+        .cp-owner-btn-edit:hover { background: #00F0FF; color: #000; }
+        .cp-owner-btn-offline { background: transparent; color: #FF003C; border-color: #FF003C; }
+        .cp-owner-btn-offline:hover { background: #FF003C; color: #000; }
 
-        /* 加载失败 */
-        .load-fail {
-            text-align: center; padding: 80px 20px; color: var(--color-muted);
-            background: #fff; border-radius: 8px;
+        /* 空 / 加载失败 */
+        .cp-empty {
+            text-align: center; padding: 80px 20px; color: rgba(255, 238, 0, 0.35);
+            background: #0d0d0d; border: 1px solid rgba(0, 240, 255, 0.12);
+            border-radius: 2px;
         }
-        .load-fail i { font-size: 48px; opacity: 0.3; margin-bottom: 8px; display: block; }
+        .cp-empty i { font-size: 48px; opacity: 0.2; margin-bottom: 8px; display: block; }
 
         /* 为你推荐 */
-        .recommend-block {
-            background: #fff; border-radius: 8px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-            margin-top: 16px; padding: 16px 20px;
-        }
-        .recommend-head {
+        .cp-recommend-head {
             display: flex; align-items: baseline; justify-content: space-between;
             margin-bottom: 14px;
         }
-        .recommend-title { font-size: 16px; font-weight: 700; }
-        .recommend-link { font-size: 12px; color: var(--color-muted); }
-        .recommend-link:hover { color: var(--color-primary); }
-        .recommend-grid {
+        .cp-recommend-title { font-size: 16px; font-weight: 700; color: #FFEE00; }
+        .cp-recommend-link { font-size: 12px; color: rgba(255, 238, 0, 0.5); }
+        .cp-recommend-link:hover { color: #00F0FF; }
+
+        .cp-goods-grid {
             display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px;
         }
-        @media (max-width: 1200px) { .recommend-grid { grid-template-columns: repeat(5, 1fr); } }
-        @media (max-width: 1024px) { .recommend-grid { grid-template-columns: repeat(4, 1fr); } }
-        @media (max-width: 768px)  { .recommend-grid { grid-template-columns: repeat(3, 1fr); } }
-        .rec-card {
-            background: #fff; border: 1px solid transparent;
-            border-radius: 4px; overflow: hidden; cursor: pointer;
+        @media (max-width: 1200px) { .cp-goods-grid { grid-template-columns: repeat(5, 1fr); } }
+        @media (max-width: 1024px) { .cp-goods-grid { grid-template-columns: repeat(4, 1fr); } }
+        @media (max-width: 768px)  { .cp-goods-grid { grid-template-columns: repeat(3, 1fr); } }
+
+        .cp-goods-card {
+            background: #0d0d0d; border: 1px solid rgba(0, 240, 255, 0.12);
+            border-radius: 2px; overflow: hidden; cursor: pointer;
             transition: all 0.15s; text-decoration: none; color: inherit;
         }
-        .rec-card:hover {
-            border-color: var(--color-primary);
+        .cp-goods-card:hover {
+            border-color: #00F0FF;
             transform: translateY(-2px);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            box-shadow: 0 0 16px rgba(0, 240, 255, 0.15);
         }
-        .rec-cover {
-            width: 100%; aspect-ratio: 1; background: #fff7ed;
+
+        .cp-goods-cover {
+            width: 100%; aspect-ratio: 1; background: #0a0a0a;
             display: grid; place-items: center; position: relative;
         }
-        .rec-cover i { font-size: 30px; color: rgba(255,107,53,0.4); }
-        .rec-cover .rec-price-tag {
+        .cp-goods-cover i { font-size: 30px; color: rgba(0, 240, 255, 0.12); }
+        .cp-goods-cover .cp-goods-price-tag {
             position: absolute; bottom: 4px; left: 4px; right: 4px;
-            background: rgba(0,0,0,0.6); color: #fff;
-            font-size: 11px; font-weight: 600; padding: 3px 6px;
-            text-align: center;
+            background: rgba(0, 0, 0, 0.85);
+            color: #00F0FF; font-size: 11px; font-weight: 600; padding: 3px 6px;
+            text-align: center; border: 1px solid rgba(0, 240, 255, 0.15);
         }
-        .rec-body { padding: 6px 8px 8px; }
-        .rec-title {
+        .cp-goods-body { padding: 6px 8px 8px; }
+        .cp-goods-title {
             font-size: 12px; line-height: 1.4; min-height: 32px;
-            color: var(--color-text);
+            color: #FFEE00;
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
             overflow: hidden;
         }
 
         /* 右侧浮动操作栏 */
-        .floats {
+        .cp-floats {
             position: fixed; right: 16px; top: 50%; transform: translateY(-50%);
             display: flex; flex-direction: column; gap: 6px; z-index: 50;
         }
-        .float-btn {
-            width: 40px; height: 40px; background: #fff;
-            border-radius: 8px; display: flex; flex-direction: column;
+        .cp-float-btn {
+            width: 40px; height: 40px; background: #0d0d0d;
+            border: 1px solid rgba(0, 240, 255, 0.15); border-radius: 2px;
+            display: flex; flex-direction: column;
             align-items: center; justify-content: center;
-            color: var(--color-text-sub); box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+            color: #00F0FF; box-shadow: 0 0 6px rgba(0, 240, 255, 0.05);
             transition: all 0.15s; cursor: pointer; font-size: 10px; gap: 1px;
-            text-decoration: none; border: none;
+            text-decoration: none; border: 1px solid rgba(0, 240, 255, 0.15);
         }
-        .float-btn i { font-size: 14px; }
-        .float-btn:hover { background: var(--color-primary); color: #fff; transform: translateY(-1px); }
-        .float-btn.primary { background: var(--color-primary); color: #fff; }
-        @media (max-width: 1200px) { .floats { display: none; } }
+        .cp-float-btn i { font-size: 14px; }
+        .cp-float-btn:hover { background: #00F0FF; color: #000; transform: translateY(-1px); box-shadow: 0 0 12px #00F0FF; }
+        .cp-float-btn.primary { background: #00F0FF; color: #000; border-color: #00F0FF; }
+        @media (max-width: 1200px) { .cp-floats { display: none; } }
 
         /* 页脚 */
         .detail-footer {
-            background: #1f2937; color: #d1d5db;
+            background: #050505; color: rgba(255, 238, 0, 0.4);
+            border-top: 1px solid rgba(0, 240, 255, 0.1);
             margin-top: 32px; padding: 32px 16px 16px;
             text-align: center; font-size: 12px;
         }
-        .detail-footer-inner { max-width: 1200px; margin: 0 auto; color: #6b7280; }
+        .detail-footer-inner { max-width: 1200px; margin: 0 auto; color: rgba(255, 238, 0, 0.25); }
 
         [v-cloak] { display: none; }
     </style>
 </head>
 <body>
 
+<div class="scanline" aria-hidden="true"></div>
+
 <!-- ========== 顶 nav ========== -->
-<header class="header">
-    <div class="header-inner">
-        <a href="<%=ctx%>/index.jsp" class="logo">
-            <span class="logo-icon"><i class="fa fa-gavel"></i></span>
+<header class="cp-nav">
+    <div class="cp-nav-inner">
+        <a href="<%=ctx%>/index.jsp" class="cp-logo">
+            <span class="cp-logo-icon"><i class="fa fa-gavel"></i></span>
             <span>二手拍卖</span>
         </a>
-        <nav class="nav">
+        <nav class="cp-nav-menu">
             <a href="<%=ctx%>/index.jsp">首页</a>
             <a href="<%=ctx%>/item?action=list">浏览拍品</a>
             <a href="<%=ctx%>/item?action=publish-page">发布拍品</a>
@@ -512,27 +522,27 @@
                 <a href="<%=ctx%>/user?action=center">个人中心</a>
             <% } %>
         </nav>
-        <form action="<%=ctx%>/item" method="get" class="nav-search">
+        <form action="<%=ctx%>/item" method="get" class="cp-nav-search">
             <input type="hidden" name="action" value="list">
             <input type="text" name="keyword" placeholder="搜索拍品 · 数码 / 服饰 / 书籍 ..."
                    value="<%= kwValue %>">
             <button type="submit"><i class="fa fa-search"></i> 搜索</button>
         </form>
-        <div class="nav-tags">
+        <div class="cp-nav-tags">
             <span class="nav-tags-label">热搜：</span>
-            <a href="<%=ctx%>/item/list?keyword=iPhone" class="nav-tag hot">iPhone 15</a>
-            <a href="<%=ctx%>/item/list?keyword=相机" class="nav-tag">佳能相机</a>
-            <a href="<%=ctx%>/item/list?keyword=球鞋" class="nav-tag">球鞋</a>
-            <a href="<%=ctx%>/item/list?keyword=茅台" class="nav-tag hot">茅台</a>
+            <a href="<%=ctx%>/item/list?keyword=iPhone" class="cp-nav-tag cp-nav-tag-hot">iPhone 15</a>
+            <a href="<%=ctx%>/item/list?keyword=相机" class="cp-nav-tag">佳能相机</a>
+            <a href="<%=ctx%>/item/list?keyword=球鞋" class="cp-nav-tag">球鞋</a>
+            <a href="<%=ctx%>/item/list?keyword=茅台" class="cp-nav-tag cp-nav-tag-hot">茅台</a>
         </div>
-        <div class="user-info">
+        <div class="cp-nav-user">
             <% if (currentUser != null) { %>
                 <a href="<%=ctx%>/user?action=center" class="user-name-link"><%= currentUser.getUsername() %></a>
-                <a href="<%=ctx%>/user?action=logout" style="font-size: 12px; color: var(--color-muted);">退出</a>
+                <a href="<%=ctx%>/user?action=logout" style="font-size: 12px; color: rgba(255,238,0,0.5);">退出</a>
                 <a href="<%=ctx%>/user?action=center" class="avatar"><%= currentUser.getUsername().substring(0, 1).toUpperCase() %></a>
             <% } else { %>
-                <a href="<%=ctx%>/user?action=login" style="font-size: 13px; padding: 6px 12px; color: var(--color-primary); border: 1px solid var(--color-primary); border-radius: 4px;">登录</a>
-                <a href="<%=ctx%>/user?action=register" style="font-size: 13px; padding: 6px 12px; color: #fff; background: var(--color-primary); border-radius: 4px;">注册</a>
+                <a href="<%=ctx%>/user?action=login" style="font-size: 13px; padding: 6px 12px; color: #00F0FF; border: 1px solid #00F0FF; border-radius: 2px;">登录</a>
+                <a href="<%=ctx%>/user?action=register" style="font-size: 13px; padding: 6px 12px; color: #000; background: #00F0FF; border-radius: 2px;">注册</a>
             <% } %>
         </div>
     </div>
@@ -575,24 +585,24 @@
         <!-- 左侧：图廊 + 描述 + 规格 -->
         <div>
             <!-- 图廊 -->
-            <div class="gallery-card">
-                <div class="gallery-thumbs" v-if="galleryImages.length > 0">
+            <div class="cp-card gallery-card">
+                <div class="cp-gallery-thumbs" v-if="galleryImages.length > 0">
                     <div v-for="(img, idx) in galleryImages" :key="idx"
-                         :class="['gallery-thumb', { active: currentImageIdx === idx }]"
+                         :class="['cp-gallery-thumb', { active: currentImageIdx === idx }]"
                          @click="currentImageIdx = idx">
                         <img v-if="img" :src="img" :alt="'图' + (idx+1)" @error="onImgError($event)">
                         <i v-else class="fa fa-image"></i>
                     </div>
                 </div>
-                <div v-else class="gallery-thumbs">
-                    <div class="gallery-thumb active">
+                <div v-else class="cp-gallery-thumbs">
+                    <div class="cp-gallery-thumb active">
                         <i class="fa fa-image"></i>
                     </div>
                 </div>
-                <div class="gallery-main">
+                <div class="cp-gallery-main">
                     <img v-if="currentImage" :src="currentImage" :alt="item.title" @error="onImgError($event)">
                     <i v-else class="fa fa-image"></i>
-                    <div class="watermark">
+                    <div class="cp-watermark">
                         <a href="javascript:void(0)" @click="toast('举报已提交（前端占位）', 'success')">
                             <i class="fa fa-flag-o"></i> 举报
                         </a>
@@ -604,34 +614,34 @@
             </div>
 
             <!-- 拍品描述 -->
-            <div class="section-card">
-                <div class="section-card-title">拍品描述</div>
-                <div class="section-card-content">{{ item.description || '卖家未填写详细描述' }}</div>
+            <div class="cp-card" style="margin-top:12px;">
+                <div class="cp-card-title">拍品描述</div>
+                <div class="cp-card-content">{{ item.description || '卖家未填写详细描述' }}</div>
             </div>
 
             <!-- 规格参数 -->
-            <div class="section-card">
-                <div class="section-card-title">规格参数</div>
-                <div class="spec-table">
-                    <div class="spec-row"><span class="spec-key">品牌：</span><span class="spec-val">{{ item.brand || '-' }}</span></div>
-                    <div class="spec-row"><span class="spec-key">型号：</span><span class="spec-val">{{ item.model || '-' }}</span></div>
-                    <div class="spec-row"><span class="spec-key">成色：</span><span class="spec-val">{{ item.conditionLevel || '-' }}</span></div>
-                    <div class="spec-row"><span class="spec-key">瑕疵：</span><span class="spec-val">{{ item.flawDesc || '无' }}</span></div>
-                    <div class="spec-row"><span class="spec-key">起拍价：</span><span class="spec-val">¥{{ formatPrice(item.startPrice) }}</span></div>
-                    <div class="spec-row"><span class="spec-key">加价幅度：</span><span class="spec-val">¥{{ formatPrice(item.bidIncrement) }}</span></div>
-                    <div class="spec-row"><span class="spec-key">开始时间：</span><span class="spec-val">{{ formatDateTime(item.startTime) }}</span></div>
-                    <div class="spec-row"><span class="spec-key">结束时间：</span><span class="spec-val">{{ formatDateTime(item.endTime) }}</span></div>
-                    <div class="spec-row"><span class="spec-key">分类：</span><span class="spec-val">{{ category ? category.categoryName : '-' }}</span></div>
-                    <div class="spec-row"><span class="spec-key">浏览数：</span><span class="spec-val">{{ item.viewCount || 0 }}</span></div>
+            <div class="cp-card" style="margin-top:12px;">
+                <div class="cp-card-title">规格参数</div>
+                <div class="cp-spec-table">
+                    <div class="cp-spec-row"><span class="cp-spec-key">品牌：</span><span class="cp-spec-val">{{ item.brand || '-' }}</span></div>
+                    <div class="cp-spec-row"><span class="cp-spec-key">型号：</span><span class="cp-spec-val">{{ item.model || '-' }}</span></div>
+                    <div class="cp-spec-row"><span class="cp-spec-key">成色：</span><span class="cp-spec-val">{{ item.conditionLevel || '-' }}</span></div>
+                    <div class="cp-spec-row"><span class="cp-spec-key">瑕疵：</span><span class="cp-spec-val">{{ item.flawDesc || '无' }}</span></div>
+                    <div class="cp-spec-row"><span class="cp-spec-key">起拍价：</span><span class="cp-spec-val">¥{{ formatPrice(item.startPrice) }}</span></div>
+                    <div class="cp-spec-row"><span class="cp-spec-key">加价幅度：</span><span class="cp-spec-val">¥{{ formatPrice(item.bidIncrement) }}</span></div>
+                    <div class="cp-spec-row"><span class="cp-spec-key">开始时间：</span><span class="cp-spec-val">{{ formatDateTime(item.startTime) }}</span></div>
+                    <div class="cp-spec-row"><span class="cp-spec-key">结束时间：</span><span class="cp-spec-val">{{ formatDateTime(item.endTime) }}</span></div>
+                    <div class="cp-spec-row"><span class="cp-spec-key">分类：</span><span class="cp-spec-val">{{ category ? category.categoryName : '-' }}</span></div>
+                    <div class="cp-spec-row"><span class="cp-spec-key">浏览数：</span><span class="cp-spec-val">{{ item.viewCount || 0 }}</span></div>
                 </div>
             </div>
         </div>
 
         <!-- 右侧：信息 + 出价 -->
-        <div class="info-col">
-            <div class="info-card">
+        <div class="cp-info-col">
+            <div class="cp-card">
                 <!-- 状态 + 浏览数 -->
-                <div class="info-status-row">
+                <div class="cp-info-status-row">
                     <div class="left">
                         <span :class="statusBadgeClass">
                             <i v-if="active" class="fa fa-gavel"></i>
@@ -641,99 +651,99 @@
                         </span>
                         <span class="badge badge-info" v-if="item.conditionLevel">{{ item.conditionLevel }}</span>
                     </div>
-                    <div class="info-meta-right">
+                    <div class="cp-info-meta-right">
                         <i class="fa fa-eye"></i> {{ item.viewCount || 0 }} 浏览
                     </div>
                 </div>
 
                 <!-- 价格 -->
-                <div class="price-row">
-                    <div class="price-current">
+                <div class="cp-price-row">
+                    <div class="cp-price-current">
                         <small>¥</small>{{ formatPrice(item.currentPrice) }}
                     </div>
-                    <span class="price-tag"><i class="fa fa-truck"></i> 包邮</span>
+                    <span class="cp-price-tag"><i class="fa fa-truck"></i> 包邮</span>
                 </div>
 
                 <!-- 标题 -->
-                <h1 class="info-title">{{ item.title }}</h1>
+                <h1 class="cp-info-title">{{ item.title }}</h1>
 
                 <!-- 规格简表 -->
-                <div class="spec-compact">
-                    <div class="spec-row" v-if="item.brand"><span class="spec-key">品牌</span><span class="spec-val">{{ item.brand }}</span></div>
-                    <div class="spec-row" v-if="item.model"><span class="spec-key">型号</span><span class="spec-val">{{ item.model }}</span></div>
-                    <div class="spec-row" v-if="category"><span class="spec-key">分类</span><span class="spec-val">{{ category.categoryName }}</span></div>
-                    <div class="spec-row"><span class="spec-key">浏览</span><span class="spec-val">{{ item.viewCount || 0 }}</span></div>
+                <div class="cp-spec-compact">
+                    <div class="cp-spec-row" v-if="item.brand"><span class="cp-spec-key">品牌</span><span class="cp-spec-val">{{ item.brand }}</span></div>
+                    <div class="cp-spec-row" v-if="item.model"><span class="cp-spec-key">型号</span><span class="cp-spec-val">{{ item.model }}</span></div>
+                    <div class="cp-spec-row" v-if="category"><span class="cp-spec-key">分类</span><span class="cp-spec-val">{{ category.categoryName }}</span></div>
+                    <div class="cp-spec-row"><span class="cp-spec-key">浏览</span><span class="cp-spec-val">{{ item.viewCount || 0 }}</span></div>
                 </div>
 
                 <!-- 倒计时 -->
-                <div :class="['countdown-block', { urgent: isUrgent, ended: !active && item.status !== 2 }]">
-                    <div class="countdown-label">
+                <div :class="['cp-countdown-block', { urgent: isUrgent, ended: !active && item.status !== 2 }]">
+                    <div class="cp-countdown-label">
                         <span v-if="active">距结束</span>
                         <span v-else-if="item.status === 2">已成交</span>
                         <span v-else>已结束</span>
                     </div>
-                    <div class="countdown-time">{{ countdownText }}</div>
+                    <div class="cp-countdown-time">{{ countdownText }}</div>
                 </div>
 
                 <!-- 出价区 -->
                 <div v-if="isOwner">
-                    <div class="info-note info-note-info">
+                    <div class="cp-info-note cp-info-note-info">
                         <i class="fa fa-info-circle"></i> 这是您自己发布的拍品，不能出价
                     </div>
                     <!-- 卖家专属操作按钮（编辑/撤拍） -->
-                    <div class="owner-actions" v-if="canEdit || canOffline">
-                        <a v-if="canEdit" :href="'<%=ctx%>/item?action=edit-page&id=' + item.id" class="owner-btn owner-btn-edit">
+                    <div class="cp-owner-actions" v-if="canEdit || canOffline">
+                        <a v-if="canEdit" :href="'<%=ctx%>/item?action=edit-page&id=' + item.id" class="cp-owner-btn cp-owner-btn-edit">
                             <i class="fa fa-pencil"></i> 编辑拍品
                         </a>
-                        <button v-if="canOffline" type="button" class="owner-btn owner-btn-offline" @click="offlineItem">
+                        <button v-if="canOffline" type="button" class="cp-owner-btn cp-owner-btn-offline" @click="offlineItem">
                             <i class="fa fa-trash-o"></i> 撤拍
                         </button>
                     </div>
                 </div>
                 <div v-else-if="!loggedIn">
-                    <a :href="loginUrl" class="btn-bid" style="display: block; text-align: center; text-decoration: none;">
+                    <a :href="loginUrl" class="cp-btn" style="display: block; text-align: center; text-decoration: none;">
                         <i class="fa fa-sign-in"></i> 登录后参与竞拍
                     </a>
                 </div>
-                <div v-else-if="!active && item.status === 2" class="info-note info-note-warning">
+                <div v-else-if="!active && item.status === 2" class="cp-info-note cp-info-note-warning">
                     <i class="fa fa-check-circle"></i> 本场拍卖已成交，最高出价者请到"我的订单"完成付款
                 </div>
-                <div v-else-if="!active" class="info-note info-note-warning">
+                <div v-else-if="!active" class="cp-info-note cp-info-note-warning">
                     <i class="fa fa-clock-o"></i> 本场拍卖已结束，无法再出价
                 </div>
-                <div v-else class="bid-area">
-                    <div class="bid-label">您的出价（最低 ¥{{ nextMinBid }}）</div>
-                    <div class="bid-row">
-                        <input type="number" class="bid-input" v-model.number="bidAmount"
+                <div v-else class="cp-bid-area">
+                    <div class="cp-bid-label">您的出价（最低 ¥{{ nextMinBid }}）</div>
+                    <div class="cp-bid-row">
+                        <input type="number" class="cp-bid-input" v-model.number="bidAmount"
                                :min="nextMinBid" :step="item.bidIncrement"
                                :placeholder="'至少 ' + nextMinBid">
-                        <button class="btn-bid" :disabled="bidding" @click="placeBid">
+                        <button class="cp-btn" :disabled="bidding" @click="placeBid">
                             {{ bidding ? '出价中...' : '立即出价' }}
                         </button>
                     </div>
-                    <div class="bid-shortcut">
-                        <span class="bid-shortcut-btn" @click="addQuickBid(0)">起拍价</span>
-                        <span class="bid-shortcut-btn" @click="addQuickBid(1)">+1 步</span>
-                        <span class="bid-shortcut-btn" @click="addQuickBid(3)">+3 步</span>
-                        <span class="bid-shortcut-btn" @click="addQuickBid(5)">+5 步</span>
+                    <div class="cp-bid-shortcut">
+                        <span class="cp-btn-sm" @click="addQuickBid(0)">起拍价</span>
+                        <span class="cp-btn-sm" @click="addQuickBid(1)">+1 步</span>
+                        <span class="cp-btn-sm" @click="addQuickBid(3)">+3 步</span>
+                        <span class="cp-btn-sm" @click="addQuickBid(5)">+5 步</span>
                     </div>
                 </div>
 
                 <!-- 次级操作 -->
-                <div class="bid-action-row">
-                    <button class="btn-secondary" @click="onFavorite" :disabled="favoriting"
+                <div class="cp-bid-action-row">
+                    <button class="cp-btn-secondary" @click="onFavorite" :disabled="favoriting"
                             :title="canFavorite ? '' : (isOwner ? '不能收藏自己发布的拍品' : '请先登录')">
                         <i :class="['fa', favorited ? 'fa-heart' : 'fa-heart-o']"
                            :style="favorited ? 'color: #ef4444;' : ''"></i>
                         {{ favorited ? '已收藏' : '收藏' }}
                     </button>
-                    <button class="btn-secondary" @click="onShare">
+                    <button class="cp-btn-secondary" @click="onShare">
                         <i class="fa fa-share-alt"></i> 分享
                     </button>
                 </div>
 
                 <!-- 担保 / 举报 -->
-                <div class="info-footer">
+                <div class="cp-info-footer">
                     <span><i class="fa fa-shield"></i> 担保交易</span>
                     <a href="javascript:void(0)" @click="toast('举报已提交（前端占位）', 'success')">
                         <i class="fa fa-flag-o"></i> 举报
@@ -742,28 +752,28 @@
             </div>
 
             <!-- 出价历史 -->
-            <div class="info-card bids-card">
-                <div class="bids-head">
-                    <div class="section-card-title" style="margin-bottom: 0;">出价记录</div>
-                    <span style="font-size: 12px; color: var(--color-muted);">
+            <div class="cp-card">
+                <div class="cp-bids-head">
+                    <div class="cp-card-title" style="margin-bottom: 0;">出价记录</div>
+                    <span style="font-size: 12px; color: rgba(255,238,0,0.45);">
                         共 {{ bids.length }} 次 / {{ bidderCount }} 人
                     </span>
                 </div>
-                <div v-if="bids.length === 0" class="bids-empty">
+                <div v-if="bids.length === 0" class="cp-bids-empty">
                     <i class="fa fa-inbox"></i>
-                    暂无出价记录，赶快来抢沙发 👀
+                    暂无出价记录，赶快来抢沙发
                 </div>
-                <div v-else class="bids-list">
-                    <div v-for="(bid, idx) in bids" :key="bid.id" class="bid-row-item">
-                        <span :class="['bid-rank', rankClass(idx)]">{{ idx + 1 }}</span>
-                        <div class="bid-user">
+                <div v-else class="cp-bids-list">
+                    <div v-for="(bid, idx) in bids" :key="bid.id" class="cp-bid-row-item">
+                        <span :class="['cp-bid-rank', rankClass(idx)]">{{ idx + 1 }}</span>
+                        <div class="cp-bid-user">
                             <div class="u-name">
                                 <span>{{ '用户 #' + bid.bidderId }}</span>
                                 <i v-if="bid.isWinning === 1" class="fa fa-crown crown" title="当前领先"></i>
                             </div>
                             <div class="u-time">{{ formatDateTime(bid.bidTime) }}</div>
                         </div>
-                        <div class="bid-amount">¥{{ formatPrice(bid.bidAmount) }}</div>
+                        <div class="cp-bid-amount">¥{{ formatPrice(bid.bidAmount) }}</div>
                     </div>
                 </div>
             </div>
@@ -771,54 +781,54 @@
     </div>
 
     <!-- 加载失败 -->
-    <div v-else class="load-fail">
+    <div v-else class="cp-empty">
         <i class="fa fa-exclamation-circle"></i>
         <p>加载失败，请稍后再试</p>
     </div>
 
     <!-- ========== 为你推荐 ========== -->
-    <div class="recommend-block">
-        <div class="recommend-head">
-            <div class="recommend-title">为你推荐</div>
-            <a href="<%=ctx%>/item?action=list" class="recommend-link">查看更多 →</a>
+    <div class="cp-card" style="margin-top:16px;">
+        <div class="cp-recommend-head">
+            <div class="cp-recommend-title">为你推荐</div>
+            <a href="<%=ctx%>/item?action=list" class="cp-recommend-link">查看更多 →</a>
         </div>
-        <div class="recommend-grid">
+        <div class="cp-goods-grid">
             <%-- 静态推荐拍品（前端占位，等后端给推荐接口再接） --%>
-            <a href="<%=ctx%>/item?action=detail&id=201" class="rec-card">
-                <div class="rec-cover"><i class="fa fa-mobile"></i>
-                    <div class="rec-price-tag">¥4,250</div>
+            <a href="<%=ctx%>/item?action=detail&id=201" class="cp-goods-card">
+                <div class="cp-goods-cover"><i class="fa fa-mobile"></i>
+                    <div class="cp-goods-price-tag">¥4,250</div>
                 </div>
-                <div class="rec-body"><div class="rec-title">iPhone 14 Pro 256G 深空黑 99新 自用</div></div>
+                <div class="cp-goods-body"><div class="cp-goods-title">iPhone 14 Pro 256G 深空黑 99新 自用</div></div>
             </a>
-            <a href="<%=ctx%>/item?action=detail&id=202" class="rec-card">
-                <div class="rec-cover"><i class="fa fa-clock-o"></i>
-                    <div class="rec-price-tag">¥62,000</div>
+            <a href="<%=ctx%>/item?action=detail&id=202" class="cp-goods-card">
+                <div class="cp-goods-cover"><i class="fa fa-clock-o"></i>
+                    <div class="cp-goods-price-tag">¥62,000</div>
                 </div>
-                <div class="rec-body"><div class="rec-title">劳力士 Submariner 黑水鬼 全新未拆封</div></div>
+                <div class="cp-goods-body"><div class="cp-goods-title">劳力士 Submariner 黑水鬼 全新未拆封</div></div>
             </a>
-            <a href="<%=ctx%>/item?action=detail&id=203" class="rec-card">
-                <div class="rec-cover"><i class="fa fa-paw"></i>
-                    <div class="rec-price-tag">¥200</div>
+            <a href="<%=ctx%>/item?action=detail&id=203" class="cp-goods-card">
+                <div class="cp-goods-cover"><i class="fa fa-paw"></i>
+                    <div class="cp-goods-price-tag">¥200</div>
                 </div>
-                <div class="rec-body"><div class="rec-title">出原神 艾尔海森 月之.cos 服全套 S码</div></div>
+                <div class="cp-goods-body"><div class="cp-goods-title">出原神 艾尔海森 月之.cos 服全套 S码</div></div>
             </a>
-            <a href="<%=ctx%>/item?action=detail&id=204" class="rec-card">
-                <div class="rec-cover"><i class="fa fa-microchip"></i>
-                    <div class="rec-price-tag">¥3,099</div>
+            <a href="<%=ctx%>/item?action=detail&id=204" class="cp-goods-card">
+                <div class="cp-goods-cover"><i class="fa fa-microchip"></i>
+                    <div class="cp-goods-price-tag">¥3,099</div>
                 </div>
-                <div class="rec-body"><div class="rec-title">全新未拆 AMD 锐龙 R9 9950X 盒装 CPU</div></div>
+                <div class="cp-goods-body"><div class="cp-goods-title">全新未拆 AMD 锐龙 R9 9950X 盒装 CPU</div></div>
             </a>
-            <a href="<%=ctx%>/item?action=detail&id=205" class="rec-card">
-                <div class="rec-cover"><i class="fa fa-camera-retro"></i>
-                    <div class="rec-price-tag">¥16,800</div>
+            <a href="<%=ctx%>/item?action=detail&id=205" class="cp-goods-card">
+                <div class="cp-goods-cover"><i class="fa fa-camera-retro"></i>
+                    <div class="cp-goods-price-tag">¥16,800</div>
                 </div>
-                <div class="rec-body"><div class="rec-title">佳能 EOS R6 Mark II 套机 24-105 镜头</div></div>
+                <div class="cp-goods-body"><div class="cp-goods-title">佳能 EOS R6 Mark II 套机 24-105 镜头</div></div>
             </a>
-            <a href="<%=ctx%>/item?action=detail&id=206" class="rec-card">
-                <div class="rec-cover"><i class="fa fa-headphones"></i>
-                    <div class="rec-price-tag">¥1,580</div>
+            <a href="<%=ctx%>/item?action=detail&id=206" class="cp-goods-card">
+                <div class="cp-goods-cover"><i class="fa fa-headphones"></i>
+                    <div class="cp-goods-price-tag">¥1,580</div>
                 </div>
-                <div class="rec-body"><div class="rec-title">索尼 WH-1000XM5 头戴式降噪耳机</div></div>
+                <div class="cp-goods-body"><div class="cp-goods-title">索尼 WH-1000XM5 头戴式降噪耳机</div></div>
             </a>
         </div>
     </div>
@@ -826,23 +836,23 @@
 </div>
 
 <!-- 浮动操作栏 -->
-<aside class="floats">
-    <button class="float-btn primary" title="发拍品" onclick="go('<%=ctx%>/item?action=publish-page')">
+<aside class="cp-floats">
+    <button class="cp-float-btn primary" title="发拍品" onclick="go('<%=ctx%>/item?action=publish-page')">
         <i class="fa fa-plus"></i><span>发布</span>
     </button>
-    <button class="float-btn" title="消息" onclick="toast('消息中心开发中', 'info')">
+    <button class="cp-float-btn" title="消息" onclick="toast('消息中心开发中', 'info')">
         <i class="fa fa-envelope-o"></i><span>消息</span>
     </button>
-    <button class="float-btn" title="APP" onclick="toast('APP 下载敬请期待', 'info')">
+    <button class="cp-float-btn" title="APP" onclick="toast('APP 下载敬请期待', 'info')">
         <i class="fa fa-mobile"></i><span>APP</span>
     </button>
-    <button class="float-btn" title="反馈" onclick="toast('反馈功能开发中', 'info')">
+    <button class="cp-float-btn" title="反馈" onclick="toast('反馈功能开发中', 'info')">
         <i class="fa fa-commenting-o"></i><span>反馈</span>
     </button>
-    <button class="float-btn" title="客服" onclick="toast('客服：400-888-8888', 'info')">
+    <button class="cp-float-btn" title="客服" onclick="toast('客服：400-888-8888', 'info')">
         <i class="fa fa-headphones"></i><span>客服</span>
     </button>
-    <button class="float-btn" title="回顶部" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" style="margin-top: auto;">
+    <button class="cp-float-btn" title="回顶部" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" style="margin-top: auto;">
         <i class="fa fa-arrow-up"></i><span>顶部</span>
     </button>
 </aside>
