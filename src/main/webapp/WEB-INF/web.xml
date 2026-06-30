@@ -51,4 +51,17 @@
         Filter 用 web.xml 注册是因为要控制顺序
     -->
 
+    <!--
+        ===================== Listener 注册 =====================
+        AuctionEndScheduler：拍卖自动结算调度器
+        - Tomcat 启动时启动后台 ScheduledExecutorService
+        - 每 30 秒扫描一次 end_time < now AND status=1 的拍品
+        - 调用 AuctionEndService.settleEndedItems() 完成状态流转
+        - 单次失败被 try-catch 包裹，不影响后续调度
+        - 手动兜底：登录用户可访问 /bid?action=settle 触发全量结算
+    -->
+    <listener>
+        <listener-class>org.example.listener.AuctionEndScheduler</listener-class>
+    </listener>
+
 </web-app>

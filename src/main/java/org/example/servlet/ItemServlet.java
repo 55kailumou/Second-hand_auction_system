@@ -128,7 +128,7 @@ public class ItemServlet extends HttpServlet {
         params.put("categoryId", categoryId);
         params.put("keyword", keyword);
         params.put("sort", sort);
-        params.put("status", 1);                     // 列表只显示拍卖中的
+        params.put("status", null);                     // 跨 status 显示（拍卖中 / 已成交 / 已流拍 都展示，由前端按 status 区分按钮语义）
         params.put("offset", (page - 1) * size);
         params.put("limit", size);
 

@@ -18,8 +18,7 @@
     List<Category> topCategories = new java.util.ArrayList<>();   // 一级分类（侧栏 + 色块）
     Map<Integer, Integer> catCountMap = new HashMap<>();         // 一级分类 → 拍品数
     int totalItemCount = 0;                                       // 总数（"全部"）
-    AuctionItem heroItem = null;                                  // Hero 主推：拍卖中 end_time 最近
-    List<AuctionItem> heroList = new java.util.ArrayList<>();     // fallback 列表
+    AuctionItem heroItem = null;                                  // Hero 主推：跨 status，按 create_time DESC 取最新发布的拍品（不论拍卖中 / 已成交 / 已流拍 / 已下架都展示）
     Map<Integer, List<AuctionItem>> catItemsMap = new LinkedHashMap<>(); // 一级分类 ID → top3 拍品
     List<AuctionItem> hotItems = new java.util.ArrayList<>();     // 12 个推荐商品（按 view_count DESC）
     Map<Integer, org.example.entity.User> hotItemSellerMap = new HashMap<>();   // item_id → 卖家
@@ -55,13 +54,11 @@
             totalItemCount += cnt;
         }
 
-        // Hero 主推：拍卖中 + end_time 最近
-        java.util.Map<String, Object> heroParams = new java.util.HashMap<>();
-        heroParams.put("status", 1);
-        heroParams.put("sort", "ending");
-        heroParams.put("limit", 1);
-        heroList = itemMapper.findByCondition(heroParams);
-        if (!heroList.isEmpty()) {
+        // Hero 主推：跨 status（不论拍卖中 / 已成交 / 已流拍 / 已下架），按 create_time DESC 取最新发布的拍品
+        // 说明：原版 heroParams.put("status", 1) 只查拍卖中，数据库里没有 status=1 的拍品时 heroItem 为 null → 首页"暂无拍品"
+        //      改用 findRecent(1) 跨 status 取最新发布的一条，hero 永远有内容可显示
+        List<AuctionItem> heroList = itemMapper.findRecent(1);
+        if (heroList != null && !heroList.isEmpty()) {
             heroItem = heroList.get(0);
         }
 
@@ -75,9 +72,8 @@
             blocks++;
         }
 
-        // 12 个推荐商品（按 view_count DESC）
+        // 12 个推荐商品（按 view_count DESC，跨 status）
         java.util.Map<String, Object> hotParams = new java.util.HashMap<>();
-        hotParams.put("status", 1);
         hotParams.put("sort", "hot");
         hotParams.put("limit", 12);
         hotItems = itemMapper.findByCondition(hotParams);

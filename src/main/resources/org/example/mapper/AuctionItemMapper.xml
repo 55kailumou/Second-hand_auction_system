@@ -27,18 +27,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         LIMIT #{limit}
     </select>
 
-    <!-- 1c. 同分类其他在拍（推荐用） -->
+    <!-- 1c. 同分类其他拍品（推荐用，跨 status，详情页底部推荐位） -->
     <select id="findRelated" resultType="AuctionItem">
         SELECT <include refid="itemColumns"/>
         FROM auction_item
-        WHERE status = 1
-          AND category_id = #{categoryId}
+        WHERE category_id = #{categoryId}
           AND id != #{excludeItemId}
-          <![CDATA[
-          AND start_time <= NOW()
-          AND end_time > NOW()
-          ]]>
-        ORDER BY id DESC
+        ORDER BY create_time DESC, id DESC
         LIMIT #{limit}
     </select>
 
@@ -204,12 +199,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         UPDATE auction_item SET category_id = #{categoryId} WHERE id = #{id}
     </update>
 
-    <!-- 12. 首页用：某一级分类（含所有二级分类）下，拍卖中、按热度排序 top N -->
+    <!-- 12. 首页用：某一级分类（含所有二级分类）下，按热度排序 top N（跨 status） -->
     <select id="findHotByTopCategory" resultType="AuctionItem">
         SELECT <include refid="itemColumns"/>
         FROM auction_item
-        WHERE status = 1
-          AND category_id IN (
+        WHERE category_id IN (
               SELECT id FROM category
               WHERE parent_id = #{topCategoryId} OR id = #{topCategoryId}
           )
