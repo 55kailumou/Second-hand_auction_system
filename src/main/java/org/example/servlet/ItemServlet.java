@@ -81,6 +81,12 @@ public class ItemServlet extends HttpServlet {
             case "my-items":
                 showMyItems(req, resp);
                 break;
+            case "my-bids":
+                showMyBids(req, resp);
+                break;
+            case "hot-ranks":
+                showHotRanks(req, resp);
+                break;
             default:
                 resp.sendRedirect(req.getContextPath() + "/item?action=list");
         }
@@ -221,11 +227,13 @@ public class ItemServlet extends HttpServlet {
         req.setAttribute("itemJson", safeToJson(item));
         req.setAttribute("bidsJson", safeToJson(bids));
         req.setAttribute("categoryJson", safeToJson(category));
+        req.setAttribute("categoryId", item.getCategoryId());
         req.setAttribute("sellerJson", safeToJson(seller));
         req.setAttribute("itemImagesJson", safeToJson(itemImages));
         req.setAttribute("loggedIn", loggedIn);
         req.setAttribute("isOwner", isOwner);
         req.setAttribute("active", active);
+        req.setAttribute("itemId", item.getId());   // 供 JSP 跳转用（如举报链接）
         req.setAttribute("nextMinBid", nextMinBid.toPlainString());
 
         // 收藏状态（仅登录用户才查；不能收藏自己发布的拍品）
@@ -240,6 +248,18 @@ public class ItemServlet extends HttpServlet {
             }
         }
         req.setAttribute("favorited", favorited);
+
+        // 同分类推荐拍品（最多 6 个，排除自己）
+        List<AuctionItem> relatedItems = new java.util.ArrayList<>();
+        if (item.getCategoryId() != null) {
+            try (SqlSession relSession = MyBatisUtil.openSession()) {
+                relatedItems = relSession.getMapper(AuctionItemMapper.class)
+                        .findRelated(item.getCategoryId(), item.getId(), 6);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        req.setAttribute("relatedItemsJson", safeToJson(relatedItems));
 
         req.getRequestDispatcher("/WEB-INF/jsp/item/detail.jsp").forward(req, resp);
     }
@@ -293,6 +313,7 @@ public class ItemServlet extends HttpServlet {
         BigDecimal startPrice = parseDecimal(req.getParameter("startPrice"));
         BigDecimal bidIncrement = parseDecimal(req.getParameter("bidIncrement"));
         BigDecimal reservePrice = parseDecimal(req.getParameter("reservePrice"));
+        BigDecimal sellerSetDeposit = parseDecimal(req.getParameter("deposit"));   // 卖家可手填
         LocalDateTime startTime = parseDateTime(req.getParameter("startTime"));
         LocalDateTime endTime = parseDateTime(req.getParameter("endTime"));
 
@@ -319,6 +340,7 @@ public class ItemServlet extends HttpServlet {
         item.setCoverImage(null);          // 后面由 syncItemImages 回填
         item.setImageUrls(imageUrls);      // 保留原始字符串便于编辑时回填
         item.setStartPrice(startPrice);
+        item.setDeposit(org.example.util.DepositCalculator.calculate(sellerSetDeposit, startPrice));  // 押金（按起拍价×10% 自动算，卖家可手填）
         item.setCurrentPrice(startPrice);  // 初始当前价 = 起拍价
         item.setBidIncrement(bidIncrement == null ? new BigDecimal("1.00") : bidIncrement);
         item.setReservePrice(reservePrice);
@@ -560,6 +582,136 @@ public class ItemServlet extends HttpServlet {
         req.getRequestDispatcher("/WEB-INF/jsp/item/my_items.jsp").forward(req, resp);
     }
 
+    // ===================== 4b. 我的出价 =====================
+
+    private void showMyBids(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        User user = (User) req.getSession().getAttribute("currentUser");
+        if (user == null) {
+            resp.sendRedirect(req.getContextPath() + "/user?action=login&returnUrl=" +
+                    java.net.URLEncoder.encode("/item?action=my-bids", "UTF-8"));
+            return;
+        }
+
+        // 加载当前用户的所有出价 + 对应拍品信息
+        List<Map<String, Object>> rows = new ArrayList<>();
+        try (SqlSession session = MyBatisUtil.openSession()) {
+            BidRecordMapper bidMapper = session.getMapper(BidRecordMapper.class);
+            AuctionItemMapper itemMapper = session.getMapper(AuctionItemMapper.class);
+
+            List<BidRecord> myBids = bidMapper.findByBidderId(user.getId());
+            // 提取我出价过的拍品（去重）
+            java.util.Set<Integer> seenItemIds = new java.util.LinkedHashSet<>();
+            for (BidRecord b : myBids) {
+                if (!seenItemIds.add(b.getItemId())) continue;
+                AuctionItem it = itemMapper.findById(b.getItemId());
+                if (it == null) continue;
+
+                BidRecord top = bidMapper.findCurrentWinning(b.getItemId());
+                boolean iAmWinning = (top != null && top.getBidderId().equals(user.getId()));
+                boolean itemEnded = (it.getEndTime() != null && !it.getEndTime().isAfter(java.time.LocalDateTime.now()));
+
+                Map<String, Object> row = new HashMap<>();
+                row.put("itemId", it.getId());
+                row.put("title", it.getTitle());
+                row.put("coverImage", it.getCoverImage());
+                row.put("startPrice", it.getStartPrice());
+                row.put("currentPrice", it.getCurrentPrice());
+                row.put("myMaxBid", b.getBidAmount());   // 我在该拍品的最高出价
+                row.put("iAmWinning", iAmWinning);
+                row.put("itemStatus", it.getStatus());
+                row.put("itemEnded", itemEnded);
+                row.put("itemEndTime", it.getEndTime());
+                rows.add(row);
+            }
+        } catch (Exception e) {
+            org.example.util.ResponseUtil.handleException(e, "我的出价");
+            req.setAttribute("error", "加载失败，请稍后重试");
+        }
+
+        req.setAttribute("rowsJson", safeToJson(rows));
+        req.getRequestDispatcher("/WEB-INF/jsp/item/my_bids.jsp").forward(req, resp);
+    }
+
+    // ===================== 4c. 热门拍品（各分类热度榜） =====================
+
+    /**
+     * 热门拍品榜首页：顶部全站热度榜（Top 12），下方按分类（包含二级）分组的各分类热度榜（每组 Top 8）
+     * 排序基准：auction_item.view_count DESC（热度 = 浏览量）
+     * 状态：所有 status 拍品都上榜（含待审核/拍卖中/已成交/已流拍），由 JSP 角标区分
+     */
+    private void showHotRanks(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        final int GLOBAL_LIMIT    = 12;
+        final int PER_CATEGORY    = 8;
+
+        List<Map<String, Object>> sections = new ArrayList<>();
+        List<AuctionItem> globalHot = new ArrayList<>();
+
+        try (SqlSession session = MyBatisUtil.openSession()) {
+            CategoryMapper categoryMapper = session.getMapper(CategoryMapper.class);
+            AuctionItemMapper itemMapper   = session.getMapper(AuctionItemMapper.class);
+
+            // 1. 全站热度榜（不限状态）
+            Map<String, Object> gParams = new HashMap<>();
+            gParams.put("sort", "hot");
+            gParams.put("limit", GLOBAL_LIMIT);
+            globalHot = itemMapper.findByCondition(gParams);
+
+            // 2. 所有启用分类（含二级）→ 各自一个 section，按"该分类拍品数"倒序
+            List<Category> allCats = categoryMapper.findAll();
+            sections = buildOrderedSections(allCats, itemMapper, categoryMapper, PER_CATEGORY);
+        } catch (Exception e) {
+            org.example.util.ResponseUtil.handleException(e, "热门拍品");
+            req.setAttribute("error", "加载失败，请稍后重试");
+        }
+
+        req.setAttribute("globalHot", globalHot);
+        req.setAttribute("sections", sections);
+        req.setAttribute("globalHotJson", safeToJson(globalHot));
+        req.getRequestDispatcher("/WEB-INF/jsp/item/hot_ranks.jsp").forward(req, resp);
+    }
+
+    /**
+     * 构造分组 sections：每个分类（含二级）单独一段，Top N 拍品，
+     * 按"该分类下的拍品数量 DESC"排序（拍品多的排在前面）
+     */
+    private List<Map<String, Object>> buildOrderedSections(List<Category> allCats,
+                                                            AuctionItemMapper itemMapper,
+                                                            CategoryMapper categoryMapper,
+                                                            int perCategoryLimit) {
+        // 1. 先给每个分类查一下拍品数（不限状态，所有拍品都参与计数）
+        List<Map.Entry<Category, Integer>> ordered = new ArrayList<>(); // [分类, 拍品数]
+        for (Category cat : allCats) {
+            if (cat == null) continue;
+            if (cat.getStatus() != null && cat.getStatus() == 0) continue; // 禁用分类跳过
+
+            int cnt = categoryMapper.countItemsByCategory(cat.getId());
+            if (cnt <= 0) continue; // 空分类跳过
+            ordered.add(new java.util.AbstractMap.SimpleEntry<>(cat, cnt));
+        }
+        // 2. 按拍品数 desc 排序
+        ordered.sort((a, b) -> b.getValue().compareTo(a.getValue()));
+
+        // 3. 拉每个 section 的 Top N 拍品
+        List<Map<String, Object>> sections = new ArrayList<>();
+        for (Map.Entry<Category, Integer> pair : ordered) {
+            Category cat = pair.getKey();
+            Map<String, Object> p = new HashMap<>();
+            p.put("categoryId", cat.getId());
+            p.put("sort", "hot");
+            p.put("limit", perCategoryLimit);
+            List<AuctionItem> items = itemMapper.findByCondition(p);
+            if (items == null || items.isEmpty()) continue;
+
+            Map<String, Object> section = new HashMap<>();
+            section.put("category", cat);
+            section.put("hotItems", items);
+            sections.add(section);
+        }
+        return sections;
+    }
+
+    // ===================== 4d. JSON 注入分类图标 =====================
+
     // ===================== 5. 编辑页 =====================
 
     /**
@@ -714,6 +866,7 @@ public class ItemServlet extends HttpServlet {
             String  flawDesc     = trim(req.getParameter("flawDesc"));
             String  imageUrls    = trim(req.getParameter("imageUrls"));
             BigDecimal startPrice   = parseDecimal(req.getParameter("startPrice"));
+            BigDecimal sellerSetDeposit = parseDecimal(req.getParameter("deposit"));
             BigDecimal bidIncrement  = parseDecimal(req.getParameter("bidIncrement"));
             BigDecimal reservePrice = parseDecimal(req.getParameter("reservePrice"));
             LocalDateTime startTime  = parseDateTime(req.getParameter("startTime"));
@@ -749,6 +902,7 @@ public class ItemServlet extends HttpServlet {
                 // 全字段更新（含价格时间）
                 update.setCategoryId(categoryId);
                 update.setStartPrice(startPrice);
+                update.setDeposit(org.example.util.DepositCalculator.calculate(sellerSetDeposit, startPrice));
                 update.setBidIncrement(bidIncrement == null ? new BigDecimal("1.00") : bidIncrement);
                 update.setReservePrice(reservePrice);
                 update.setStartTime(startTime);

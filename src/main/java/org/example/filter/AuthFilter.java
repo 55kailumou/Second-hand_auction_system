@@ -82,6 +82,10 @@ public class AuthFilter implements Filter {
                 return true;
             }
         }
+        // 前台公告：所有人可查看详情
+        if ("/notice".equals(path) && "detail".equals(action)) {
+            return true;
+        }
         return false;
     }
 

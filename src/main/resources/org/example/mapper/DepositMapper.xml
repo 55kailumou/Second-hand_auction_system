@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.example.mapper.DepositMapper">
+
+    <sql id="depositColumns">
+        id, user_id, item_id, amount, status, pay_method, pay_time,
+        refund_time, related_order_no, remark
+    </sql>
+
+    <!-- 1. 插入 -->
+    <insert id="insert" parameterType="Deposit" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_deposit (user_id, item_id, amount, status, pay_method, pay_time, remark)
+        VALUES (#{userId}, #{itemId}, #{amount}, #{status}, #{payMethod}, #{payTime}, #{remark})
+    </insert>
+
+    <!-- 2. 按 ID -->
+    <select id="findById" parameterType="int" resultType="Deposit">
+        SELECT <include refid="depositColumns"/>
+        FROM user_deposit
+        WHERE id = #{id}
+    </select>
+
+    <!-- 3. 按 user + item -->
+    <select id="findByUserAndItem" resultType="Deposit">
+        SELECT <include refid="depositColumns"/>
+        FROM user_deposit
+        WHERE user_id = #{userId} AND item_id = #{itemId}
+        LIMIT 1
+    </select>
+
+    <!-- 4. 某拍品所有押金 -->
+    <select id="findByItemId" parameterType="int" resultType="Deposit">
+        SELECT <include refid="depositColumns"/>
+        FROM user_deposit
+        WHERE item_id = #{itemId}
+        ORDER BY pay_time DESC
+    </select>
+
+    <!-- 5. 某拍品所有 status=0（锁定中）押金 -->
+    <select id="findActiveByItemId" parameterType="int" resultType="Deposit">
+        SELECT <include refid="depositColumns"/>
+        FROM user_deposit
+        WHERE item_id = #{itemId} AND status = 0
+    </select>
+
+    <!-- 6. 某用户所有押金 -->
+    <select id="findByUserId" parameterType="int" resultType="Deposit">
+        SELECT <include refid="depositColumns"/>
+        FROM user_deposit
+        WHERE user_id = #{userId}
+        ORDER BY pay_time DESC
+    </select>
+
+    <!-- 7. 标记已转货款（status 0→1） -->
+    <update id="markTransferred">
+        UPDATE user_deposit
+        SET status = 1,
+            refund_time = NOW(),
+            related_order_no = #{orderNo},
+            remark = #{remark}
+        WHERE id = #{id} AND status = 0
+    </update>
+
+    <!-- 8. 标记已退还（status 0→2） -->
+    <update id="markRefunded">
+        UPDATE user_deposit
+        SET status = 2,
+            refund_time = NOW(),
+            remark = #{remark}
+        WHERE id = #{id} AND status = 0
+    </update>
+
+    <!-- 9. 标记已没收（status 0→3） -->
+    <update id="markForfeited">
+        UPDATE user_deposit
+        SET status = 3,
+            refund_time = NOW(),
+            remark = #{remark}
+        WHERE id = #{id} AND status = 0
+    </update>
+
+    <!-- 10. 某拍品押金总数（status 0/1） -->
+    <select id="sumActiveAmountByItem" parameterType="int" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(amount), 0)
+        FROM user_deposit
+        WHERE item_id = #{itemId} AND status IN (0, 1)
+    </select>
+
+    <!-- 11. 某用户已缴押金总额（status 0/1） -->
+    <select id="sumActiveAmountByUser" parameterType="int" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(amount), 0)
+        FROM user_deposit
+        WHERE user_id = #{userId} AND status IN (0, 1)
+    </select>
+
+    <!-- 12. 某拍品的中标者押金（status=1） -->
+    <select id="findTransferredByItem" parameterType="int" resultType="Deposit">
+        SELECT <include refid="depositColumns"/>
+        FROM user_deposit
+        WHERE item_id = #{itemId} AND status = 1
+        LIMIT 1
+    </select>
+
+    <!-- 13. 分页查某用户押金 -->
+    <select id="findByUserIdPaged" parameterType="map" resultType="Deposit">
+        SELECT <include refid="depositColumns"/>
+        FROM user_deposit
+        WHERE user_id = #{userId}
+        ORDER BY pay_time DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 14. 计数 -->
+    <select id="countByUserId" parameterType="int" resultType="int">
+        SELECT COUNT(*) FROM user_deposit WHERE user_id = #{userId}
+    </select>
+
+    <!-- 15. 更新押金的关联订单号（订单生成后回调） -->
+    <update id="updateRelatedOrderNo">
+        UPDATE user_deposit
+        SET related_order_no = #{orderNo}
+        WHERE id = #{id}
+    </update>
+
+</mapper>

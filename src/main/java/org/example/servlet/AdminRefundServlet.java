@@ -151,7 +151,7 @@ public class AdminRefundServlet extends HttpServlet {
         req.getRequestDispatcher("/WEB-INF/jsp/admin/refunds.jsp").forward(req, resp);
     }
 
-    // ============ 同意退款（4→5） ============
+    // ============ 同意退款（4→5，平台账户 → 买家余额） ============
 
     private void doApprove(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         Admin admin = (Admin) req.getSession().getAttribute("currentAdmin");
@@ -165,35 +165,33 @@ public class AdminRefundServlet extends HttpServlet {
         }
         if (result.length() > 500) { writeJson(resp, errorOf("审核结果不超过 500 字")); return; }
 
-        try (SqlSession session = MyBatisUtil.openSession()) {
-            OrderMapper mapper = session.getMapper(OrderMapper.class);
-            OrderInfo o = mapper.findById(id);
-            if (o == null) { writeJson(resp, errorOf("订单不存在")); return; }
-            if (o.getStatus() == null || o.getStatus() != 4) {
-                writeJson(resp, errorOf("只有申请退款中（status=4）的订单才能审核"));
-                return;
-            }
-            int rows = mapper.markRefunded(id, result.trim());
-            session.commit();
-            if (rows > 0) {
-                Map<String, Object> data = new HashMap<>();
-                data.put("success", true);
-                data.put("message", "已同意退款，订单状态更新为「已退款」");
-                writeJson(resp, data);
+        // 调 PayService：平台账户 -= finalPrice → 买家余额 += finalPrice → order.status 4→5
+        Map<String, Object> r = org.example.service.PayService.refundToBuyer(id, result.trim(), true);
 
-                // 通知买家：退款已通过（独立事务）
-                MessageService.send(o.getBuyerId(), MessageService.TYPE_AUDIT_RESULT,
-                        "退款已通过",
-                        "订单 " + o.getOrderNo() + "（" + o.getItemTitle() +
-                                "）的退款申请已通过，¥" + o.getFinalPrice().toPlainString() +
-                                " 将原路返回。审核说明：" + result.trim(),
-                        o.getId());
-            } else {
-                writeJson(resp, errorOf("操作失败，请稍后重试"));
-            }
-        } catch (Exception e) {
-            writeJson(resp, ResponseUtil.handleException(e, "同意退款"));
+        if (Boolean.TRUE.equals(r.get("success"))) {
+            // 查订单给买家发通知
+            try (SqlSession session = MyBatisUtil.openSession()) {
+                OrderMapper mapper = session.getMapper(OrderMapper.class);
+                OrderInfo o = mapper.findById(id);
+                if (o != null) {
+                    MessageService.send(o.getBuyerId(), MessageService.TYPE_AUDIT_RESULT,
+                            "退款已通过",
+                            "订单 " + o.getOrderNo() + "（" + o.getItemTitle() +
+                                    "）的退款申请已通过，¥" + o.getFinalPrice().toPlainString() +
+                                    " 已退回您的账户余额。审核说明：" + result.trim(),
+                            o.getId());
+                    // 同时通知卖家
+                    MessageService.send(o.getSellerId(), MessageService.TYPE_ORDER_STATUS,
+                            "订单已退款",
+                            "订单 " + o.getOrderNo() + "（" + o.getItemTitle() +
+                                    "）买家已退款 ¥" + o.getFinalPrice().toPlainString() +
+                                    "，从平台账户出。审核说明：" + result.trim(),
+                            o.getId());
+                }
+            } catch (Exception ex) { ex.printStackTrace(); }
         }
+
+        writeJson(resp, r);
     }
 
     // ============ 驳回退款（4→1） ============

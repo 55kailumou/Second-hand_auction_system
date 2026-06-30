@@ -3,6 +3,7 @@ package org.example.mapper;
 import org.apache.ibatis.annotations.Param;
 import org.example.entity.OrderInfo;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -23,8 +24,15 @@ public interface OrderMapper {
     /** 更新订单状态（通用） */
     int updateStatus(@Param("id") Integer id, @Param("status") Integer status);
 
-    /** 付款（更新 status 0→1 + 付款时间） */
-    int markPaid(@Param("id") Integer id);
+    /**
+     * 付款（更新 status 0→1 + 付款时间 + 尾款金额 + 尾款支付方式）
+     * @param id              订单 ID
+     * @param finalPayAmount  尾款支付金额
+     * @param finalPayMethod  尾款支付方式 balance / alipay / wechat
+     */
+    int markPaid(@Param("id") Integer id,
+                 @Param("finalPayAmount") BigDecimal finalPayAmount,
+                 @Param("finalPayMethod") String finalPayMethod);
 
     /** 发货（更新 status 1→2 + 物流信息 + 发货时间） */
     int markDelivered(@Param("id") Integer id,

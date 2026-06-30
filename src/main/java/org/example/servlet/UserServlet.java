@@ -350,12 +350,11 @@ public class UserServlet extends HttpServlet {
             sellerShipParams.put("status", 1);
             int sellerOrdersToShip = orderMapper.countByCondition(sellerShipParams);
 
-            // 6. 最近发布的拍品（最多 5 个）
-            Map<String, Object> itemParams = new HashMap<>();
-            itemParams.put("sellerId", currentUser.getId());
-            itemParams.put("offset", 0);
-            itemParams.put("limit", 5);
-            List<AuctionItem> recentItems = itemMapper.findByCondition(itemParams);
+            // 6. 我的拍品按状态分组（每组最多 12 个，给前端 tab 切换用）
+            int recentLimit = 12;
+            List<AuctionItem> activeItems = itemMapper.findByCondition(buildItemParams(currentUser.getId(), 1, recentLimit));
+            List<AuctionItem> soldItems   = itemMapper.findByCondition(buildItemParams(currentUser.getId(), 2, recentLimit));
+            List<AuctionItem> failedItems = itemMapper.findByCondition(buildItemParams(currentUser.getId(), 3, recentLimit));
 
             req.setAttribute("user", currentUser);
             req.setAttribute("sellerStats", sellerStats);
@@ -369,7 +368,9 @@ public class UserServlet extends HttpServlet {
             req.setAttribute("unreadMessageCount", unreadMessageCount);
             req.setAttribute("myComplaintCount", myComplaintCount);
             req.setAttribute("sellerOrdersToShip", sellerOrdersToShip);
-            req.setAttribute("recentItems", recentItems);
+            req.setAttribute("activeItems", activeItems);
+            req.setAttribute("soldItems", soldItems);
+            req.setAttribute("failedItems", failedItems);
 
             req.getRequestDispatcher("/WEB-INF/jsp/user/center.jsp").forward(req, resp);
         } catch (Exception e) {
@@ -380,6 +381,16 @@ public class UserServlet extends HttpServlet {
     }
 
     // ============ AJAX 查重（返回 JSON） ============
+
+    /** 拼装「按卖家 + 状态」查拍品的条件 map（offset=0, limit 外部指定） */
+    private static Map<String, Object> buildItemParams(int sellerId, int status, int limit) {
+        Map<String, Object> p = new HashMap<>();
+        p.put("sellerId", sellerId);
+        p.put("status", status);
+        p.put("offset", 0);
+        p.put("limit", limit);
+        return p;
+    }
 
     private void checkUsername(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String username = trim(req.getParameter("username"));

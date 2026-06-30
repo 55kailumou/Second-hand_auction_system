@@ -458,7 +458,7 @@
             <a href="<%=ctx%>/index.jsp">首页</a>
             <a href="<%=ctx%>/item?action=list">浏览拍品</a>
             <a href="<%=ctx%>/item?action=publish-page" class="active">发布拍品</a>
-            <a href="javascript:void(0)" onclick="go('<%=ctx%>/item?action=list&sort=hot')">热门拍品</a>
+            <a href="javascript:void(0)" onclick="go('<%=ctx%>/item?action=hot-ranks')">热门拍品</a>
             <a href="javascript:void(0)" onclick="go('<%=ctx%>/user?action=center')">个人中心</a>
         </nav>
         <form action="<%=ctx%>/item" method="get" class="cp-nav-search">
@@ -669,6 +669,29 @@
 
                 <div class="cp-form-row">
                     <div class="cp-form-group">
+                        <label class="cp-form-label">参拍押金 (元)</label>
+                        <input type="number" name="deposit" class="cp-form-input" min="0" step="0.01"
+                               v-model.number="form.deposit" placeholder="留空则按起拍价×10% 自动算">
+                        <span class="cp-form-hint">
+                            必填项（如留空）：<span style="color: #00F0FF;">¥{{ autoDeposit }}</span>
+                            <span style="color: rgba(255,238,0,0.5); margin-left: 6px;">= 起拍价 × 10%（最低 ¥1）</span>
+                        </span>
+                    </div>
+                    <div class="cp-form-group">
+                        <label class="cp-form-label">起拍价变更提示</label>
+                        <div class="cp-form-hint" style="padding: 11px 0;">
+                            <i class="fa fa-info-circle" style="color: #00F0FF;"></i>
+                            押金 = 起拍价 × 10%（向上取整到 0.01 元）
+                            <br>
+                            · 起拍价 ¥10 → 押金 ¥1.00（按最低）
+                            <br>
+                            · 起拍价 ¥1000 → 押金 ¥100.00
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cp-form-row">
+                    <div class="cp-form-group">
                         <label class="cp-form-label">开始时间<span class="required">*</span></label>
                         <input type="datetime-local" name="startTime" class="cp-form-input"
                                v-model="form.startTime"
@@ -776,10 +799,18 @@
                         flawDesc:       init('flawDesc', pre.flawDesc || ''),
                         imageUrls:      init('imageUrls', pre.imageUrls || ''),
                         startPrice:     init('startPrice', pre.startPrice || 0),
+                        deposit:        init('deposit', pre.deposit || null),
                         bidIncrement:   init('bidIncrement', pre.bidIncrement || 1),
                         reservePrice:   init('reservePrice', pre.reservePrice),
                         startTime:      init('startTime', pre.startTime || ''),
                         endTime:        init('endTime', pre.endTime || '')
+                    });
+                    // 押金自动计算：起拍价 × 10% 向上取整，最低 1
+                    const autoDeposit = computed(() => {
+                        const sp = parseFloat(form.startPrice) || 0;
+                        if (sp <= 0) return '0.00';
+                        const calc = Math.ceil(sp * 0.10 * 100) / 100;
+                        return Math.max(calc, 1.0).toFixed(2);
                     });
                     const errors  = reactive({});
                     const touched = reactive({});
@@ -922,7 +953,8 @@
                         imageUrlList,
                         topCategories, getChildren,
                         setEndTime, onImgError,
-                        validateField, handleSubmit
+                        validateField, handleSubmit,
+                        autoDeposit
                     };
                 }
             }).mount('#app');

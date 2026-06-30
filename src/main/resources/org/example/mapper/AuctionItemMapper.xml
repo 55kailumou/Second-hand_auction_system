@@ -8,7 +8,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <sql id="itemColumns">
         id, seller_id, category_id, title, description, brand, model,
         condition_level, flaw_desc, cover_image, image_urls,
-        start_price, current_price, bid_increment, reserve_price,
+        start_price, deposit, current_price, bid_increment, reserve_price,
         start_time, end_time, status, view_count, create_time, update_time
     </sql>
 
@@ -19,17 +19,40 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         WHERE id = #{id}
     </select>
 
+    <!-- 1b. 最近 N 个拍品（admin 演示用） -->
+    <select id="findRecent" parameterType="int" resultType="AuctionItem">
+        SELECT <include refid="itemColumns"/>
+        FROM auction_item
+        ORDER BY create_time DESC, id DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 1c. 同分类其他在拍（推荐用） -->
+    <select id="findRelated" resultType="AuctionItem">
+        SELECT <include refid="itemColumns"/>
+        FROM auction_item
+        WHERE status = 1
+          AND category_id = #{categoryId}
+          AND id != #{excludeItemId}
+          <![CDATA[
+          AND start_time <= NOW()
+          AND end_time > NOW()
+          ]]>
+        ORDER BY id DESC
+        LIMIT #{limit}
+    </select>
+
     <!-- 2. 发布拍品 -->
     <insert id="insert" parameterType="AuctionItem" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO auction_item (
             seller_id, category_id, title, description, brand, model,
             condition_level, flaw_desc, cover_image, image_urls,
-            start_price, current_price, bid_increment, reserve_price,
+            start_price, deposit, current_price, bid_increment, reserve_price,
             start_time, end_time, status
         ) VALUES (
             #{sellerId}, #{categoryId}, #{title}, #{description}, #{brand}, #{model},
             #{conditionLevel}, #{flawDesc}, #{coverImage}, #{imageUrls},
-            #{startPrice}, #{currentPrice}, #{bidIncrement}, #{reservePrice},
+            #{startPrice}, #{deposit}, #{currentPrice}, #{bidIncrement}, #{reservePrice},
             #{startTime}, #{endTime}, #{status}
         )
     </insert>
@@ -81,6 +104,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             cover_image     = #{coverImage},
             image_urls      = #{imageUrls},
             start_price     = #{startPrice},
+            deposit         = #{deposit},
             bid_increment   = #{bidIncrement},
             reserve_price   = #{reservePrice},
             start_time      = #{startTime},

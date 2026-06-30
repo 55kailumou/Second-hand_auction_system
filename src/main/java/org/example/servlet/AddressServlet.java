@@ -59,6 +59,9 @@ public class AddressServlet extends HttpServlet {
             case "list":
                 showList(req, resp);
                 break;
+            case "default":
+                getDefaultAddress(req, resp);
+                break;
             default:
                 resp.sendRedirect(req.getContextPath() + "/address?action=list");
         }
@@ -303,6 +306,47 @@ public class AddressServlet extends HttpServlet {
         } catch (Exception e) {
             writeJson(resp, ResponseUtil.handleException(e, "设置默认地址"));
         }
+    }
+
+    // ============ 查默认地址（JSON） ============
+
+    private void getDefaultAddress(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        User user = (User) req.getSession().getAttribute("currentUser");
+        Map<String, Object> data = new HashMap<>();
+        if (user == null) {
+            data.put("success", false);
+            data.put("message", "请先登录");
+            writeJson(resp, data);
+            return;
+        }
+        try (SqlSession session = MyBatisUtil.openSession()) {
+            AddressMapper mapper = session.getMapper(AddressMapper.class);
+            Address addr = mapper.findDefaultByUserId(user.getId());
+            if (addr == null) {
+                // 没默认地址 → 取第一个
+                List<Address> all = mapper.findByUserId(user.getId());
+                if (all != null && !all.isEmpty()) {
+                    addr = all.get(0);
+                }
+            }
+            if (addr == null) {
+                data.put("success", false);
+                data.put("message", "请先添加收货地址");
+                data.put("hasAddress", false);
+            } else {
+                data.put("success", true);
+                data.put("hasAddress", true);
+                data.put("addressId", addr.getId());
+                data.put("addressText",
+                        addr.getReceiverName() + " " + addr.getReceiverPhone() + " " +
+                        addr.getProvince() + addr.getCity() + addr.getDistrict() + " " +
+                        addr.getDetailAddress());
+            }
+        } catch (Exception e) {
+            data.put("success", false);
+            data.put("message", e.getMessage());
+        }
+        writeJson(resp, data);
     }
 
     // ============ 工具方法 ============

@@ -24,11 +24,16 @@ public class OrderInfo {
     private Integer buyerId;
     private Integer sellerId;
     private BigDecimal finalPrice;      // 成交价
+    private BigDecimal depositAmount;   // 已抵用押金（中标后从 user_deposit 转入）
+    private BigDecimal finalPayAmount;  // 尾款金额（=finalPrice - depositAmount）
+    private String finalPayMethod;      // 尾款支付方式：balance / alipay / wechat
+    private LocalDateTime finalPayTime; // 尾款支付时间
     private Integer addressId;          // 收货地址 ID
     private Integer status;             // 0待付款 1已付款 2已发货 3已收货 4申请退款 5已退款 6已取消
     private LocalDateTime payTime;
     private LocalDateTime deliverTime;
     private LocalDateTime receiveTime;
+    private LocalDateTime settledTime;  // 平台打款给卖家的时间
     private String logisticsCompany;
     private String trackingNumber;
     private LocalDateTime createTime;
@@ -91,6 +96,21 @@ public class OrderInfo {
 
     public BigDecimal getFinalPrice() { return finalPrice; }
     public void setFinalPrice(BigDecimal finalPrice) { this.finalPrice = finalPrice; }
+
+    public BigDecimal getDepositAmount() { return depositAmount; }
+    public void setDepositAmount(BigDecimal depositAmount) { this.depositAmount = depositAmount; }
+
+    public BigDecimal getFinalPayAmount() { return finalPayAmount; }
+    public void setFinalPayAmount(BigDecimal finalPayAmount) { this.finalPayAmount = finalPayAmount; }
+
+    public String getFinalPayMethod() { return finalPayMethod; }
+    public void setFinalPayMethod(String finalPayMethod) { this.finalPayMethod = finalPayMethod; }
+
+    public LocalDateTime getFinalPayTime() { return finalPayTime; }
+    public void setFinalPayTime(LocalDateTime finalPayTime) { this.finalPayTime = finalPayTime; }
+
+    public LocalDateTime getSettledTime() { return settledTime; }
+    public void setSettledTime(LocalDateTime settledTime) { this.settledTime = settledTime; }
 
     public Integer getAddressId() { return addressId; }
     public void setAddressId(Integer addressId) { this.addressId = addressId; }

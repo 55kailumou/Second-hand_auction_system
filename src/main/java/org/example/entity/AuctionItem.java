@@ -22,6 +22,7 @@ public class AuctionItem {
     private String coverImage;       // 封面图 URL
     private String imageUrls;        // 多图 JSON 数组字符串
     private BigDecimal startPrice;
+    private BigDecimal deposit;          // 参拍押金（卖家发布时定，0=免押；默认起拍价×10%）
     private BigDecimal currentPrice;
     private BigDecimal bidIncrement;
     private BigDecimal reservePrice; // 可选
@@ -69,6 +70,9 @@ public class AuctionItem {
 
     public BigDecimal getStartPrice() { return startPrice; }
     public void setStartPrice(BigDecimal startPrice) { this.startPrice = startPrice; }
+
+    public BigDecimal getDeposit() { return deposit; }
+    public void setDeposit(BigDecimal deposit) { this.deposit = deposit; }
 
     public BigDecimal getCurrentPrice() { return currentPrice; }
     public void setCurrentPrice(BigDecimal currentPrice) { this.currentPrice = currentPrice; }

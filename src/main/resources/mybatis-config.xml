@@ -51,6 +51,9 @@ PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
         <mapper resource="org/example/mapper/NoticeMapper.xml"/>
         <mapper resource="org/example/mapper/StatsMapper.xml"/>
         <mapper resource="org/example/mapper/ItemImageMapper.xml"/>
+        <mapper resource="org/example/mapper/DepositMapper.xml"/>
+        <mapper resource="org/example/mapper/PaymentRecordMapper.xml"/>
+        <mapper resource="org/example/mapper/SystemAccountMapper.xml"/>
         <!-- 后续模块按需追加 -->
     </mappers>
 

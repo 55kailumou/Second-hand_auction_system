@@ -68,4 +68,20 @@ public interface UserMapper {
      */
     int resetPasswordByAdmin(@Param("userId") Integer userId,
                              @Param("password") String password);
+
+    // ============ 余额原子操作（支付系统用） ============
+
+    /**
+     * 用户余额加钱（原子）
+     * @return affected rows（1=成功 0=用户不存在）
+     */
+    int addBalance(@Param("userId") Integer userId,
+                   @Param("amount") java.math.BigDecimal amount);
+
+    /**
+     * 用户余额减钱（带防超扣）
+     * @return affected rows（1=成功 0=失败：用户不存在或余额不足）
+     */
+    int subtractBalance(@Param("userId") Integer userId,
+                        @Param("amount") java.math.BigDecimal amount);
 }

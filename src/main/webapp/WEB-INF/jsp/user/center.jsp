@@ -1,6 +1,40 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ page import="org.example.util.EscapeUtil" %>
+<%!
+    /** 渲染拍品网格（限当前用户发布，3 个 tab 复用） */
+    private String renderItemGrid(java.util.List<org.example.entity.AuctionItem> items, String ctx) {
+        if (items == null || items.isEmpty()) {
+            return "<div class=\"empty-state\"><i class=\"fa fa-inbox\"></i>暂无相关拍品</div>";
+        }
+        StringBuilder sb = new StringBuilder("<div class=\"cp-goods-grid\">");
+        for (org.example.entity.AuctionItem item : items) {
+            String cover = item.getCoverImage() != null && !item.getCoverImage().isEmpty()
+                    ? "background-image: url('" + item.getCoverImage() + "'); background-size: cover; background-position: center;"
+                    : "";
+            String placeholder = (item.getCoverImage() == null || item.getCoverImage().isEmpty())
+                    ? "<i class=\"fa fa-image\"></i>" : "";
+            String overlay = "";
+            if (item.getStatus() != null && item.getStatus() == 2) {
+                overlay = "<div class=\"sold-tag\">已成交</div>";
+            } else if (item.getStatus() != null && item.getStatus() == 3) {
+                overlay = "<div class=\"sold-tag\" style=\"background: rgba(100,100,100,0.7); color: #888;\">已流拍</div>";
+            }
+            sb.append("<a href=\"").append(ctx).append("/item?action=detail&id=").append(item.getId())
+              .append("\" class=\"cp-goods-card\">")
+              .append("<div class=\"cp-goods-cover\" style=\"").append(cover).append("\">")
+              .append(placeholder).append(overlay)
+              .append("</div>")
+              .append("<div class=\"cp-goods-body\">")
+              .append("<div class=\"cp-goods-title\">").append(EscapeUtil.html(item.getTitle())).append("</div>")
+              .append("<div class=\"cp-goods-price\"><small>¥</small>")
+              .append(item.getCurrentPrice() == null ? "0.00" : item.getCurrentPrice().toPlainString())
+              .append("</div></div></a>");
+        }
+        sb.append("</div>");
+        return sb.toString();
+    }
+%>
 <%
     String ctx = request.getContextPath();
     org.example.entity.User user =
@@ -17,8 +51,12 @@
     Integer unreadMessageCount = (Integer) request.getAttribute("unreadMessageCount");
     Integer myComplaintCount = (Integer) request.getAttribute("myComplaintCount");
     Integer sellerOrdersToShip = (Integer) request.getAttribute("sellerOrdersToShip");
-    java.util.List<org.example.entity.AuctionItem> recentItems =
-            (java.util.List<org.example.entity.AuctionItem>) request.getAttribute("recentItems");
+    java.util.List<org.example.entity.AuctionItem> activeItems =
+            (java.util.List<org.example.entity.AuctionItem>) request.getAttribute("activeItems");
+    java.util.List<org.example.entity.AuctionItem> soldItems =
+            (java.util.List<org.example.entity.AuctionItem>) request.getAttribute("soldItems");
+    java.util.List<org.example.entity.AuctionItem> failedItems =
+            (java.util.List<org.example.entity.AuctionItem>) request.getAttribute("failedItems");
     String error = (String) request.getAttribute("error");
     if (sellerStats == null) sellerStats = new java.util.HashMap<>();
     if (ordersPending == null) ordersPending = 0;
@@ -31,7 +69,9 @@
     if (unreadMessageCount == null) unreadMessageCount = 0;
     if (myComplaintCount == null) myComplaintCount = 0;
     if (sellerOrdersToShip == null) sellerOrdersToShip = 0;
-    if (recentItems == null) recentItems = new java.util.ArrayList<>();
+    if (activeItems == null) activeItems = new java.util.ArrayList<>();
+    if (soldItems == null) soldItems = new java.util.ArrayList<>();
+    if (failedItems == null) failedItems = new java.util.ArrayList<>();
 %>
 <!DOCTYPE html>
 <html lang="zh-CN">
@@ -573,8 +613,8 @@
                         <span class="cp-badge"><%= sellerStats.get("total") %></span>
                     <% } %>
                 </a></li>
-                <li><a href="javascript:void(0)" onclick="toast('我的出价功能开发中', 'info')" class="side-link">
-                    我的出价
+                <li><a href="<%=ctx%>/item?action=my-bids" class="side-link">
+                    <i class="fa fa-gavel"></i> 我的出价
                     <% if (myBidsCount > 0) { %>
                         <span class="cp-badge"><%= myBidsCount %></span>
                     <% } %>
@@ -584,6 +624,12 @@
                     <% if (ordersPending + ordersPaid + ordersShipped + ordersDone > 0) { %>
                         <span class="cp-badge"><%= ordersPending + ordersPaid + ordersShipped + ordersDone %></span>
                     <% } %>
+                </a></li>
+                <li><a href="<%=ctx%>/deposit?action=my" class="side-link">
+                    <i class="fa fa-shield"></i> 我的押金
+                </a></li>
+                <li><a href="<%=ctx%>/payment?action=ledger" class="side-link">
+                    <i class="fa fa-list-alt"></i> 账户流水
                 </a></li>
                 <li><a href="<%=ctx%>/order?action=list&role=seller" class="side-link">
                     卖出订单（卖家）
@@ -706,14 +752,14 @@
 
         <!-- 4 CORE STATS -->
         <div class="core-stats">
-            <a href="<%=ctx%>/item?action=list&seller=<%= user.getId() %>" class="cp-kpi-card">
+            <a href="<%=ctx%>/item?action=my-items" class="cp-kpi-card">
                 <div class="cp-kpi-icon"><i class="fa fa-gavel"></i></div>
                 <div class="cp-kpi-body">
                     <div class="cp-kpi-value"><%= sellerStats.get("total") == null ? 0 : sellerStats.get("total") %></div>
                     <div class="cp-kpi-label">我的发布</div>
                 </div>
             </a>
-            <a href="javascript:void(0)" onclick="toast('我的出价开发中', 'info')" class="cp-kpi-card">
+            <a href="<%=ctx%>/item?action=my-bids" class="cp-kpi-card">
                 <div class="cp-kpi-icon"><i class="fa fa-hand-paper-o"></i></div>
                 <div class="cp-kpi-body">
                     <div class="cp-kpi-value"><%= myBidsCount %></div>
@@ -807,37 +853,16 @@
                     </div>
                 </div>
 
-                <!-- item grid -->
-                <% if (recentItems.isEmpty()) { %>
-                    <div class="empty-state">
-                        <i class="fa fa-inbox"></i>
-                        还没有发布过拍品, <a href="<%=ctx%>/item?action=publish-page">立即发布</a>
-                    </div>
-                <% } else { %>
-                    <div class="cp-goods-grid">
-                        <% for (org.example.entity.AuctionItem item : recentItems) { %>
-                            <a href="<%=ctx%>/item?action=detail&id=<%= item.getId() %>" class="cp-goods-card">
-                                <div class="cp-goods-cover" style="<%= item.getCoverImage() != null && !item.getCoverImage().isEmpty() ? "background-image: url('" + item.getCoverImage() + "'); background-size: cover; background-position: center;" : "" %>">
-                                    <% if (item.getCoverImage() == null || item.getCoverImage().isEmpty()) { %>
-                                        <i class="fa fa-image"></i>
-                                    <% } %>
-                                    <%-- sold / failed overlay --%>
-                                    <% if (item.getStatus() != null && item.getStatus() == 2) { %>
-                                        <div class="sold-tag">已成交</div>
-                                    <% } else if (item.getStatus() != null && item.getStatus() == 3) { %>
-                                        <div class="sold-tag" style="background: rgba(100,100,100,0.7); color: #888;">已流拍</div>
-                                    <% } %>
-                                </div>
-                                <div class="cp-goods-body">
-                                    <div class="cp-goods-title"><%= EscapeUtil.html(item.getTitle()) %></div>
-                                    <div class="cp-goods-price">
-                                        <small>¥</small><%= item.getCurrentPrice() == null ? "0.00" : item.getCurrentPrice().toPlainString() %>
-                                    </div>
-                                </div>
-                            </a>
-                        <% } %>
-                    </div>
-                <% } %>
+                <!-- item grid (3 panels, tab-switched) -->
+                <div class="tab-panel" data-panel="active">
+                    <%= renderItemGrid(activeItems, ctx) %>
+                </div>
+                <div class="tab-panel" data-panel="sold" style="display:none;">
+                    <%= renderItemGrid(soldItems, ctx) %>
+                </div>
+                <div class="tab-panel" data-panel="failed" style="display:none;">
+                    <%= renderItemGrid(failedItems, ctx) %>
+                </div>
             </div>
         </div>
 
@@ -883,13 +908,15 @@
         group.classList.toggle('collapsed');
     }
 
-    // item tab switching (frontend placeholder, real data from backend)
+    // item tab switching: 切换 tab + 显示对应拍品面板
     document.querySelectorAll('.cp-grid-tab').forEach(tab => {
         tab.addEventListener('click', function () {
             document.querySelectorAll('.cp-grid-tab').forEach(t => t.classList.remove('active'));
             this.classList.add('active');
-            const tabName = this.dataset.tab;
-            toast('SWITCHED TO «' + (tabName === 'active' ? '拍卖中' : tabName === 'sold' ? '已成交' : '已流拍') + '»', 'info');
+            const tabName = this.dataset.tab; // active / sold / failed
+            document.querySelectorAll('.tab-panel').forEach(p => {
+                p.style.display = (p.dataset.panel === tabName) ? '' : 'none';
+            });
         });
     });
 </script>

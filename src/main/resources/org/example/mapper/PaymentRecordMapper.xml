@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.example.mapper.PaymentRecordMapper">
+
+    <sql id="recordColumns">
+        id, user_id, user_role, type, amount, method, order_no, item_id,
+        balance_after, platform_after, remark, create_time
+    </sql>
+
+    <!-- 1. 插入 -->
+    <insert id="insert" parameterType="PaymentRecord" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO payment_record
+            (user_id, user_role, type, amount, method, order_no, item_id,
+             balance_after, platform_after, remark, create_time)
+        VALUES
+            (#{userId}, #{userRole}, #{type}, #{amount}, #{method}, #{orderNo}, #{itemId},
+             #{balanceAfter}, #{platformAfter}, #{remark}, #{createTime})
+    </insert>
+
+    <!-- 2. 按 ID -->
+    <select id="findById" parameterType="int" resultType="PaymentRecord">
+        SELECT <include refid="recordColumns"/>
+        FROM payment_record
+        WHERE id = #{id}
+    </select>
+
+    <!-- 2b. 最近 N 条全部流水（admin 演示控制台用） -->
+    <select id="findRecent" parameterType="map" resultType="PaymentRecord">
+        SELECT <include refid="recordColumns"/>
+        FROM payment_record
+        ORDER BY create_time DESC, id DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 3. 分页查某用户流水 -->
+    <select id="findByUserIdPaged" parameterType="map" resultType="PaymentRecord">
+        SELECT <include refid="recordColumns"/>
+        FROM payment_record
+        <where>
+            user_id = #{userId}
+            <if test="type != null">
+                AND type = #{type}
+            </if>
+        </where>
+        ORDER BY create_time DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 4. 计数 -->
+    <select id="countByUserId" parameterType="map" resultType="int">
+        SELECT COUNT(*) FROM payment_record
+        <where>
+            user_id = #{userId}
+            <if test="type != null">
+                AND type = #{type}
+            </if>
+        </where>
+    </select>
+
+    <!-- 5. 某用户某 type 总额 -->
+    <select id="sumByUserAndType" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(amount), 0)
+        FROM payment_record
+        WHERE user_id = #{userId} AND type = #{type}
+    </select>
+
+    <!-- 6. 某订单的所有流水 -->
+    <select id="findByOrderNo" parameterType="string" resultType="PaymentRecord">
+        SELECT <include refid="recordColumns"/>
+        FROM payment_record
+        WHERE order_no = #{orderNo}
+        ORDER BY create_time ASC
+    </select>
+
+</mapper>

@@ -1120,7 +1120,7 @@
             <a href="<%=ctx%>/index.jsp" class="active">首页</a>
             <a href="javascript:void(0)" onclick="go('/item?action=list')">浏览拍品</a>
             <a href="javascript:void(0)" onclick="go('/item?action=publish-page')">发布拍品</a>
-            <a href="javascript:void(0)" onclick="go('/item?action=list&sort=hot')">热门拍品</a>
+            <a href="javascript:void(0)" onclick="go('/item?action=hot-ranks')">热门拍品</a>
             <% if (currentUser != null) { %>
                 <a href="javascript:void(0)" onclick="go('/user?action=center')">个人中心</a>
             <% } %>
@@ -1131,13 +1131,6 @@
                        v-model="keyword" @keyup.enter="search">
                 <button @click="search"><i class="fa fa-search"></i> 搜索</button>
             </div>
-        </div>
-        <div class="nav-tags">
-            <span class="nav-tags-label">// 热搜:</span>
-            <a href="javascript:void(0)" onclick="go('/item/list?keyword=iPhone')" class="nav-tag">iPhone 15</a>
-            <a href="javascript:void(0)" onclick="go('/item/list?keyword=Camera')" class="nav-tag">相机</a>
-            <a href="javascript:void(0)" onclick="go('/item/list?keyword=Sneakers')" class="nav-tag">球鞋</a>
-            <a href="javascript:void(0)" onclick="go('/item/list?keyword=Moutai')" class="nav-tag">茅台</a>
         </div>
         <div class="nav-user">
             <% if (currentUser != null) { %>
@@ -1194,21 +1187,52 @@
         <% } %>
     </div>
 </div>
+
+<!-- ========== 公告详情弹窗（cyberpunk 风格） ========== -->
+<div id="noticeModal" class="cp-modal-overlay" style="display:none;" onclick="if(event.target===this)closeNotice()">
+    <div class="cp-modal">
+        <div class="cp-modal-title">
+            <span id="noticeTitle" style="flex:1; min-width:0; word-break:break-all;">公告</span>
+            <span class="cp-modal-close" onclick="closeNotice()">&times;</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; font-size:11px; color:#888; margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid rgba(255,238,0,0.15);">
+            <i class="fa fa-clock-o"></i>
+            <span id="noticeMeta"></span>
+        </div>
+        <div id="noticeContent" style="color:#ccc; line-height:1.8; font-size:14px; white-space:pre-wrap; max-height:50vh; overflow-y:auto; padding-right:4px;"></div>
+        <div style="margin-top:18px; padding-top:14px; border-top:1px solid rgba(255,238,0,0.15); display:flex; gap:8px; justify-content:flex-end;">
+            <button onclick="closeNotice()" style="padding:8px 24px; background:#FFEE00; color:#000; font-weight:700; border:none; cursor:pointer; font-family:inherit; font-size:13px; clip-path:polygon(8% 0, 100% 0, 92% 100%, 0 100%);">我知道了</button>
+        </div>
+    </div>
+</div>
 <script>
-    // 公告详情弹窗
+    // 公告详情弹窗（公开接口，无需管理员登录）
     window.showNotice = function(id) {
         loadAxios().then(() => {
-            axios.get('<%= ctx %>/admin/announcement?action=detail&id=' + id).then(r => {
+            axios.get('<%= ctx %>/notice?action=detail&id=' + id).then(r => {
                 if (r.data.success) {
                     const n = r.data.notice;
-                    const text = (n.content || '').replace(/\\n/g, '\\n');
-                    alert('【' + n.title + '】\\n\\n' + text);
+                    document.getElementById('noticeTitle').textContent = n.title || '公告';
+                    // 把内容里的换行符保留（pre-wrap 起作用），并把可能的 HTML 标签转义防注入
+                    document.getElementById('noticeContent').textContent = n.content || '';
+                    const meta = [];
+                    if (n.isTop === 1) meta.push('<span style="color:#FF003C;">[置顶]</span>');
+                    if (n.publishTime) meta.push(n.publishTime.toString().substring(0, 16));
+                    document.getElementById('noticeMeta').innerHTML = meta.join(' · ');
+                    document.getElementById('noticeModal').style.display = 'flex';
                 } else {
-                    toast('加载失败', 'error');
+                    toast(r.data.message || '加载失败', 'error');
                 }
             }).catch(() => toast('网络错误', 'error'));
         });
     };
+    window.closeNotice = function() {
+        document.getElementById('noticeModal').style.display = 'none';
+    };
+    // ESC 键关闭
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeNotice();
+    });
 </script>
 <% } %>
 
@@ -1378,7 +1402,7 @@
                 <a class="tab active">猜你喜欢</a>
                 <a class="tab" onclick="go('/item?action=list&sort=ending')">即将结束</a>
                 <a class="tab" onclick="go('/item?action=list&sort=newest')">最新发布</a>
-                <a class="tab" onclick="go('/item?action=list&sort=hot')">人气榜</a>
+                <a class="tab" onclick="go('/item?action=hot-ranks')">人气榜</a>
                 <a class="tab" onclick="go('/item?action=list&sort=price-asc')">价格升序</a>
                 <a class="tab" onclick="go('/item?action=list&sort=price-desc')">价格降序</a>
                 <div class="tabs-right">

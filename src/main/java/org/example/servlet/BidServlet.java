@@ -6,9 +6,11 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.ibatis.session.SqlSession;
 import org.example.entity.AuctionItem;
 import org.example.entity.BidRecord;
+import org.example.entity.Deposit;
 import org.example.entity.User;
 import org.example.mapper.AuctionItemMapper;
 import org.example.mapper.BidRecordMapper;
+import org.example.mapper.DepositMapper;
 import org.example.util.MyBatisUtil;
 import org.example.util.ResponseUtil;
 import org.example.service.MessageService;
@@ -90,6 +92,7 @@ public class BidServlet extends HttpServlet {
         try (SqlSession session = MyBatisUtil.openSession()) {
             AuctionItemMapper itemMapper = session.getMapper(AuctionItemMapper.class);
             BidRecordMapper bidMapper = session.getMapper(BidRecordMapper.class);
+            DepositMapper depositMapper = session.getMapper(DepositMapper.class);
 
             AuctionItem item = itemMapper.findById(itemId);
             if (item == null) {
@@ -101,6 +104,21 @@ public class BidServlet extends HttpServlet {
             if (item.getSellerId().equals(user.getId())) {
                 writeJson(resp, errorOf("卖家不能给自己的拍品出价"));
                 return;
+            }
+
+            // 押金校验（拍品设置了 deposit > 0 时必须先交押金）
+            BigDecimal requiredDeposit = item.getDeposit();
+            if (requiredDeposit != null && requiredDeposit.compareTo(BigDecimal.ZERO) > 0) {
+                Deposit d = depositMapper.findByUserAndItem(user.getId(), itemId);
+                if (d == null || (d.getStatus() != null && d.getStatus() != 0)) {
+                    Map<String, Object> r = new HashMap<>();
+                    r.put("success", false);
+                    r.put("message", "请先缴纳押金");
+                    r.put("code", "DEPOSIT_REQUIRED");
+                    r.put("depositUrl", req.getContextPath() + "/deposit?action=checkout&itemId=" + itemId);
+                    writeJson(resp, r);
+                    return;
+                }
             }
 
             // 状态校验
@@ -198,40 +216,14 @@ public class BidServlet extends HttpServlet {
     // ===================== 拍卖结束结算（手动触发，简化版） =====================
 
     private void doSettle(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        // 找出所有到期且还在拍卖中的拍品
-        try (SqlSession session = MyBatisUtil.openSession()) {
-            AuctionItemMapper itemMapper = session.getMapper(AuctionItemMapper.class);
-            BidRecordMapper bidMapper = session.getMapper(BidRecordMapper.class);
-
-            List<AuctionItem> ended = itemMapper.findEndedActiveItems();
-            int settled = 0;
-            int failed = 0;
-            for (AuctionItem item : ended) {
-                try {
-                    BidRecord winner = bidMapper.findCurrentWinning(item.getId());
-                    if (winner != null) {
-                        // 有人出过价 → 已成交（乐观更新：仅当 status=1 时生效）
-                        itemMapper.updateStatusIfActive(item.getId(), 2);
-                    } else {
-                        // 没人出价 → 流拍（乐观更新：仅当 status=1 时生效）
-                        itemMapper.updateStatusIfActive(item.getId(), 3);
-                    }
-                    settled++;
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                    failed++;
-                }
-            }
-            session.commit();
-
-            Map<String, Object> data = new HashMap<>();
-            data.put("success", true);
-            data.put("settled", settled);
-            data.put("failed", failed);
-            data.put("message", "结算完成：成功 " + settled + "，失败 " + failed);
-            writeJson(resp, data);
+        // 委托给 AuctionEndService（统一的拍卖结束结算：状态更新 + 退押金 + 转货款 + 通知）
+        try {
+            Map<String, Object> r = org.example.service.AuctionEndService.settleEndedItems();
+            r.put("success", true);
+            writeJson(resp, r);
         } catch (Exception e) {
-            writeJson(resp, ResponseUtil.handleException(e, "出价历史查询"));
+            e.printStackTrace();
+            writeJson(resp, ResponseUtil.handleException(e, "拍卖结算"));
         }
     }
 

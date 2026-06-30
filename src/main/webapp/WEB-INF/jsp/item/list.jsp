@@ -153,6 +153,25 @@
         .filter-chip.active { background: rgba(0, 240, 255, 0.1); color: #00F0FF; font-weight: 700; border-color: #00F0FF; }
         .filter-chip i { font-size: 11px; }
 
+        /* 一级 / 二级层级区分 */
+        .filter-chip-top {
+            font-weight: 600;
+            color: rgba(255, 238, 0, 0.85);
+        }
+        .filter-chip-sub {
+            margin-left: 12px;
+            padding-left: 8px;
+            font-size: 11px;
+            color: rgba(255, 238, 0, 0.5);
+            border-left: 1px solid rgba(0, 240, 255, 0.18);
+        }
+        .filter-chip-sub:hover {
+            color: #00F0FF;
+            border-color: rgba(0, 240, 255, 0.3);
+            border-left-color: rgba(0, 240, 255, 0.3);
+        }
+        .filter-chip-sub.active { border-left-color: #00F0FF; }
+
         /* ---------- 商品网格 ---------- */
         .cp-goods-grid {
             display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px;
@@ -331,7 +350,7 @@
             <a href="<%=ctx%>/index.jsp">首页</a>
             <a href="<%=ctx%>/item?action=list" class="active">浏览拍品</a>
             <a href="<%=ctx%>/item?action=publish-page">发布拍品</a>
-            <a href="javascript:void(0)" onclick="go('<%=ctx%>/item?action=list&sort=hot')">热门拍品</a>
+            <a href="javascript:void(0)" onclick="go('<%=ctx%>/item?action=hot-ranks')">热门拍品</a>
             <% if (currentUser != null) { %>
                 <a href="javascript:void(0)" onclick="go('<%=ctx%>/user?action=center')">个人中心</a>
             <% } %>
@@ -342,13 +361,6 @@
                    value="<%= keyword %>">
             <button type="submit"><i class="fa fa-search"></i> 搜索</button>
         </form>
-        <div class="cp-nav-tags">
-            <span class="nav-tags-label">热搜：</span>
-            <a href="<%=ctx%>/item/list?keyword=iPhone" class="cp-nav-tag cp-nav-tag-hot">iPhone 15</a>
-            <a href="<%=ctx%>/item/list?keyword=相机" class="cp-nav-tag">佳能相机</a>
-            <a href="<%=ctx%>/item/list?keyword=球鞋" class="cp-nav-tag">球鞋</a>
-            <a href="<%=ctx%>/item/list?keyword=茅台" class="cp-nav-tag cp-nav-tag-hot">茅台</a>
-        </div>
         <div class="cp-nav-user">
             <% if (currentUser != null) { %>
                 <a href="javascript:void(0)" onclick="go('<%=ctx%>/user?action=center')" class="user-name-link"><%= currentUser.getUsername() %></a>
@@ -398,36 +410,27 @@
         </div>
     </div>
 
-    <!-- 属性筛选条（checkbox 风格） -->
+    <!-- 分类筛选条（一级 + 缩进二级） -->
     <div class="filterbar">
         <div class="filterbar-section">
             <span class="filterbar-label">分类</span>
             <div :class="['filter-chip', { active: !currentCategoryId }]" @click="changeCategory(null)">全部</div>
-            <div v-for="c in categories" :key="c.id"
-                 :class="['filter-chip', { active: currentCategoryId === c.id }]"
-                 @click="changeCategory(c.id)">
-                {{ c.categoryName }}
-            </div>
-        </div>
-    </div>
-
-    <div class="filterbar" style="padding-top: 6px; padding-bottom: 6px;">
-        <div class="filterbar-section">
-            <span class="filterbar-label">属性</span>
-            <div class="filter-chip" @click="toast('个人拍品筛选（前端占位）', 'info')">
-                <i class="fa fa-square-o"></i> 个人拍品
-            </div>
-            <div class="filter-chip" @click="toast('包邮筛选（前端占位）', 'info')">
-                <i class="fa fa-square-o"></i> 包邮
-            </div>
-            <div class="filter-chip" @click="toast('严选筛选（前端占位）', 'info')">
-                <i class="fa fa-square-o"></i> 严选
-            </div>
-            <div class="filter-chip" @click="toast('全新筛选（前端占位）', 'info')">
-                <i class="fa fa-square-o"></i> 全新
-            </div>
-            <div class="filter-chip" @click="toast('即将结束筛选（前端占位）', 'info')">
-                <i class="fa fa-square-o"></i> 即将结束
+            <template v-for="top in topCategories" :key="top.id">
+                <div :class="['filter-chip', 'filter-chip-top', { active: currentCategoryId === top.id }]"
+                     @click="changeCategory(top.id)">
+                    {{ top.categoryName }}
+                </div>
+                <div v-for="sub in subCategoriesOf(top.id)" :key="sub.id"
+                     :class="['filter-chip', 'filter-chip-sub', { active: currentCategoryId === sub.id }]"
+                     @click="changeCategory(sub.id)">
+                    {{ sub.categoryName }}
+                </div>
+            </template>
+            <!-- 没有 parent 的"游离"分类（孤儿兜底） -->
+            <div v-for="o in orphanCategories" :key="o.id"
+                 :class="['filter-chip', 'filter-chip-sub', { active: currentCategoryId === o.id }]"
+                 @click="changeCategory(o.id)">
+                {{ o.categoryName }}
             </div>
         </div>
         <div style="margin-left: auto; font-size: 12px; color: rgba(255,238,0,0.5);">
@@ -575,6 +578,23 @@
                     return arr;
                 });
 
+                // 分类层级：一级 + parentId 关系
+                const topCategories = computed(() =>
+                    categoriesRef.value.filter(c => c.parentId === 0)
+                );
+                const orphanCategories = computed(() => {
+                    // 二级分类里 parentId 找不到对应一级的，单独列兜底
+                    const topIds = new Set(topCategories.value.map(c => c.id));
+                    return categoriesRef.value.filter(c =>
+                        c.parentId !== 0 && c.parentId != null && !topIds.has(c.parentId)
+                    );
+                });
+                function subCategoriesOf(parentId) {
+                    return categoriesRef.value
+                        .filter(c => c.parentId === parentId)
+                        .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+                }
+
                 function formatPrice(p) {
                     return Number(p).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 }
@@ -642,6 +662,7 @@
                 return {
                     items: itemsRef, categories: categoriesRef,
                     currentCategoryId, sort: sortRef, page, total, totalPages,
+                    topCategories, subCategoriesOf, orphanCategories,
                     pageNumbers,
                     formatPrice, conditionLabel, countdownOf,
                     isEnding, isUrgent, isEnded, creditLabel, relativeTime,

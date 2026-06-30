@@ -124,4 +124,18 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         WHERE id = #{userId}
     </update>
 
+    <!-- 12. 余额加钱（原子） -->
+    <update id="addBalance">
+        UPDATE user
+        SET balance = balance + #{amount}
+        WHERE id = #{userId}
+    </update>
+
+    <!-- 13. 余额减钱（带防超扣） -->
+    <update id="subtractBalance">
+        UPDATE user
+        SET balance = balance - #{amount}
+        WHERE id = #{userId} AND balance >= #{amount}
+    </update>
+
 </mapper>

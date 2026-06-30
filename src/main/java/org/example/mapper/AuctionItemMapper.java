@@ -15,6 +15,19 @@ public interface AuctionItemMapper {
     /** 按 ID 查询（详情页） */
     AuctionItem findById(Integer id);
 
+    /** 最近 N 个拍品（admin 演示控制台用） */
+    List<AuctionItem> findRecent(@Param("limit") Integer limit);
+
+    /**
+     * 同分类其他在拍（推荐用）
+     * @param categoryId 分类 ID
+     * @param excludeItemId 排除自己
+     * @param limit 返回数量
+     */
+    List<AuctionItem> findRelated(@Param("categoryId") Integer categoryId,
+                                  @Param("excludeItemId") Integer excludeItemId,
+                                  @Param("limit") Integer limit);
+
     /** 发布拍品（插入） */
     int insert(AuctionItem item);
 

@@ -7,8 +7,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <sql id="orderColumns">
         id, order_no, item_id, item_title, cover_image,
-        buyer_id, seller_id, final_price, address_id,
-        status, pay_time, deliver_time, receive_time,
+        buyer_id, seller_id, final_price, deposit_amount, final_pay_amount,
+        final_pay_method, final_pay_time, address_id,
+        status, pay_time, deliver_time, receive_time, settled_time,
         logistics_company, tracking_number, create_time,
         refund_reason, refund_audit_time, refund_audit_result
     </sql>
@@ -29,8 +30,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <!-- 3. 创建订单（插入） -->
     <insert id="insert" parameterType="OrderInfo" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO order_info (order_no, item_id, item_title, cover_image, buyer_id, seller_id, final_price, address_id, status)
-        VALUES (#{orderNo}, #{itemId}, #{itemTitle}, #{coverImage}, #{buyerId}, #{sellerId}, #{finalPrice}, #{addressId}, #{status})
+        INSERT INTO order_info
+            (order_no, item_id, item_title, cover_image, buyer_id, seller_id,
+             final_price, deposit_amount, final_pay_amount, address_id, status, create_time)
+        VALUES
+            (#{orderNo}, #{itemId}, #{itemTitle}, #{coverImage}, #{buyerId}, #{sellerId},
+             #{finalPrice}, #{depositAmount}, #{finalPayAmount}, #{addressId}, #{status}, #{createTime})
     </insert>
 
     <!-- 4. 更新订单状态（通用） -->
@@ -40,10 +45,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         WHERE id = #{id}
     </update>
 
-    <!-- 5. 付款（status 0→1） -->
+    <!-- 5. 付款（status 0→1，写支付方式 + 尾款金额 + 尾款支付时间） -->
     <update id="markPaid">
         UPDATE order_info
-        SET status = 1, pay_time = NOW()
+        SET status           = 1,
+            pay_time         = NOW(),
+            final_pay_amount = #{finalPayAmount},
+            final_pay_method = #{finalPayMethod},
+            final_pay_time   = NOW()
         WHERE id = #{id} AND status = 0
     </update>
 
@@ -57,10 +66,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         WHERE id = #{id} AND status = 1
     </update>
 
-    <!-- 7. 确认收货（status 2→3） -->
+    <!-- 7. 确认收货（status 2→3 + 写 settled_time 平台打款时间） -->
     <update id="markReceived">
         UPDATE order_info
-        SET status = 3, receive_time = NOW()
+        SET status       = 3,
+            receive_time = NOW(),
+            settled_time = NOW()
         WHERE id = #{id} AND status = 2
     </update>
 

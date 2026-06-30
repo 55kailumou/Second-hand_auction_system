@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.example.mapper.SystemAccountMapper">
+
+    <sql id="accountColumns">
+        id, balance, total_in, total_out, update_time
+    </sql>
+
+    <!-- 1. 取唯一一行（id=1） -->
+    <select id="get" resultType="SystemAccount">
+        SELECT <include refid="accountColumns"/>
+        FROM system_account
+        WHERE id = 1
+    </select>
+
+    <!-- 2. 入金：balance += amount, total_in += amount -->
+    <update id="addBalance">
+        UPDATE system_account
+        SET balance   = balance + #{amount},
+            total_in  = total_in + #{amount}
+        WHERE id = 1
+    </update>
+
+    <!-- 3. 出金：balance -= amount（带防超扣）, total_out += amount -->
+    <update id="subtractBalance">
+        UPDATE system_account
+        SET balance   = balance - #{amount},
+            total_out = total_out + #{amount}
+        WHERE id = 1 AND balance >= #{amount}
+    </update>
+
+</mapper>

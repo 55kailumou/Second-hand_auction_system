@@ -549,6 +549,23 @@
                 <% if (order.getReceiveTime() != null) { %>
                     <div class="cp-info-row"><span class="cp-info-label">收货时间</span><span class="cp-info-value"><%= order.getReceiveTime().toString().replace('T', ' ') %></span></div>
                 <% } %>
+                <% if (order.getSettledTime() != null) { %>
+                    <div class="cp-info-row" style="background: rgba(0, 255, 65, 0.05);">
+                        <span class="cp-info-label" style="color: #00FF41;">平台打款时间</span>
+                        <span class="cp-info-value" style="color: #00FF41;"><%= order.getSettledTime().toString().replace('T', ' ') %></span>
+                    </div>
+                <% } %>
+                <% if (order.getFinalPayMethod() != null && !order.getFinalPayMethod().isEmpty()) { %>
+                    <div class="cp-info-row">
+                        <span class="cp-info-label">尾款支付方式</span>
+                        <span class="cp-info-value">
+                            <%= "balance".equals(order.getFinalPayMethod()) ? "<i class='fa fa-database'></i> 账户余额" :
+                                ("alipay".equals(order.getFinalPayMethod()) ? "<i class='fa fa-mobile' style='color:#1677ff;'></i> 支付宝" :
+                                 ("wechat".equals(order.getFinalPayMethod()) ? "<i class='fa fa-weixin' style='color:#07c160;'></i> 微信支付" :
+                                  order.getFinalPayMethod())) %>
+                        </span>
+                    </div>
+                <% } %>
                 <% if (order.getLogisticsCompany() != null && !order.getLogisticsCompany().isEmpty()) { %>
                     <div class="cp-info-row"><span class="cp-info-label">物流公司</span><span class="cp-info-value"><%= order.getLogisticsCompany() == null ? "-" : EscapeUtil.html(order.getLogisticsCompany()) %></span></div>
                 <% } %>
@@ -663,6 +680,27 @@
             <div class="cp-action-card">
                 <div style="text-align: center; color: var(--cp-text-dim); font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">订单金额</div>
                 <div class="cp-price-big"><small>¥</small><%= order.getFinalPrice() == null ? "0.00" : order.getFinalPrice().toPlainString() %></div>
+
+                <%-- 押金/尾款明细 --%>
+                <% if (order.getDepositAmount() != null && order.getDepositAmount().compareTo(java.math.BigDecimal.ZERO) > 0) { %>
+                <div style="background: rgba(0, 240, 255, 0.05); border: 1px dashed rgba(0, 240, 255, 0.2); border-radius: 2px; padding: 8px 10px; margin: 10px 0; font-size: 12px; color: rgba(255, 238, 0, 0.7); line-height: 1.7;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>已抵用押金</span>
+                        <span style="color: #00F0FF;">-¥<%= order.getDepositAmount().toPlainString() %></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 2px;">
+                        <span>待付尾款</span>
+                        <span style="color: #FFEE00; font-weight: 600;">¥<%= order.getFinalPayAmount() == null ? "0.00" : order.getFinalPayAmount().toPlainString() %></span>
+                    </div>
+                    <% if (order.getFinalPayMethod() != null && !order.getFinalPayMethod().isEmpty()) { %>
+                    <div style="display: flex; justify-content: space-between; margin-top: 4px; padding-top: 4px; border-top: 1px solid rgba(0, 240, 255, 0.1);">
+                        <span>已付方式</span>
+                        <span><%= "balance".equals(order.getFinalPayMethod()) ? "余额" : ("alipay".equals(order.getFinalPayMethod()) ? "支付宝" : ("wechat".equals(order.getFinalPayMethod()) ? "微信" : order.getFinalPayMethod())) %></span>
+                    </div>
+                    <% } %>
+                </div>
+                <% } %>
+
                 <span class="cp-badge <%= order.getStatusBadgeClass() != null && order.getStatusBadgeClass().contains("warning") ? "cp-badge-warning" : order.getStatusBadgeClass() != null && order.getStatusBadgeClass().contains("info") ? "cp-badge-info" : order.getStatusBadgeClass() != null && order.getStatusBadgeClass().contains("primary") ? "cp-badge-primary" : order.getStatusBadgeClass() != null && order.getStatusBadgeClass().contains("success") ? "cp-badge-success" : "cp-badge-gray" %>" style="display: block; text-align: center; margin-bottom: 16px;"><%= order.getStatusText() %></span>
 
                 <% if (isBuyer) { %>
@@ -858,14 +896,49 @@ const orderNo = '<%= order != null ? order.getOrderNo() : "" %>';
 const ctx = '<%= ctx %>';
 
 function payOrder() {
-    if (!confirm('确认付款 ¥<%= order != null ? order.getFinalPrice() : "0.00" %>？\n(演示项目，跳过实际支付)')) return;
-    axios.post(ctx + '/order?action=pay', new URLSearchParams({ orderNo: orderNo }))
+    const finalPay = '<%= order != null && order.getFinalPayAmount() != null ? order.getFinalPayAmount().toPlainString() : "0.00" %>';
+    const deposit = '<%= order != null && order.getDepositAmount() != null ? order.getDepositAmount().toPlainString() : "0.00" %>';
+    const total = '<%= order != null && order.getFinalPrice() != null ? order.getFinalPrice().toPlainString() : "0.00" %>';
+
+    let info = '订单总价 ¥' + total;
+    if (parseFloat(deposit) > 0) {
+        info += '（已抵用押金 ¥' + deposit + '，待付尾款 ¥' + finalPay + '）';
+    }
+    info += '\n请选择支付方式：';
+
+    // 弹出支付方式选择
+    const choice = prompt(
+        info + '\n\n' +
+        '1 - 账户余额（即时到账）\n' +
+        '2 - 支付宝（模拟）\n' +
+        '3 - 微信支付（模拟）\n\n' +
+        '请输入 1 / 2 / 3：',
+        '1'
+    );
+    if (choice == null) return;
+
+    let method = 'balance';
+    if (choice === '2') method = 'alipay';
+    else if (choice === '3') method = 'wechat';
+    else if (choice !== '1') {
+        toast('无效选择', 'error');
+        return;
+    }
+
+    axios.post(ctx + '/order?action=pay', new URLSearchParams({ orderNo: orderNo, method: method }))
         .then(r => {
-            if (r.data.success) {
-                toast('付款成功', 'success');
-                setTimeout(() => location.reload(), 800);
+            const data = r.data;
+            if (data.success) {
+                if (data.redirect) {
+                    // 模拟支付：跳到模拟收银台
+                    window.location.href = data.redirect;
+                } else {
+                    // 余额支付：直接成功
+                    toast(data.message || '付款成功', 'success');
+                    setTimeout(() => location.reload(), 800);
+                }
             } else {
-                toast(r.data.message, 'error');
+                toast(data.message, 'error');
             }
         })
         .catch(() => toast('网络错误', 'error'));

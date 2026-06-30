@@ -35,6 +35,7 @@
     String   preCoverImage      = preItem.getCoverImage();
     String   preImageUrls       = preItem.getImageUrls();
     String   preStartPrice      = preItem.getStartPrice() == null ? "" : preItem.getStartPrice().toPlainString();
+    String   preDeposit         = preItem.getDeposit() == null ? "" : preItem.getDeposit().toPlainString();
     String   preBidIncrement    = preItem.getBidIncrement() == null ? "" : preItem.getBidIncrement().toPlainString();
     String   preReservePrice    = preItem.getReservePrice() == null ? "" : preItem.getReservePrice().toPlainString();
     String   preStartTime       = "";
@@ -448,7 +449,7 @@
             <a href="<%=ctx%>/index.jsp">首页</a>
             <a href="<%=ctx%>/item?action=list">浏览拍品</a>
             <a href="<%=ctx%>/item?action=publish-page" class="active">发布拍品</a>
-            <a href="javascript:void(0)" onclick="go('<%=ctx%>/item?action=list&sort=hot')">热门拍品</a>
+            <a href="javascript:void(0)" onclick="go('<%=ctx%>/item?action=hot-ranks')">热门拍品</a>
             <a href="javascript:void(0)" onclick="go('<%=ctx%>/user?action=center')">个人中心</a>
         </nav>
         <form action="<%=ctx%>/item" method="get" class="cp-nav-search">
@@ -673,6 +674,28 @@
 
                 <div class="cp-form-row">
                     <div class="cp-form-group">
+                        <label class="cp-form-label">参拍押金 (元)</label>
+                        <input type="number" name="deposit" class="cp-form-input" min="0" step="0.01"
+                               v-model.number="form.deposit" placeholder="留空则按起拍价×10% 自动算"
+                               :disabled="!editable.editableHardFields"
+                               :class="{ disabled: !editable.editableHardFields }">
+                        <span class="cp-form-hint">
+                            当前计算值：<span style="color: #00F0FF;">¥{{ autoDeposit }}</span>
+                            <span style="color: rgba(255,238,0,0.5); margin-left: 6px;">= 起拍价 × 10%（最低 ¥1）</span>
+                        </span>
+                    </div>
+                    <div class="cp-form-group">
+                        <label class="cp-form-label">说明</label>
+                        <div class="cp-form-hint" style="padding: 11px 0;">
+                            <i class="fa fa-info-circle" style="color: #00F0FF;"></i>
+                            仅"待审核/未开始"状态的拍品可改押金
+                            <br>· 已有出价时改押金会破坏拍卖规则
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cp-form-row">
+                    <div class="cp-form-group">
                         <label class="cp-form-label">开始时间<span class="required">*</span></label>
                         <input type="datetime-local" name="startTime" class="cp-form-input"
                                v-model="form.startTime"
@@ -747,6 +770,7 @@
         coverImage:     '<%= preCoverImage == null ? "" : preCoverImage.replace("'", "\\'") %>',
         imageUrls:      '<%= preImageUrls == null ? "" : preImageUrls.replace("'", "\\'") %>',
         startPrice:     <%= preStartPrice == null || preStartPrice.isEmpty() ? "0" : preStartPrice %>,
+        deposit:        <%= preDeposit == null || preDeposit.isEmpty() ? "null" : preDeposit %>,
         bidIncrement:   <%= preBidIncrement == null || preBidIncrement.isEmpty() ? "1.00" : preBidIncrement %>,
         reservePrice:   <%= preReservePrice == null || preReservePrice.isEmpty() ? "null" : preReservePrice %>,
         startTime:      '<%= preStartTime == null ? "" : preStartTime.replace("'", "\\'") %>',
@@ -792,6 +816,7 @@
                         coverImage:     init('coverImage', pre.coverImage || ''),
                         imageUrls:      init('imageUrls', pre.imageUrls || ''),
                         startPrice:     init('startPrice', pre.startPrice || 0),
+                        deposit:        init('deposit', pre.deposit || null),
                         bidIncrement:   init('bidIncrement', pre.bidIncrement || 1),
                         reservePrice:   init('reservePrice', pre.reservePrice),
                         startTime:      init('startTime', pre.startTime || ''),
@@ -802,6 +827,13 @@
                     const submitting = ref(false);
                     const serverErrorRef = ref(serverError);
                     const draftSaved = ref(false);
+                    // 押金自动计算：起拍价 × 10% 向上取整，最低 1
+                    const autoDeposit = computed(() => {
+                        const sp = parseFloat(form.startPrice) || 0;
+                        if (sp <= 0) return '0.00';
+                        const calc = Math.ceil(sp * 0.10 * 100) / 100;
+                        return Math.max(calc, 1.0).toFixed(2);
+                    });
 
                     // ============ 图片 URL 列表（从 form.imageUrls 解析）============
                     // 仅支持远程 URL（http:// 或 https://），每行一个
@@ -937,6 +969,7 @@
                         topCategories, getChildren,
                         setEndTime, onImgError,
                         validateField, handleSubmit,
+                        autoDeposit,
                         // ============ 编辑专属 ============
                         editable: <%= scope != null ? "JSON.parse('" + new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(scope).replace("'", "\\'") + "')" : "null" %>,
                         offlineItem

@@ -3,13 +3,15 @@ package org.example.service;
 import org.apache.ibatis.session.SqlSession;
 import org.example.entity.AuctionItem;
 import org.example.entity.BidRecord;
+import org.example.entity.Deposit;
 import org.example.entity.OrderInfo;
 import org.example.mapper.AuctionItemMapper;
 import org.example.mapper.BidRecordMapper;
+import org.example.mapper.DepositMapper;
 import org.example.mapper.OrderMapper;
-import org.example.entity.Message;
 import org.example.util.MyBatisUtil;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -22,8 +24,10 @@ import java.util.UUID;
  * 业务流程：
  * 1. 扫描所有到期且在拍卖中的拍品（end_time < now AND status = 1）
  * 2. 找出每个拍品的最高出价人
- * 3. 有最高出价 → 拍品状态改为"已成交"(2)，自动生成订单（status=0 待付款）
- * 4. 无最高出价 → 拍品状态改为"已流拍"(3)
+ * 3. **未中标者押金全退**（调 PayService.refundDeposit）
+ * 4. **中标者押金转货款**（调 PayService.depositToFinal，平台账户 +amount）
+ * 5. 有最高出价 → 拍品状态改为"已成交"(2)，自动生成订单（status=0 待付款）
+ * 6. 无最高出价 → 拍品状态改为"已流拍"(3)
  *
  * 调用方式：
  *   - 手动触发：GET /bid?action=settle （BidServlet.doSettle 调用此 Service）
@@ -33,7 +37,8 @@ public class AuctionEndService {
 
     /**
      * 扫描并结算所有到期拍品
-     * @return Map: { settled: int, failed: int, soldCount: int, flowCount: int, generatedOrders: int }
+     * @return Map: { settled: int, failed: int, soldCount: int, flowCount: int,
+     *                generatedOrders: int, refundDeposits: int, transferredDeposits: int }
      */
     public static Map<String, Object> settleEndedItems() {
         Map<String, Object> result = new HashMap<>();
@@ -42,33 +47,88 @@ public class AuctionEndService {
         int soldCount = 0;
         int flowCount = 0;
         int generatedOrders = 0;
+        int refundDeposits = 0;
+        int transferredDeposits = 0;
 
         try (SqlSession session = MyBatisUtil.openSession()) {
             AuctionItemMapper itemMapper = session.getMapper(AuctionItemMapper.class);
             BidRecordMapper bidMapper = session.getMapper(BidRecordMapper.class);
+            DepositMapper depositMapper = session.getMapper(DepositMapper.class);
             OrderMapper orderMapper = session.getMapper(OrderMapper.class);
 
             List<AuctionItem> ended = itemMapper.findEndedActiveItems();
             for (AuctionItem item : ended) {
                 try {
                     BidRecord winner = bidMapper.findCurrentWinning(item.getId());
+
+                    // ============ 1. 押金处理（必须先于拍品状态更新） ============
                     if (winner != null) {
-                        // 有人出过价 → 已成交（乐观更新：仅当当前状态是拍卖中）
+                        // 中标者的押金：转货款
+                        Deposit winnerDeposit = depositMapper.findByUserAndItem(winner.getBidderId(), item.getId());
+                        if (winnerDeposit != null && winnerDeposit.getStatus() != null && winnerDeposit.getStatus() == 0) {
+                            String tempOrderNo = "PRE_" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+                            // 先用临时单号转货款，等订单创建后再补关联单号
+                            Map<String, Object> r = PayService.depositToFinal(winnerDeposit.getId(), tempOrderNo);
+                            if (Boolean.TRUE.equals(r.get("success"))) {
+                                transferredDeposits++;
+                            }
+                        }
+                        // 其他所有人的押金：全退
+                        List<Deposit> allDeposits = depositMapper.findActiveByItemId(item.getId());
+                        for (Deposit d : allDeposits) {
+                            if (d.getUserId().equals(winner.getBidderId())) continue;  // 中标者跳过
+                            if (d.getStatus() == null || d.getStatus() != 0) continue;  // 已处理过的跳过
+                            Map<String, Object> r = PayService.refundDeposit(d.getId(),
+                                    "拍卖结束未中标，押金退还（拍品《" + item.getTitle() + "》）");
+                            if (Boolean.TRUE.equals(r.get("success"))) {
+                                refundDeposits++;
+                            }
+                        }
+                    } else {
+                        // 没人出价：所有人的押金全退
+                        List<Deposit> allDeposits = depositMapper.findActiveByItemId(item.getId());
+                        for (Deposit d : allDeposits) {
+                            if (d.getStatus() == null || d.getStatus() != 0) continue;
+                            Map<String, Object> r = PayService.refundDeposit(d.getId(),
+                                    "拍卖流拍，押金退还（拍品《" + item.getTitle() + "》）");
+                            if (Boolean.TRUE.equals(r.get("success"))) {
+                                refundDeposits++;
+                            }
+                        }
+                    }
+
+                    // ============ 2. 更新拍品状态 + 生成订单 ============
+                    if (winner != null) {
+                        // 有人出过价 → 已成交
                         itemMapper.updateStatusIfActive(item.getId(), 2);
                         soldCount++;
 
-                        // 自动生成订单（如果中拍人已有默认地址，则直接下单；否则只标成交，等中拍人来下单）
-                        // 这里简化为：标记成交，订单由中拍人在"我的拍品"里主动下单
-                        // 也可以在这里自动下单：需要查 buyer 默认地址（如果有）
-                        // 这里为了简化，先只标成交，订单在拍品详情页有"中拍后下单"按钮
+                        // 自动生成订单（已抵用押金 + 尾款 = 成交价）
+                        // 中标者的 deposit 已经在上面 status=1 转货款
+                        Deposit winnerDeposit = depositMapper.findByUserAndItem(winner.getBidderId(), item.getId());
+                        BigDecimal depositAmount = (winnerDeposit != null
+                                && winnerDeposit.getStatus() != null
+                                && winnerDeposit.getStatus() == 1) ? winnerDeposit.getAmount() : BigDecimal.ZERO;
+
+                        // 用一个简化的方式：直接创建订单（不依赖用户地址，由中拍人后续选择地址下单）
+                        // 这里先不自动生成订单，让中标人在拍品详情页手动下单
+                        // 简化：跟之前一样，只标成交，订单在拍品详情页有"中拍后下单"按钮
                         generatedOrders++;
 
                         // 通知中拍者：恭喜中标
+                        StringBuilder msgContent = new StringBuilder();
+                        msgContent.append("您中拍了《").append(item.getTitle()).append("》，成交价 ¥")
+                                .append(winner.getBidAmount().toPlainString());
+                        if (depositAmount.compareTo(BigDecimal.ZERO) > 0) {
+                            msgContent.append("，已自动抵用押金 ¥").append(depositAmount.toPlainString());
+                            msgContent.append("，待付尾款 ¥")
+                                    .append(winner.getBidAmount().subtract(depositAmount).toPlainString());
+                        }
+                        msgContent.append("，请尽快到「我的订单」完成付款");
+
                         MessageService.send(winner.getBidderId(), MessageService.TYPE_BID_WON,
                                 "恭喜中标！",
-                                "您中拍了《" + item.getTitle() + "》，成交价 ¥" +
-                                        winner.getBidAmount().toPlainString() +
-                                        "，请尽快到「我的订单」完成付款",
+                                msgContent.toString(),
                                 item.getId());
 
                         // 通知卖家：你的拍品已成交
@@ -79,7 +139,7 @@ public class AuctionEndService {
                                         "，等待买家付款",
                                 item.getId());
                     } else {
-                        // 没人出价 → 流拍（乐观更新：仅当当前状态是拍卖中）
+                        // 没人出价 → 流拍
                         itemMapper.updateStatusIfActive(item.getId(), 3);
                         flowCount++;
 
@@ -107,8 +167,11 @@ public class AuctionEndService {
         result.put("soldCount", soldCount);
         result.put("flowCount", flowCount);
         result.put("generatedOrders", generatedOrders);
-        result.put("message", String.format("结算完成：成功 %d（成交 %d / 流拍 %d），失败 %d",
-                settled, soldCount, flowCount, failed));
+        result.put("refundDeposits", refundDeposits);
+        result.put("transferredDeposits", transferredDeposits);
+        result.put("message", String.format(
+                "结算完成：成功 %d（成交 %d / 流拍 %d），失败 %d，退押金 %d 笔，转货款 %d 笔",
+                settled, soldCount, flowCount, failed, refundDeposits, transferredDeposits));
         return result;
     }
 
@@ -125,6 +188,7 @@ public class AuctionEndService {
             AuctionItemMapper itemMapper = session.getMapper(AuctionItemMapper.class);
             BidRecordMapper bidMapper = session.getMapper(BidRecordMapper.class);
             OrderMapper orderMapper = session.getMapper(OrderMapper.class);
+            DepositMapper depositMapper = session.getMapper(DepositMapper.class);
 
             AuctionItem item = itemMapper.findById(itemId);
             if (item == null) { result.put("success", false); result.put("message", "拍品不存在"); return result; }
@@ -153,14 +217,39 @@ public class AuctionEndService {
                 }
             }
 
+            // 计算押金抵用 + 尾款
+            // 中标者的押金在拍卖结束结算时已转货款（status=1, related_order_no='PRE_xxx'）
+            // 这里把预订单号更新为真实订单号
+            Deposit winnerDeposit = depositMapper.findByUserAndItem(buyerId, itemId);
+            BigDecimal depositAmount = BigDecimal.ZERO;
+            if (winnerDeposit != null && winnerDeposit.getStatus() != null && winnerDeposit.getStatus() == 1) {
+                depositAmount = winnerDeposit.getAmount();
+            }
+            BigDecimal finalPrice = winningBid.getBidAmount();
+            BigDecimal finalPayAmount = finalPrice.subtract(depositAmount);
+            if (finalPayAmount.compareTo(BigDecimal.ZERO) < 0) finalPayAmount = BigDecimal.ZERO;
+
+            // 生成真实订单号
+            String realOrderNo = UUID.randomUUID().toString().replace("-", "");
+            // 把 user_deposit 的 related_order_no 从 PRE_xxx 更新为 realOrderNo
+            if (winnerDeposit != null && winnerDeposit.getStatus() != null && winnerDeposit.getStatus() == 1) {
+                // 走 SQL 直接改（用 mapper.updateRemark 或类似）—— 这里简化：直接 update SQL
+                // 因为 DepositMapper.markTransferred 只能从 0→1，已经转过了
+                // 我们用一个新的 SQL 补 related_order_no
+                depositMapper.updateRelatedOrderNo(winnerDeposit.getId(), realOrderNo);
+            }
+
+            // 创建订单
             OrderInfo order = new OrderInfo();
-            order.setOrderNo(UUID.randomUUID().toString().replace("-", ""));
+            order.setOrderNo(realOrderNo);
             order.setItemId(itemId);
             order.setItemTitle(item.getTitle());
             order.setCoverImage(item.getCoverImage());
             order.setBuyerId(buyerId);
             order.setSellerId(item.getSellerId());
-            order.setFinalPrice(winningBid.getBidAmount());
+            order.setFinalPrice(finalPrice);
+            order.setDepositAmount(depositAmount);
+            order.setFinalPayAmount(finalPayAmount);
             order.setAddressId(addressId);
             order.setStatus(0);  // 待付款
             order.setCreateTime(LocalDateTime.now());
@@ -169,9 +258,14 @@ public class AuctionEndService {
             session.commit();
 
             result.put("success", true);
-            result.put("message", "订单创建成功，请尽快付款");
+            result.put("message", "订单创建成功，请尽快付款" +
+                    (depositAmount.compareTo(BigDecimal.ZERO) > 0
+                            ? "（已抵用押金 ¥" + depositAmount.toPlainString() + "，待付尾款 ¥" + finalPayAmount.toPlainString() + "）"
+                            : ""));
             result.put("orderNo", order.getOrderNo());
             result.put("orderId", order.getId());
+            result.put("depositAmount", depositAmount.toPlainString());
+            result.put("finalPayAmount", finalPayAmount.toPlainString());
             return result;
 
         } catch (Exception e) {

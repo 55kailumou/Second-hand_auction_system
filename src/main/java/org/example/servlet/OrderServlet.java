@@ -63,6 +63,9 @@ public class OrderServlet extends HttpServlet {
             case "detail":
                 showOrderDetail(req, resp);
                 break;
+            case "lookup":
+                lookupByOrderNo(req, resp);
+                break;
             default:
                 resp.sendRedirect(req.getContextPath() + "/order?action=list");
         }
@@ -206,6 +209,35 @@ public class OrderServlet extends HttpServlet {
         }
     }
 
+    // ============ 根据订单号查 ID（JSON） ============
+
+    private void lookupByOrderNo(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        String orderNo = req.getParameter("orderNo");
+        Map<String, Object> data = new HashMap<>();
+        if (orderNo == null || orderNo.isEmpty()) {
+            data.put("success", false);
+            data.put("message", "orderNo 必填");
+            writeJson(resp, data);
+            return;
+        }
+        try (SqlSession session = MyBatisUtil.openSession()) {
+            OrderMapper mapper = session.getMapper(OrderMapper.class);
+            OrderInfo order = mapper.findByOrderNo(orderNo);
+            if (order == null) {
+                data.put("success", false);
+                data.put("message", "订单不存在");
+            } else {
+                data.put("success", true);
+                data.put("id", order.getId());
+                data.put("status", order.getStatus());
+            }
+        } catch (Exception e) {
+            data.put("success", false);
+            data.put("message", e.getMessage());
+        }
+        writeJson(resp, data);
+    }
+
     // ============ 创建订单 ============
 
     private void doCreate(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -221,6 +253,7 @@ public class OrderServlet extends HttpServlet {
             BidRecordMapper bidMapper = session.getMapper(BidRecordMapper.class);
             AddressMapper addressMapper = session.getMapper(AddressMapper.class);
             OrderMapper orderMapper = session.getMapper(OrderMapper.class);
+            org.example.mapper.DepositMapper depositMapper = session.getMapper(org.example.mapper.DepositMapper.class);
 
             // 1. 拍品必须存在 + 状态为已成交(2)
             AuctionItem item = itemMapper.findById(itemId);
@@ -246,7 +279,6 @@ public class OrderServlet extends HttpServlet {
             }
 
             // 4. 检查是否已存在订单（避免重复下单）
-            // 简化：从数据库找当前用户对该拍品的所有非取消订单
             Map<String, Object> checkParams = new HashMap<>();
             checkParams.put("userId", user.getId());
             checkParams.put("role", "buyer");
@@ -258,15 +290,37 @@ public class OrderServlet extends HttpServlet {
                 }
             }
 
-            // 5. 创建订单
+            // 5. 计算押金抵用 + 尾款
+            org.example.entity.Deposit winnerDeposit = depositMapper.findByUserAndItem(user.getId(), itemId);
+            java.math.BigDecimal depositAmount = java.math.BigDecimal.ZERO;
+            if (winnerDeposit != null
+                    && winnerDeposit.getStatus() != null
+                    && winnerDeposit.getStatus() == 1) {
+                depositAmount = winnerDeposit.getAmount();
+            }
+            java.math.BigDecimal finalPrice = winningBid.getBidAmount();
+            java.math.BigDecimal finalPayAmount = finalPrice.subtract(depositAmount);
+            if (finalPayAmount.compareTo(java.math.BigDecimal.ZERO) < 0) finalPayAmount = java.math.BigDecimal.ZERO;
+
+            // 6. 生成真实订单号 + 更新押金的 related_order_no
+            String realOrderNo = UUID.randomUUID().toString().replace("-", "");
+            if (winnerDeposit != null
+                    && winnerDeposit.getStatus() != null
+                    && winnerDeposit.getStatus() == 1) {
+                depositMapper.updateRelatedOrderNo(winnerDeposit.getId(), realOrderNo);
+            }
+
+            // 7. 创建订单
             OrderInfo order = new OrderInfo();
-            order.setOrderNo(UUID.randomUUID().toString().replace("-", ""));
+            order.setOrderNo(realOrderNo);
             order.setItemId(itemId);
             order.setItemTitle(item.getTitle());
             order.setCoverImage(item.getCoverImage());
             order.setBuyerId(user.getId());
             order.setSellerId(item.getSellerId());
-            order.setFinalPrice(winningBid.getBidAmount());
+            order.setFinalPrice(finalPrice);
+            order.setDepositAmount(depositAmount);
+            order.setFinalPayAmount(finalPayAmount);
             order.setAddressId(addressId);
             order.setStatus(0);  // 待付款
             order.setCreateTime(java.time.LocalDateTime.now());
@@ -276,9 +330,16 @@ public class OrderServlet extends HttpServlet {
 
             Map<String, Object> data = new HashMap<>();
             data.put("success", true);
-            data.put("message", "订单创建成功");
+            StringBuilder msg = new StringBuilder("订单创建成功");
+            if (depositAmount.compareTo(java.math.BigDecimal.ZERO) > 0) {
+                msg.append("（已抵用押金 ¥").append(depositAmount.toPlainString())
+                        .append("，待付尾款 ¥").append(finalPayAmount.toPlainString()).append("）");
+            }
+            data.put("message", msg.toString());
             data.put("orderId", order.getId());
             data.put("orderNo", order.getOrderNo());
+            data.put("depositAmount", depositAmount.toPlainString());
+            data.put("finalPayAmount", finalPayAmount.toPlainString());
             writeJson(resp, data);
 
         } catch (Exception e) {
@@ -293,39 +354,50 @@ public class OrderServlet extends HttpServlet {
         if (user == null) { writeJson(resp, errorOf("请先登录")); return; }
 
         String orderNo = req.getParameter("orderNo");
+        String method = req.getParameter("method");
         if (orderNo == null || orderNo.isEmpty()) { writeJson(resp, errorOf("订单号不能为空")); return; }
+        if (method == null || method.isEmpty()) method = "balance";
 
-        try (SqlSession session = MyBatisUtil.openSession()) {
-            OrderMapper mapper = session.getMapper(OrderMapper.class);
-            OrderInfo order = mapper.findByOrderNo(orderNo);
-            if (order == null) { writeJson(resp, errorOf("订单不存在")); return; }
-            if (!order.getBuyerId().equals(user.getId())) { writeJson(resp, errorOf("无权操作此订单")); return; }
-            if (order.getStatus() == null || order.getStatus() != 0) {
-                writeJson(resp, errorOf("该订单当前状态不能付款"));
+        // 余额支付：直接调 PayService.payFinal（实际扣款 + 平台账户 + 写流水）
+        if ("balance".equals(method)) {
+            Map<String, Object> r;
+            try {
+                Integer orderId = null;
+                try (SqlSession session = MyBatisUtil.openSession()) {
+                    OrderMapper mapper = session.getMapper(OrderMapper.class);
+                    OrderInfo o = mapper.findByOrderNo(orderNo);
+                    if (o == null) { writeJson(resp, errorOf("订单不存在")); return; }
+                    orderId = o.getId();
+                }
+                r = org.example.service.PayService.payFinal(orderId, "balance");
+            } catch (Exception e) {
+                writeJson(resp, ResponseUtil.handleException(e, "付款"));
                 return;
             }
-
-            int updated = mapper.markPaid(order.getId());
-            session.commit();
-
-            if (updated > 0) {
-                Map<String, Object> data = new HashMap<>();
-                data.put("success", true);
-                data.put("message", "付款成功");
-                writeJson(resp, data);
-
-                // 通知卖家：买家已付款（独立事务，失败不影响主流程）
-                MessageService.send(order.getSellerId(), MessageService.TYPE_ORDER_STATUS,
-                        "买家已付款，请尽快发货",
-                        "订单 " + order.getOrderNo() + "（" + order.getItemTitle() +
-                                "）买家已支付 ¥" + order.getFinalPrice().toPlainString() + "，请尽快发货",
-                        order.getId());
-            } else {
-                writeJson(resp, errorOf("付款失败，请稍后重试"));
+            // 付款成功 → 通知卖家
+            if (Boolean.TRUE.equals(r.get("success"))) {
+                try (SqlSession session = MyBatisUtil.openSession()) {
+                    OrderMapper mapper = session.getMapper(OrderMapper.class);
+                    OrderInfo o = mapper.findByOrderNo(orderNo);
+                    if (o != null) {
+                        MessageService.send(o.getSellerId(), MessageService.TYPE_ORDER_STATUS,
+                                "买家已付款，请尽快发货",
+                                "订单 " + o.getOrderNo() + "（" + o.getItemTitle() +
+                                        "）买家已支付 ¥" + o.getFinalPrice().toPlainString() + "，请尽快发货",
+                                o.getId());
+                    }
+                } catch (Exception ignored) {}
             }
-        } catch (Exception e) {
-            writeJson(resp, ResponseUtil.handleException(e, "付款"));
+            writeJson(resp, r);
+            return;
         }
+
+        // 模拟支付（alipay/wechat）：跳到模拟收银台，等用户点确认后由 PaymentCallbackServlet 处理
+        Map<String, Object> data = new HashMap<>();
+        data.put("success", true);
+        data.put("redirect", req.getContextPath() +
+                "/payment?action=sim&type=final&orderNo=" + orderNo + "&method=" + method);
+        writeJson(resp, data);
     }
 
     // ============ 卖家发货 ============
@@ -374,7 +446,7 @@ public class OrderServlet extends HttpServlet {
         }
     }
 
-    // ============ 买家确认收货 ============
+    // ============ 买家确认收货（平台打款给卖家） ============
 
     private void doConfirmReceive(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         User user = (User) req.getSession().getAttribute("currentUser");
@@ -383,6 +455,8 @@ public class OrderServlet extends HttpServlet {
         String orderNo = req.getParameter("orderNo");
         if (orderNo == null || orderNo.isEmpty()) { writeJson(resp, errorOf("订单号不能为空")); return; }
 
+        Integer orderId = null;
+        OrderInfo orderForMsg = null;
         try (SqlSession session = MyBatisUtil.openSession()) {
             OrderMapper mapper = session.getMapper(OrderMapper.class);
             OrderInfo order = mapper.findByOrderNo(orderNo);
@@ -392,28 +466,29 @@ public class OrderServlet extends HttpServlet {
                 writeJson(resp, errorOf("该订单当前状态不能确认收货"));
                 return;
             }
-
-            int updated = mapper.markReceived(order.getId());
-            session.commit();
-
-            if (updated > 0) {
-                Map<String, Object> data = new HashMap<>();
-                data.put("success", true);
-                data.put("message", "确认收货成功，交易完成");
-                writeJson(resp, data);
-
-                // 通知卖家：买家已确认收货（独立事务）
-                MessageService.send(order.getSellerId(), MessageService.TYPE_ORDER_STATUS,
-                        "买家已确认收货",
-                        "订单 " + order.getOrderNo() + "（" + order.getItemTitle() +
-                                "）买家已确认收货，交易完成 ¥" + order.getFinalPrice().toPlainString(),
-                        order.getId());
-            } else {
-                writeJson(resp, errorOf("操作失败，请稍后重试"));
-            }
+            orderId = order.getId();
+            orderForMsg = order;
         } catch (Exception e) {
             writeJson(resp, ResponseUtil.handleException(e, "确认收货"));
+            return;
         }
+
+        // 调 PayService：平台账户 -amount → 卖家余额 +amount → order.status 2→3 + settled_time
+        Map<String, Object> r = org.example.service.PayService.settleToSeller(orderId);
+
+        if (Boolean.TRUE.equals(r.get("success"))) {
+            // 通知卖家：买家已确认收货 + 平台已打款
+            try {
+                MessageService.send(orderForMsg.getSellerId(), MessageService.TYPE_ORDER_STATUS,
+                        "买家已确认收货，平台已打款",
+                        "订单 " + orderForMsg.getOrderNo() + "（" + orderForMsg.getItemTitle() +
+                                "）买家已确认收货，平台已打款 ¥" + orderForMsg.getFinalPrice().toPlainString() +
+                                " 到您的账户余额",
+                        orderForMsg.getId());
+            } catch (Exception ex) { ex.printStackTrace(); }
+        }
+
+        writeJson(resp, r);
     }
 
     // ============ 取消订单 ============

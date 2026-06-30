@@ -217,7 +217,7 @@ public class AdminAnnouncementServlet extends HttpServlet {
             notice.setContent(content);
             notice.setIsTop(isTop);
             notice.setStatus(status);
-            notice.setPublishTime(status == 1 ? LocalDateTime.now() : null);
+            notice.setPublishTime(LocalDateTime.now());   // 草稿也填，避 NOT NULL 报错；区分发布与否留给 status 字段
 
             session.getMapper(NoticeMapper.class).insert(notice);
             session.commit();

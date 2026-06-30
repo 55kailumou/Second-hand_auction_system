@@ -5,16 +5,19 @@
     org.example.entity.User currentUser =
             (org.example.entity.User) session.getAttribute("currentUser");
 
+    Integer categoryId  = (Integer) request.getAttribute("categoryId");
     String itemJson      = (String) request.getAttribute("itemJson");
     String bidsJson      = (String) request.getAttribute("bidsJson");
     String categoryJson  = (String) request.getAttribute("categoryJson");
     String sellerJson    = (String) request.getAttribute("sellerJson");
     String itemImagesJson= (String) request.getAttribute("itemImagesJson");
+    String relatedItemsJson = (String) request.getAttribute("relatedItemsJson");
     Boolean loggedIn     = (Boolean) request.getAttribute("loggedIn");
     Boolean isOwner      = (Boolean) request.getAttribute("isOwner");
     Boolean active       = (Boolean) request.getAttribute("active");
     Boolean favorited    = (Boolean) request.getAttribute("favorited");
     String nextMinBid    = (String) request.getAttribute("nextMinBid");
+    Integer currentUserId = currentUser == null ? null : currentUser.getId();
     // 顶部搜索框回显（避免嵌套引号问题）
     String kwParam = request.getParameter("kw");
     String kwValue = kwParam == null ? "" : kwParam;
@@ -23,6 +26,7 @@
     if (categoryJson == null) categoryJson = "null";
     if (sellerJson == null) sellerJson = "null";
     if (itemImagesJson == null) itemImagesJson = "[]";
+    if (relatedItemsJson == null) relatedItemsJson = "[]";
     if (loggedIn == null) loggedIn = false;
     if (isOwner == null) isOwner = false;
     if (active == null) active = false;
@@ -177,13 +181,6 @@
             position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
             color: rgba(255, 238, 0, 0.4); font-size: 13px;
         }
-        .cp-watermark {
-            position: absolute; bottom: 30px; right: 16px;
-            display: flex; gap: 12px; font-size: 12px; color: rgba(255, 238, 0, 0.4);
-        }
-        .cp-watermark a { color: rgba(255, 238, 0, 0.5); }
-        .cp-watermark a:hover { color: #00F0FF; }
-
         /* ---------- 通用卡片 ---------- */
         .cp-card {
             background: #0d0d0d; border-radius: 2px;
@@ -517,7 +514,7 @@
             <a href="<%=ctx%>/index.jsp">首页</a>
             <a href="<%=ctx%>/item?action=list">浏览拍品</a>
             <a href="<%=ctx%>/item?action=publish-page">发布拍品</a>
-            <a href="<%=ctx%>/item?action=list&sort=hot">热门拍品</a>
+            <a href="<%=ctx%>/item?action=hot-ranks">热门拍品</a>
             <% if (currentUser != null) { %>
                 <a href="<%=ctx%>/user?action=center">个人中心</a>
             <% } %>
@@ -602,14 +599,6 @@
                 <div class="cp-gallery-main">
                     <img v-if="currentImage" :src="currentImage" :alt="item.title" @error="onImgError($event)">
                     <i v-else class="fa fa-image"></i>
-                    <div class="cp-watermark">
-                        <a href="javascript:void(0)" @click="toast('举报已提交（前端占位）', 'success')">
-                            <i class="fa fa-flag-o"></i> 举报
-                        </a>
-                        <a href="javascript:void(0)" @click="onShare">
-                            <i class="fa fa-share-alt"></i> 分享
-                        </a>
-                    </div>
                 </div>
             </div>
 
@@ -705,13 +694,41 @@
                         <i class="fa fa-sign-in"></i> 登录后参与竞拍
                     </a>
                 </div>
-                <div v-else-if="!active && item.status === 2" class="cp-info-note cp-info-note-warning">
-                    <i class="fa fa-check-circle"></i> 本场拍卖已成交，最高出价者请到"我的订单"完成付款
+                <div v-else-if="!active && item.status === 2" :class="['cp-info-note', isWinner ? 'cp-info-note-info' : 'cp-info-note-warning']" style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
+                    <div>
+                        <i class="fa fa-check-circle"></i>
+                        <span v-if="isWinner">恭喜您中拍了！请尽快下单完成付款</span>
+                        <span v-else>本场拍卖已成交</span>
+                    </div>
+                    <a v-if="isWinner" :href="ctxPath + '/order?action=create&itemId=' + item.id" class="cp-btn"
+                       style="display: inline-block; text-decoration: none; padding: 10px 20px; font-size: 14px;"
+                       onclick="event.preventDefault(); createOrderNow();">
+                        <i class="fa fa-shopping-cart"></i> 立即下单
+                    </a>
                 </div>
                 <div v-else-if="!active" class="cp-info-note cp-info-note-warning">
                     <i class="fa fa-clock-o"></i> 本场拍卖已结束，无法再出价
                 </div>
-                <div v-else class="cp-bid-area">
+                <div v-else>
+                    <!-- 押金提示（如果有押金时显示） -->
+                    <div v-if="item.deposit && parseFloat(item.deposit) > 0" :class="['cp-info-note', depositPaid ? 'cp-info-note-info' : 'cp-info-note-warning']" style="margin-bottom: 12px;">
+                        <i :class="['fa', depositPaid ? 'fa-check-circle' : 'fa-shield']"></i>
+                        <div style="flex: 1;">
+                            <div v-if="depositPaid">
+                                <span style="color: #00F0FF; font-weight: 600;">已缴纳押金 ¥{{ formatPrice(item.deposit) }}</span>
+                                <span style="font-size: 12px; opacity: 0.7; margin-left: 6px;">出价资格已激活</span>
+                            </div>
+                            <div v-else>
+                                <div>本拍品需缴纳押金 <span style="color: #FFEE00; font-weight: 700;">¥{{ formatPrice(item.deposit) }}</span> 才能出价</div>
+                                <a :href="ctxPath + '/deposit?action=checkout&itemId=' + item.id"
+                                   class="cp-btn" style="margin-top: 8px; padding: 8px 16px; font-size: 13px; display: inline-block; text-decoration: none;">
+                                    <i class="fa fa-shield"></i> 立即缴纳押金
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cp-bid-area">
                     <div class="cp-bid-label">您的出价（最低 ¥{{ nextMinBid }}）</div>
                     <div class="cp-bid-row">
                         <input type="number" class="cp-bid-input" v-model.number="bidAmount"
@@ -727,6 +744,7 @@
                         <span class="cp-btn-sm" @click="addQuickBid(3)">+3 步</span>
                         <span class="cp-btn-sm" @click="addQuickBid(5)">+5 步</span>
                     </div>
+                    </div>
                 </div>
 
                 <!-- 次级操作 -->
@@ -740,14 +758,16 @@
                     <button class="cp-btn-secondary" @click="onShare">
                         <i class="fa fa-share-alt"></i> 分享
                     </button>
+                    <button class="cp-btn-secondary" title="举报该拍品"
+                            onclick="window.location.href='<%=ctx%>/complaint?action=list&itemId=<%= request.getAttribute("itemId") %>'">
+                        <i class="fa fa-flag"></i> 举报
+                    </button>
                 </div>
 
-                <!-- 担保 / 举报 -->
+                <!-- 担保 / 担保说明 -->
                 <div class="cp-info-footer">
                     <span><i class="fa fa-shield"></i> 担保交易</span>
-                    <a href="javascript:void(0)" @click="toast('举报已提交（前端占位）', 'success')">
-                        <i class="fa fa-flag-o"></i> 举报
-                    </a>
+                    <span style="font-size: 11px; opacity: 0.6;">如需投诉请在订单页操作</span>
                 </div>
             </div>
 
@@ -786,50 +806,14 @@
         <p>加载失败，请稍后再试</p>
     </div>
 
-    <!-- ========== 为你推荐 ========== -->
+    <!-- ========== 为你推荐（★ Phase 4 改：动态加载同分类其他在拍） ========== -->
     <div class="cp-card" style="margin-top:16px;">
         <div class="cp-recommend-head">
-            <div class="cp-recommend-title">为你推荐</div>
-            <a href="<%=ctx%>/item?action=list" class="cp-recommend-link">查看更多 →</a>
+            <div class="cp-recommend-title">同分类推荐</div>
+            <a href="<%=ctx%>/item?action=list&categoryId=<%= categoryId %>" class="cp-recommend-link">查看更多 →</a>
         </div>
-        <div class="cp-goods-grid">
-            <%-- 静态推荐拍品（前端占位，等后端给推荐接口再接） --%>
-            <a href="<%=ctx%>/item?action=detail&id=201" class="cp-goods-card">
-                <div class="cp-goods-cover"><i class="fa fa-mobile"></i>
-                    <div class="cp-goods-price-tag">¥4,250</div>
-                </div>
-                <div class="cp-goods-body"><div class="cp-goods-title">iPhone 14 Pro 256G 深空黑 99新 自用</div></div>
-            </a>
-            <a href="<%=ctx%>/item?action=detail&id=202" class="cp-goods-card">
-                <div class="cp-goods-cover"><i class="fa fa-clock-o"></i>
-                    <div class="cp-goods-price-tag">¥62,000</div>
-                </div>
-                <div class="cp-goods-body"><div class="cp-goods-title">劳力士 Submariner 黑水鬼 全新未拆封</div></div>
-            </a>
-            <a href="<%=ctx%>/item?action=detail&id=203" class="cp-goods-card">
-                <div class="cp-goods-cover"><i class="fa fa-paw"></i>
-                    <div class="cp-goods-price-tag">¥200</div>
-                </div>
-                <div class="cp-goods-body"><div class="cp-goods-title">出原神 艾尔海森 月之.cos 服全套 S码</div></div>
-            </a>
-            <a href="<%=ctx%>/item?action=detail&id=204" class="cp-goods-card">
-                <div class="cp-goods-cover"><i class="fa fa-microchip"></i>
-                    <div class="cp-goods-price-tag">¥3,099</div>
-                </div>
-                <div class="cp-goods-body"><div class="cp-goods-title">全新未拆 AMD 锐龙 R9 9950X 盒装 CPU</div></div>
-            </a>
-            <a href="<%=ctx%>/item?action=detail&id=205" class="cp-goods-card">
-                <div class="cp-goods-cover"><i class="fa fa-camera-retro"></i>
-                    <div class="cp-goods-price-tag">¥16,800</div>
-                </div>
-                <div class="cp-goods-body"><div class="cp-goods-title">佳能 EOS R6 Mark II 套机 24-105 镜头</div></div>
-            </a>
-            <a href="<%=ctx%>/item?action=detail&id=206" class="cp-goods-card">
-                <div class="cp-goods-cover"><i class="fa fa-headphones"></i>
-                    <div class="cp-goods-price-tag">¥1,580</div>
-                </div>
-                <div class="cp-goods-body"><div class="cp-goods-title">索尼 WH-1000XM5 头戴式降噪耳机</div></div>
-            </a>
+        <div class="cp-goods-grid" id="relatedItemsGrid">
+            <%-- 由 relatedItemsJson + Vue 动态渲染 --%>
         </div>
     </div>
 
@@ -871,17 +855,80 @@
     // 全局跳转
     function go(path) { window.location.href = path; }
 
+    // 立即下单（中标者用）
+    function createOrderNow() {
+        const itemId = item ? item.id : null;
+        if (!itemId) { alert('拍品 ID 缺失'); return; }
+        // 1. 先查默认地址
+        loadAxios().then(() => {
+            axios.get(ctxPath + '/address', { params: { action: 'default' } })
+                .then(r => {
+                    const data = r.data;
+                    if (!data.success) {
+                        if (confirm('您还没有收货地址，是否前往添加？')) {
+                            window.location.href = ctxPath + '/address?action=list&returnUrl=' +
+                                encodeURIComponent(window.location.pathname + window.location.search);
+                        }
+                        return;
+                    }
+                    const addressText = data.addressText || '默认地址';
+                    if (!confirm('使用以下地址下单？\n\n' + addressText + '\n\n点击确定即可创建订单。')) return;
+                    // 2. 创建订单
+                    axios.post(ctxPath + '/order?action=create', new URLSearchParams({
+                        itemId: itemId,
+                        addressId: data.addressId
+                    })).then(r2 => {
+                        if (r2.data.success) {
+                            toast(r2.data.message || '下单成功', 'success');
+                            setTimeout(() => {
+                                window.location.href = ctxPath + '/order?action=list&role=buyer';
+                            }, 800);
+                        } else {
+                            toast(r2.data.message || '下单失败', 'error');
+                        }
+                    }).catch(() => toast('网络错误', 'error'));
+                })
+                .catch(() => toast('查询地址失败', 'error'));
+        });
+    }
+
     const item       = <%= itemJson %>;
     const bids       = <%= bidsJson %>;
     const category   = <%= categoryJson %>;
     const seller     = <%= sellerJson %>;
     // item_images 表的图片列表（来自 ItemImageMapper.findByItemId）；为空则 fallback 到 item.coverImage / item.imageUrls
     const itemImages = <%= itemImagesJson %>;
+    const relatedItems = <%= relatedItemsJson %>;
+
+    // 渲染同分类推荐（vanilla JS，不依赖 Vue 挂载）
+    (function() {
+        const grid = document.getElementById('relatedItemsGrid');
+        if (!grid) return;
+        if (!relatedItems || relatedItems.length === 0) {
+            grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 30px 20px; color: rgba(255,238,0,0.4); font-size: 13px;">' +
+                '<i class="fa fa-info-circle" style="opacity: 0.4;"></i> 同分类暂无其他在拍拍品</div>';
+            return;
+        }
+        const fallback = '<%=ctx%>/static/img/placeholder.png';
+        grid.innerHTML = relatedItems.map(it => {
+            const cover = it.coverImage || fallback;
+            const price = it.currentPrice ? parseFloat(it.currentPrice).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00';
+            const title = (it.title || '').replace(/</g, '&lt;');
+            return '<a href="<%=ctx%>/item?action=detail&id=' + it.id + '" class="cp-goods-card">' +
+                '<div class="cp-goods-cover">' +
+                (cover ? '<img src="' + cover + '" onerror="this.style.display=\'none\'" style="width:100%;height:100%;object-fit:cover;">' : '<i class="fa fa-image"></i>') +
+                '<div class="cp-goods-price-tag">¥' + price + '</div>' +
+                '</div>' +
+                '<div class="cp-goods-body"><div class="cp-goods-title">' + title + '</div></div>' +
+                '</a>';
+        }).join('');
+    })();
     const loggedIn   = <%= loggedIn.toString() %>;
     const isOwner    = <%= isOwner.toString() %>;
     const activeInit = <%= active.toString() %>;
     const favoritedInit = <%= favorited.toString() %>;
     const nextMinBid = <%= nextMinBid %>;
+    const currentUserIdInit = <%= currentUserId == null ? "null" : currentUserId.toString() %>;
     const ctxPath    = '<%=ctx%>';
 
     loadVue().then(() => {
@@ -900,10 +947,32 @@
                 const favorited = ref(favoritedInit);
                 const favoriting = ref(false);
                 const canFavorite = computed(() => loggedIn && !isOwner);
+                // 押金状态：true=已缴（status=0/1），false=未缴
+                const depositPaid = ref(false);
+                // 当前用户是不是中标者
+                const currentUserIdRef = ref(currentUserIdInit);
+                const isWinner = computed(() => {
+                    if (!loggedIn || currentUserIdRef.value == null) return false;
+                    if (!bidsRef.value || bidsRef.value.length === 0) return false;
+                    const top = bidsRef.value[0];
+                    return top && top.isWinning === 1 && top.bidderId === currentUserIdRef.value;
+                });
                 const currentImageIdx = ref(0);
                 let timer = null;
 
-                onMounted(() => { timer = setInterval(() => { now.value = Date.now(); }, 1000); });
+                onMounted(() => {
+                    timer = setInterval(() => { now.value = Date.now(); }, 1000);
+                    // 查询押金状态
+                    if (loggedIn && !isOwner) {
+                        loadAxios().then(() => {
+                            axios.get(ctxPath + '/deposit', { params: { action: 'status', itemId: itemRef.value.id } })
+                                .then(r => {
+                                    depositPaid.value = !!r.data.deposited;
+                                })
+                                .catch(() => {});
+                        });
+                    }
+                });
                 onUnmounted(() => { if (timer) clearInterval(timer); });
 
                 // 解析多图 URL 列表（与 publish.jsp 同样的解析逻辑）
@@ -1089,7 +1158,14 @@
                                 bidAmount.value = parseFloat(data.currentPrice) + parseFloat(itemRef.value.bidIncrement);
                                 refreshHistory();
                             } else {
-                                toast(data.message || '出价失败', 'error');
+                                // 押金未交 → 弹窗询问
+                                if (data.code === 'DEPOSIT_REQUIRED' && data.depositUrl) {
+                                    if (confirm(data.message + '\n\n是否立即前往缴纳押金？')) {
+                                        window.location.href = data.depositUrl;
+                                    }
+                                } else {
+                                    toast(data.message || '出价失败', 'error');
+                                }
                             }
                             bidding.value = false;
                         }).catch(err => {
@@ -1156,7 +1232,10 @@
                     formatPrice, formatDateTime, rankClass, onImgError,
                     addQuickBid, onFavorite, onChat, onFollow, onShare,
                     placeBid,
-                    canEdit, canOffline, offlineItem
+                    canEdit, canOffline, offlineItem,
+                    ctxPath,                // ★ Phase 2 加的押金提示按钮需要
+                    depositPaid,            // ★ Phase 2 加的押金状态
+                    isWinner                // ★ 中标者按钮需要
                 };
             }
         }).mount('#app');
