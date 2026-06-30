@@ -25,7 +25,7 @@
     <link rel="stylesheet" href="<%=ctx%>/static/css/cyberpunk.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
     <style>
-        body { background: #0a0a0a; color: #FFEE00; font-family: 'Courier New', Consolas, 'Source Code Pro', monospace; }
+        body { background: #0a0a0a; color: #FFEE00; font-family: 'Sarasa Mono SC', 'Source Code Pro', monospace; }
 
         .cp-nav-user a { color: #00f0ff; }
         .cp-container { max-width: 900px; margin: 0 auto; padding: 0 24px 60px; }

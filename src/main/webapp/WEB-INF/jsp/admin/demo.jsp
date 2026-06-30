@@ -60,7 +60,7 @@
         .item-table th, .item-table td { padding: 8px 10px; text-align: left; border-bottom: 1px solid rgba(0, 240, 255, 0.05); }
         .item-table th { background: #050505; color: #00F0FF; font-weight: 600; font-size: 11px; text-transform: uppercase; }
         .item-table tr:hover { background: rgba(0, 240, 255, 0.03); }
-        .item-table td.amount { text-align: right; font-family: 'Courier New', monospace; color: #00F0FF; }
+        .item-table td.amount { text-align: right; font-family: 'Sarasa Mono SC', monospace; color: #00F0FF; }
         .badge { padding: 2px 8px; border-radius: 2px; font-size: 10px; font-weight: 600; border: 1px solid; display: inline-block; }
         .badge-1 { background: rgba(0, 240, 255, 0.1); color: #00F0FF; border-color: rgba(0, 240, 255, 0.3); }
         .badge-2 { background: rgba(0, 255, 65, 0.1); color: #00FF41; border-color: rgba(0, 255, 65, 0.3); }
@@ -73,7 +73,7 @@
         .user-card .bal { font-size: 16px; font-weight: 700; color: #00F0FF; }
 
         .record-row { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; padding: 8px 12px; background: #0d0d0d; border: 1px solid rgba(0, 240, 255, 0.08); border-radius: 2px; margin-bottom: 4px; font-size: 12px; }
-        .record-row .amt { font-family: 'Courier New', monospace; font-weight: 700; text-align: right; }
+        .record-row .amt { font-family: 'Sarasa Mono SC', monospace; font-weight: 700; text-align: right; }
         .record-row .pos { color: #00FF41; }
         .record-row .neg { color: #FF003C; }
 
@@ -168,7 +168,7 @@
                     <td class="amount" style="color: #FFEE00;">¥<%= it.get("deposit") == null ? "0.00" : ((java.math.BigDecimal)it.get("deposit")).toPlainString() %></td>
                     <td class="amount">¥<%= it.get("currentPrice") == null ? "0.00" : ((java.math.BigDecimal)it.get("currentPrice")).toPlainString() %></td>
                     <td><%= it.get("winnerName") == null ? "<span style='color: rgba(255, 238, 0, 0.3);'>-</span>" : it.get("winnerName") %></td>
-                    <td style="font-family: 'Courier New', monospace; font-size: 11px;">
+                    <td style="font-family: 'Sarasa Mono SC', monospace; font-size: 11px;">
                         <span style="color: rgba(255, 238, 0, 0.5);"><%= it.get("depositActive") %></span> /
                         <span style="color: #00FF41;"><%= it.get("depositTransferred") %></span> /
                         <span style="color: #00F0FF;"><%= it.get("depositRefunded") %></span>

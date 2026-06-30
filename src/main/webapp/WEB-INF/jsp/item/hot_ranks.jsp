@@ -82,7 +82,7 @@
         body {
             background: #050505;
             color: #FFEE00;
-            font-family: 'Courier New', Consolas, monospace;
+            font-family: 'Sarasa Mono SC', monospace;
             min-height: 100vh;
         }
 
@@ -117,7 +117,7 @@
         }
         .hr-hero-title {
             font-size: 28px; font-weight: 700;
-            font-family: 'Orbitron', monospace;
+            font-family: 'Sarasa Mono SC', monospace;
             color: #FF003C;
             text-shadow: 0 0 16px rgba(255,0,60,0.5);
             letter-spacing: 0.08em;
@@ -150,7 +150,7 @@
         }
         .hr-section-title {
             font-size: 16px; font-weight: 700; color: #FFEE00;
-            font-family: 'Orbitron', monospace;
+            font-family: 'Sarasa Mono SC', monospace;
             letter-spacing: 0.06em;
         }
         .hr-section-title .num {
@@ -213,7 +213,7 @@
             width: 26px; height: 26px;
             display: grid; place-items: center;
             font-size: 13px; font-weight: 700;
-            font-family: 'Orbitron', monospace;
+            font-family: 'Sarasa Mono SC', monospace;
             z-index: 2;
             color: #0a0a0a;
             clip-path: polygon(20% 0, 80% 0, 100% 20%, 100% 80%, 80% 100%, 20% 100%, 0 80%, 0 20%);
@@ -250,7 +250,7 @@
         }
         .hot-price {
             color: #FFEE00;
-            font-family: 'Orbitron', monospace;
+            font-family: 'Sarasa Mono SC', monospace;
             font-weight: 700;
         }
         .hot-price small { font-size: 10px; margin-right: 1px; opacity: 0.7; }
@@ -265,7 +265,7 @@
             position: absolute; top: 6px; right: 6px;
             padding: 2px 8px;
             font-size: 10px; font-weight: 700;
-            font-family: 'Orbitron', monospace;
+            font-family: 'Sarasa Mono SC', monospace;
             letter-spacing: 0.05em;
             color: #fff;
             z-index: 2;

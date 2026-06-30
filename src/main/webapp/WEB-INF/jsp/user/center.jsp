@@ -92,7 +92,7 @@
         body {
             background: #0a0a0a;
             color: #FFEE00;
-            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-family: 'Sarasa Mono SC', monospace;
             min-height: 100vh;
             position: relative;
             overflow-x: hidden;
@@ -147,7 +147,7 @@
             display: flex; align-items: center; gap: 8px;
             padding: 10px 16px; font-size: 12px; color: #FFEE00;
             cursor: pointer; transition: color 0.15s;
-            font-weight: 600; font-family: 'Orbitron', monospace;
+            font-weight: 600; font-family: 'Sarasa Mono SC', monospace;
         }
         .side-group-title:hover { color: #fff; text-shadow: 0 0 8px #FFEE00; }
         .side-group-title i:first-child { width: 16px; color: #FFEE00; }
@@ -215,7 +215,7 @@
             background: #FFEE00; color: #0a0a0a;
             display: grid; place-items: center;
             font-size: 32px; font-weight: 700;
-            font-family: 'Orbitron', monospace;
+            font-family: 'Sarasa Mono SC', monospace;
             clip-path: polygon(20% 0%, 80% 0%, 100% 20%, 100% 80%, 80% 100%, 20% 100%, 0% 80%, 0% 20%);
             position: relative; z-index: 1;
             text-shadow: none;
@@ -223,7 +223,7 @@
         .profile-info { position: relative; z-index: 1; }
         .profile-name { font-size: 22px; font-weight: 700; margin-bottom: 6px;
                         display: flex; align-items: center; gap: 8px; color: #FFEE00;
-                        font-family: 'Orbitron', monospace;
+                        font-family: 'Sarasa Mono SC', monospace;
                         text-shadow: 0 0 10px rgba(255,238,0,0.3); }
         .profile-name .hello { font-size: 13px; font-weight: 400; color: #888; }
         .profile-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
@@ -247,7 +247,7 @@
             display: flex; align-items: center; justify-content: center; gap: 5px;
             text-decoration: none;
             clip-path: polygon(4% 0, 96% 0, 100% 50%, 96% 100%, 4% 100%, 0% 50%);
-            font-family: 'Orbitron', monospace;
+            font-family: 'Sarasa Mono SC', monospace;
         }
         .profile-action:hover { background: #ffcc00; box-shadow: 0 0 12px rgba(255,238,0,0.5); }
         .profile-action.outline {
@@ -287,7 +287,7 @@
         }
         .cp-kpi-body { min-width: 0; }
         .cp-kpi-value { font-size: 22px; font-weight: 700; color: #FFEE00; line-height: 1.1;
-                        font-family: 'Orbitron', monospace; }
+                        font-family: 'Sarasa Mono SC', monospace; }
         .cp-kpi-label { font-size: 11px; color: #777; margin-top: 2px; }
 
         /* ---- order stats (cp-card) ---- */
@@ -303,7 +303,7 @@
         }
         .cp-card-title {
             font-size: 13px; font-weight: 600;
-            font-family: 'Orbitron', monospace;
+            font-family: 'Sarasa Mono SC', monospace;
             color: #FFEE00;
         }
         .cp-card-title::before {
@@ -324,7 +324,7 @@
             clip-path: polygon(4% 0, 96% 0, 100% 50%, 96% 100%, 4% 100%, 0% 50%);
         }
         .cp-order-item:hover { background: #1a1a00; border-color: #FFEE00; }
-        .cp-order-num { font-size: 22px; font-weight: 700; color: #555; font-family: 'Orbitron', monospace; }
+        .cp-order-num { font-size: 22px; font-weight: 700; color: #555; font-family: 'Sarasa Mono SC', monospace; }
         .cp-order-num.has { color: #FFEE00; }
         .cp-order-label { font-size: 11px; color: #777; margin-top: 2px; }
         .cp-order-dot {
@@ -362,7 +362,7 @@
             padding: 10px 18px; font-size: 12px; color: #555;
             cursor: pointer; transition: color 0.15s;
             position: relative; font-weight: 500; text-decoration: none;
-            font-family: 'Orbitron', monospace;
+            font-family: 'Sarasa Mono SC', monospace;
         }
         .cp-grid-tab:hover { color: #FFEE00; }
         .cp-grid-tab.active { color: #FFEE00; font-weight: 600; }
@@ -394,7 +394,7 @@
             clip-path: polygon(4% 0, 96% 0, 100% 50%, 96% 100%, 4% 100%, 0% 50%);
             text-align: center;
         }
-        .seller-stat-num { font-size: 22px; font-weight: 700; color: #555; font-family: 'Orbitron', monospace; }
+        .seller-stat-num { font-size: 22px; font-weight: 700; color: #555; font-family: 'Sarasa Mono SC', monospace; }
         .seller-stat-num.primary { color: #FFEE00; }
         .seller-stat-num.success { color: #66ff66; }
         .seller-stat-num.muted   { color: #555; }
@@ -431,7 +431,7 @@
             background: rgba(0,0,0,0.7);
             display: grid; place-items: center;
             color: #FFEE00; font-size: 16px; font-weight: 700;
-            font-family: 'Orbitron', monospace;
+            font-family: 'Sarasa Mono SC', monospace;
             letter-spacing: 0.15em;
         }
         .cp-goods-body { padding: 8px; }
@@ -442,7 +442,7 @@
         }
         .cp-goods-price {
             font-size: 14px; font-weight: 700; color: #FFEE00;
-            font-family: 'Orbitron', monospace;
+            font-family: 'Sarasa Mono SC', monospace;
         }
         .cp-goods-price small { font-size: 10px; margin-right: 1px; }
 
@@ -495,7 +495,7 @@
         }
         .cp-footer-inner {
             max-width: 1200px; margin: 0 auto;
-            color: #555; font-family: 'JetBrains Mono', monospace;
+            color: #555; font-family: 'Sarasa Mono SC', monospace;
         }
         .cp-footer-inner::before {
             content: '> ';

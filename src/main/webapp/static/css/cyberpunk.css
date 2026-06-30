@@ -3,28 +3,15 @@
  *  基于 index.jsp 的设计令牌提取 + 扩展表单/表格/弹窗组件
  * ============================================================ */
 
-/* --- 字体 --- */
-@font-face {
-    font-family: 'Sarasa Mono SC';
-    font-weight: 400;
-    font-style: normal;
-    src: url('../fonts/SarasaMonoSC-Regular.ttf') format('truetype');
-    font-display: swap;
-}
-@font-face {
-    font-family: 'Sarasa Mono SC';
-    font-weight: 700;
-    font-style: normal;
-    src: url('../fonts/SarasaMonoSC-Bold.ttf') format('truetype');
-    font-display: swap;
-}
-@font-face {
-    font-family: 'Sarasa Mono SC';
-    font-weight: 400;
-    font-style: italic;
-    src: url('../fonts/SarasaMonoSC-Italic.ttf') format('truetype');
-    font-display: swap;
-}
+/* --- 字体 ---
+   故意不下载项目 ttf：让所有页面跟首页走同一套系统 fallback 链
+   浏览器按 var(--font-mono) / var(--font-display) 的 fallback 顺序自动找字体
+   - 用户系统装了 Sarasa Mono SC → 用它（细、窄、优雅等宽，与首页一致）
+   - 没装 → 回退到 Consolas / Cascadia Code（Windows 等宽字体）
+   - 中文字符回退到系统中文字体（微软雅黑 / 思源黑体等）
+   这样全站字形统一，依赖用户系统而非项目 ttf，避免"首页 vs 其他页面"字形割裂
+   如果以后要恢复 ttf 加载，把下面 3 个 @font-face 块解除注释即可
+   --------------------------------------------------------------- */
 
 /* --- 设计令牌 --- */
 :root {

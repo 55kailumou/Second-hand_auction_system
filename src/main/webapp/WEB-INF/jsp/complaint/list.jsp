@@ -43,7 +43,7 @@
         body {
             background: #000;
             color: #FFEE00;
-            font-family: 'Courier New', Consolas, 'Source Code Pro', monospace;
+            font-family: 'Sarasa Mono SC', 'Source Code Pro', monospace;
             line-height: 1.6;
         }
 
@@ -82,7 +82,7 @@
         }
         .cpl-head-info { flex: 1; min-width: 0; }
         .cp-page-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; }
-        .cp-page-sub { font-size: 12px; color: #888; font-family: 'Courier New', monospace; }
+        .cp-page-sub { font-size: 12px; color: #888; font-family: 'Sarasa Mono SC', monospace; }
         .cpl-head-actions { }
 
         /* ---- Alert ---- */
@@ -102,7 +102,7 @@
         .cp-tab {
             padding: 12px 16px; font-size: 14px; color: #888;
             cursor: pointer; position: relative; font-weight: 500;
-            text-decoration: none; font-family: 'Courier New', monospace;
+            text-decoration: none; font-family: 'Sarasa Mono SC', monospace;
         }
         .cp-tab:hover { color: #FFEE00; }
         .cp-tab.active { color: #FFEE00; font-weight: 700; }
@@ -117,7 +117,7 @@
             padding: 6px 12px; border: 1px solid #333;
             background: #111; color: #FFEE00;
             font-size: 13px; outline: none; width: 220px;
-            font-family: 'Courier New', monospace;
+            font-family: 'Sarasa Mono SC', monospace;
         }
         .filter-search input:focus { border-color: #FFEE00; }
         .filter-search input::placeholder { color: #555; }
@@ -174,7 +174,7 @@
         .cp-badge {
             padding: 3px 10px; font-weight: 600; margin-bottom: 6px;
             display: inline-block; font-size: 11px;
-            font-family: 'Courier New', monospace;
+            font-family: 'Sarasa Mono SC', monospace;
             text-transform: uppercase; letter-spacing: 1px;
         }
         .cp-badge-yellow { background: #FFEE00; color: #000; }
@@ -186,7 +186,7 @@
         .cp-btn-sm {
             padding: 6px 14px; background: #FFEE00; color: #000;
             border: none; font-size: 13px; cursor: pointer;
-            font-family: 'Courier New', monospace; font-weight: 700;
+            font-family: 'Sarasa Mono SC', monospace; font-weight: 700;
             text-transform: uppercase;
             clip-path: polygon(4px 0, 100% 0, 100% 100%, 0 100%, 0 4px);
         }
@@ -196,7 +196,7 @@
             padding: 8px 16px; background: transparent; color: #FFEE00;
             border: 1px solid #FFEE00; font-size: 13px; text-decoration: none;
             display: flex; align-items: center; gap: 5px;
-            font-family: 'Courier New', monospace;
+            font-family: 'Sarasa Mono SC', monospace;
             clip-path: polygon(6px 0, 100% 0, 100% 100%, 0 100%, 0 6px);
             transition: all 0.15s;
         }
@@ -218,7 +218,7 @@
             padding: 6px 12px; border: 1px solid #333;
             font-size: 13px; color: #888; text-decoration: none;
             min-width: 32px; text-align: center; background: #0a0a0a;
-            font-family: 'Courier New', monospace;
+            font-family: 'Sarasa Mono SC', monospace;
         }
         .pager a:hover { border-color: #FFEE00; color: #FFEE00; }
         .pager .active { background: #FFEE00; color: #000; border-color: #FFEE00; font-weight: 700; }
@@ -331,7 +331,7 @@
                         <span class="role-tag" style="background: #222; color: #888; border-color: #555;">双向</span>
                     </span>
                     <span class="sep">·</span>
-                    <span>订单号 <code style="font-family: 'Courier New', monospace;">{{ c.orderNo }}</code></span>
+                    <span>订单号 <code style="font-family: 'Sarasa Mono SC', monospace;">{{ c.orderNo }}</code></span>
                     <span class="sep">·</span>
                     <span>{{ c.itemTitle }}</span>
                 </div>

@@ -52,7 +52,7 @@
         body {
             background: #000;
             color: #FFEE00;
-            font-family: 'Courier New', Consolas, 'Source Code Pro', monospace;
+            font-family: 'Sarasa Mono SC', 'Source Code Pro', monospace;
             line-height: 1.5;
             min-height: 100vh;
         }
@@ -131,14 +131,14 @@
             border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 2px;
             font-size: 13px; font-weight: 600; cursor: pointer;
             display: flex; align-items: center; gap: 5px;
-            transition: all 0.15s; font-family: 'Courier New', Consolas, monospace;
+            transition: all 0.15s; font-family: 'Sarasa Mono SC', monospace;
         }
         .btn-chat:hover { background: #00F0FF; color: #000; border-color: #00F0FF; }
         .btn-follow {
             padding: 8px 18px; background: transparent; color: #00F0FF;
             border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 2px;
             font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 5px;
-            transition: all 0.15s; font-family: 'Courier New', Consolas, monospace;
+            transition: all 0.15s; font-family: 'Sarasa Mono SC', monospace;
         }
         .btn-follow:hover { border-color: #FFEE00; color: #FFEE00; }
 
@@ -286,7 +286,7 @@
         .cp-countdown-label { font-size: 12px; color: rgba(255, 238, 0, 0.45); margin-bottom: 4px; }
         .cp-countdown-time {
             font-size: 22px; font-weight: 700; color: #00F0FF;
-            font-family: 'Courier New', Consolas, monospace; letter-spacing: 2px;
+            font-family: 'Sarasa Mono SC', monospace; letter-spacing: 2px;
         }
         .cp-countdown-block.urgent .cp-countdown-time { color: #FF003C; text-shadow: 0 0 8px #FF003C; }
         .cp-countdown-block.ended .cp-countdown-time { color: rgba(255, 238, 0, 0.3); font-size: 16px; }
@@ -301,7 +301,7 @@
             border-radius: 2px; font-size: 16px; outline: none;
             transition: border-color 0.15s; background: #0a0a0a;
             min-width: 0; color: #00F0FF;
-            font-family: 'Courier New', Consolas, monospace;
+            font-family: 'Sarasa Mono SC', monospace;
         }
         .cp-bid-input:focus { border-color: #00F0FF; box-shadow: 0 0 8px rgba(0, 240, 255, 0.15); }
         .cp-bid-input::placeholder { color: rgba(0, 240, 255, 0.25); }
@@ -310,7 +310,7 @@
             padding: 11px 22px; background: #00F0FF; color: #000;
             font-size: 14px; font-weight: 700; border-radius: 2px;
             border: 1px solid #00F0FF; cursor: pointer; transition: all 0.15s;
-            white-space: nowrap; font-family: 'Courier New', Consolas, monospace;
+            white-space: nowrap; font-family: 'Sarasa Mono SC', monospace;
         }
         .cp-btn:hover:not(:disabled) { background: #FFEE00; border-color: #FFEE00; color: #000; }
         .cp-btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -323,7 +323,7 @@
             background: transparent; color: #00F0FF;
             border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 2px;
             cursor: pointer; transition: all 0.15s;
-            font-family: 'Courier New', Consolas, monospace;
+            font-family: 'Sarasa Mono SC', monospace;
         }
         .cp-btn-sm:hover { background: rgba(0, 240, 255, 0.1); color: #FFEE00; border-color: #00F0FF; }
 
@@ -335,7 +335,7 @@
             border: 1px solid rgba(0, 240, 255, 0.2); border-radius: 2px;
             font-size: 13px; cursor: pointer; transition: all 0.15s;
             display: flex; align-items: center; justify-content: center; gap: 5px;
-            font-family: 'Courier New', Consolas, monospace;
+            font-family: 'Sarasa Mono SC', monospace;
         }
         .cp-btn-secondary:hover { border-color: #00F0FF; color: #FFEE00; }
         .cp-btn-secondary.danger:hover { border-color: #FF003C; color: #FF003C; }
@@ -407,7 +407,7 @@
             text-decoration: none; text-align: center;
             display: inline-flex; align-items: center; justify-content: center; gap: 6px;
             transition: all 0.15s; border: 1px solid transparent;
-            font-family: 'Courier New', Consolas, monospace;
+            font-family: 'Sarasa Mono SC', monospace;
         }
         .cp-owner-btn-edit { background: transparent; color: #00F0FF; border-color: #00F0FF; }
         .cp-owner-btn-edit:hover { background: #00F0FF; color: #000; }

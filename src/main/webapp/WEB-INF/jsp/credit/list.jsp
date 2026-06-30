@@ -48,7 +48,7 @@
         body {
             background: #000;
             color: #FFEE00;
-            font-family: 'Courier New', Consolas, 'Source Code Pro', monospace;
+            font-family: 'Sarasa Mono SC', 'Source Code Pro', monospace;
             line-height: 1.6;
         }
 
@@ -87,7 +87,7 @@
         }
         .credit-head-info { flex: 1; min-width: 0; }
         .cp-page-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; }
-        .cp-page-sub { font-size: 12px; color: #888; font-family: 'Courier New', monospace; }
+        .cp-page-sub { font-size: 12px; color: #888; font-family: 'Sarasa Mono SC', monospace; }
         .credit-head-actions { }
 
         /* ---- Alert ---- */
@@ -129,7 +129,7 @@
         .cp-tab {
             padding: 12px 16px; font-size: 14px; color: #888;
             cursor: pointer; position: relative; font-weight: 500;
-            text-decoration: none; font-family: 'Courier New', monospace;
+            text-decoration: none; font-family: 'Sarasa Mono SC', monospace;
         }
         .cp-tab:hover { color: #FFEE00; }
         .cp-tab.active { color: #FFEE00; font-weight: 700; }
@@ -204,7 +204,7 @@
             padding: 6px 12px; border: 1px solid #333;
             font-size: 13px; color: #888; text-decoration: none;
             min-width: 32px; text-align: center; background: #0a0a0a;
-            font-family: 'Courier New', monospace;
+            font-family: 'Sarasa Mono SC', monospace;
         }
         .pager a:hover { border-color: #FFEE00; color: #FFEE00; }
         .pager .active { background: #FFEE00; color: #000; border-color: #FFEE00; font-weight: 700; }

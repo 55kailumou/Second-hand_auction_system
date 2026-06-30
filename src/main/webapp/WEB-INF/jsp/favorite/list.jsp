@@ -49,7 +49,7 @@
         body {
             background: #000;
             color: #FFEE00;
-            font-family: 'Courier New', 'Consolas', 'Share Tech Mono', monospace;
+            font-family: 'Sarasa Mono SC', monospace;
             font-size: 14px;
             line-height: 1.6;
             position: relative;

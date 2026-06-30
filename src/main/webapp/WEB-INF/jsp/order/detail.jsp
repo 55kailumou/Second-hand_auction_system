@@ -39,7 +39,7 @@
             --cp-text-dim: #AA9900;
             --cp-text-muted: #555;
             --cp-danger: #ff3355;
-            --cp-font: 'Courier New', Consolas, monospace;
+            --cp-font: 'Sarasa Mono SC', monospace;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {

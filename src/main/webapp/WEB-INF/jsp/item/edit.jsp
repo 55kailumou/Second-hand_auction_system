@@ -83,7 +83,7 @@
         body {
             background: #0a0a0a;
             color: #FFEE00;
-            font-family: 'Courier New', Consolas, 'Source Code Pro', monospace;
+            font-family: 'Sarasa Mono SC', 'Source Code Pro', monospace;
             margin: 0; padding: 0;
             min-height: 100vh;
         }

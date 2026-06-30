@@ -44,7 +44,7 @@
         body {
             background: #000;
             color: #FFEE00;
-            font-family: 'Courier New', Consolas, 'Source Code Pro', monospace;
+            font-family: 'Sarasa Mono SC', 'Source Code Pro', monospace;
             line-height: 1.5;
             min-height: 100vh;
         }
@@ -274,7 +274,7 @@
             background: #0d0d0d; border: 1px solid rgba(0, 240, 255, 0.15);
             border-radius: 2px; cursor: pointer; font-size: 13px;
             display: inline-flex; align-items: center; justify-content: center;
-            transition: all 0.15s; color: #FFEE00; font-family: 'Courier New', Consolas, monospace;
+            transition: all 0.15s; color: #FFEE00; font-family: 'Sarasa Mono SC', monospace;
         }
         .cp-page-btn:hover:not(:disabled) { border-color: #00F0FF; color: #00F0FF; box-shadow: 0 0 8px rgba(0, 240, 255, 0.15); }
         .cp-page-btn.active { background: #00F0FF; color: #000; border-color: #00F0FF; font-weight: 700; }
