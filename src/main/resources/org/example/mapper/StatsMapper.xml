@@ -24,27 +24,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </select>
 
     <!-- ============================================================
-         KPI 单独方法（备用）
-         ============================================================ -->
-    <select id="countUsers" resultType="int">
-        SELECT COUNT(*) FROM `user`
-    </select>
-
-    <select id="countItems" resultType="int">
-        SELECT COUNT(*) FROM `auction_item`
-    </select>
-
-    <select id="countCompletedOrders" resultType="int">
-        SELECT COUNT(*) FROM `order_info` WHERE status IN (2, 3)
-    </select>
-
-    <select id="sumGmv" resultType="java.lang.Double">
-        SELECT IFNULL(SUM(final_price), 0)
-          FROM `order_info`
-         WHERE status IN (2, 3, 4, 5)
-    </select>
-
-    <!-- ============================================================
          用户增长趋势（最近 N 天，按天聚合）
          返回：[{date: '06-01', count: 10}, ...]
          ============================================================ -->

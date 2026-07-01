@@ -134,7 +134,7 @@ public class UserServlet extends HttpServlet {
             // 一条 SQL：按 phone 或 email 匹配 + 校验密码
             user = mapper.loginByPhoneOrEmail(account, PasswordUtil.encrypt(password));
         } catch (Exception e) {
-            org.example.util.ResponseUtil.handleException(e, "用户登录");
+            ResponseUtil.handleException(e, "用户登录");
             req.setAttribute("error", "登录失败，请稍后重试");
             req.setAttribute("returnUrl", returnUrl);
             req.getRequestDispatcher("/WEB-INF/jsp/user/login.jsp").forward(req, resp);
@@ -265,7 +265,7 @@ public class UserServlet extends HttpServlet {
                 fail(req, resp, "注册失败，请稍后再试", username, phone, email);
             }
         } catch (Exception e) {
-            org.example.util.ResponseUtil.handleException(e, "用户注册");
+            ResponseUtil.handleException(e, "用户注册");
             fail(req, resp, "注册出错，请稍后重试", username, phone, email);
         }
     }
@@ -374,7 +374,7 @@ public class UserServlet extends HttpServlet {
 
             req.getRequestDispatcher("/WEB-INF/jsp/user/center.jsp").forward(req, resp);
         } catch (Exception e) {
-            org.example.util.ResponseUtil.handleException(e, "个人中心加载");
+            ResponseUtil.handleException(e, "个人中心加载");
             req.setAttribute("error", "加载个人中心失败，请稍后重试");
             req.getRequestDispatcher("/WEB-INF/jsp/user/center.jsp").forward(req, resp);
         }

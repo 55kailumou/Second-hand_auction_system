@@ -38,7 +38,7 @@ public class AuctionEndService {
     /**
      * 扫描并结算所有到期拍品
      * @return Map: { settled: int, failed: int, soldCount: int, flowCount: int,
-     *                generatedOrders: int, refundDeposits: int, transferredDeposits: int }
+     *                refundDeposits: int, transferredDeposits: int }
      */
     public static Map<String, Object> settleEndedItems() {
         Map<String, Object> result = new HashMap<>();
@@ -46,7 +46,6 @@ public class AuctionEndService {
         int failed = 0;
         int soldCount = 0;
         int flowCount = 0;
-        int generatedOrders = 0;
         int refundDeposits = 0;
         int transferredDeposits = 0;
 
@@ -110,10 +109,8 @@ public class AuctionEndService {
                                 && winnerDeposit.getStatus() != null
                                 && winnerDeposit.getStatus() == 1) ? winnerDeposit.getAmount() : BigDecimal.ZERO;
 
-                        // 用一个简化的方式：直接创建订单（不依赖用户地址，由中拍人后续选择地址下单）
-                        // 这里先不自动生成订单，让中标人在拍品详情页手动下单
-                        // 简化：跟之前一样，只标成交，订单在拍品详情页有"中拍后下单"按钮
-                        generatedOrders++;
+                        // 不自动生成订单：让中标人在拍品详情页手动下单（点"立即下单"选地址）
+                        // 订单生成由 AuctionEndService.generateOrderForWinner 负责
 
                         // 通知中拍者：恭喜中标
                         StringBuilder msgContent = new StringBuilder();
@@ -166,7 +163,6 @@ public class AuctionEndService {
         result.put("failed", failed);
         result.put("soldCount", soldCount);
         result.put("flowCount", flowCount);
-        result.put("generatedOrders", generatedOrders);
         result.put("refundDeposits", refundDeposits);
         result.put("transferredDeposits", transferredDeposits);
         result.put("message", String.format(

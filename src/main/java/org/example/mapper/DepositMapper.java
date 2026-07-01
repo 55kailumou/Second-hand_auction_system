@@ -37,18 +37,6 @@ public interface DepositMapper {
     /** 把某条记录状态改为 2（已退还） */
     int markRefunded(@Param("id") Integer id, @Param("remark") String remark);
 
-    /** 把某条记录状态改为 3（已没收） */
-    int markForfeited(@Param("id") Integer id, @Param("remark") String remark);
-
-    /** 某拍品的押金总数（status=0/1 都算） */
-    java.math.BigDecimal sumActiveAmountByItem(@Param("itemId") Integer itemId);
-
-    /** 某用户的已缴押金总额（status=0/1） */
-    java.math.BigDecimal sumActiveAmountByUser(@Param("userId") Integer userId);
-
-    /** 某拍品的中标者押金记录（status=1） */
-    Deposit findTransferredByItem(@Param("itemId") Integer itemId);
-
     // ===== 流水查询（个人中心账户流水页用） =====
 
     /**

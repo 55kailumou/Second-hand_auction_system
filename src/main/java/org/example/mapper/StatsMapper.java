@@ -21,20 +21,6 @@ public interface StatsMapper {
      */
     Map<String, Object> getOverview(@Param("trendDays") Integer trendDays);
 
-    // ============ 单独方法（备用，便于将来单图刷新） ============
-
-    /** 用户总数 */
-    int countUsers();
-
-    /** 拍品总数 */
-    int countItems();
-
-    /** 已成交订单数（status 2 已发货 / 3 已收货） */
-    int countCompletedOrders();
-
-    /** 总成交额 GMV（已成交订单的 final_price 之和） */
-    Double sumGmv();
-
     /** 用户增长趋势（最近 N 天） */
     List<Map<String, Object>> userTrend(@Param("days") Integer days);
 

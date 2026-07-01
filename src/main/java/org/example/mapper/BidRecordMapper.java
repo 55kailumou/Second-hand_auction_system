@@ -19,9 +19,6 @@ public interface BidRecordMapper {
     /** 把某个拍品的所有 isWinning 置为 0（用于新的最高价产生时） */
     int resetWinningByItem(Integer itemId);
 
-    /** 把某条记录置为 winning=1 */
-    int setWinning(@Param("id") Integer id);
-
     /** 查询某拍品的所有出价（按金额倒序） */
     List<BidRecord> findByItemIdOrderByAmountDesc(Integer itemId);
 

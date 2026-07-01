@@ -64,14 +64,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </where>
     </select>
 
-    <!-- 5. 某用户某 type 总额 -->
-    <select id="sumByUserAndType" resultType="java.math.BigDecimal">
-        SELECT COALESCE(SUM(amount), 0)
-        FROM payment_record
-        WHERE user_id = #{userId} AND type = #{type}
-    </select>
-
-    <!-- 6. 某订单的所有流水 -->
+    <!-- 5. 某订单的所有流水 -->
     <select id="findByOrderNo" parameterType="string" resultType="PaymentRecord">
         SELECT <include refid="recordColumns"/>
         FROM payment_record

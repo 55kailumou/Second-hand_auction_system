@@ -15,6 +15,7 @@ import org.example.mapper.BidRecordMapper;
 import org.example.mapper.CategoryMapper;
 import org.example.mapper.ItemImageMapper;
 import org.example.mapper.WatchListMapper;
+import org.example.util.DepositCalculator;
 import org.example.util.MyBatisUtil;
 import org.example.util.ResponseUtil;
 
@@ -142,7 +143,7 @@ public class ItemServlet extends HttpServlet {
             total = itemMapper.countByCondition(params);
             categories = catMapper.findAll();
         } catch (Exception e) {
-            org.example.util.ResponseUtil.handleException(e, "拍品列表");
+            ResponseUtil.handleException(e, "拍品列表");
             items = new ArrayList<>();
             total = 0;
             categories = new ArrayList<>();
@@ -202,7 +203,7 @@ public class ItemServlet extends HttpServlet {
             // 优先从 item_image 表读图（已 bind 到拍品的图）；若为空，fallback 到 cover_image/image_urls 字段
             itemImages = imgMapper.findByItemId(id);
         } catch (Exception e) {
-            org.example.util.ResponseUtil.handleException(e, "拍品详情");
+            ResponseUtil.handleException(e, "拍品详情");
             req.setAttribute("error", "加载详情失败，请稍后重试");
             req.getRequestDispatcher("/WEB-INF/jsp/error.jsp").forward(req, resp);
             return;
@@ -279,7 +280,7 @@ public class ItemServlet extends HttpServlet {
         try (SqlSession session = MyBatisUtil.openSession()) {
             categories = session.getMapper(CategoryMapper.class).findAll();
         } catch (Exception e) {
-            org.example.util.ResponseUtil.handleException(e, "拍品发布页分类查询");
+            ResponseUtil.handleException(e, "拍品发布页分类查询");
             categories = new ArrayList<>();
         }
 
@@ -340,7 +341,7 @@ public class ItemServlet extends HttpServlet {
         item.setCoverImage(null);          // 后面由 syncItemImages 回填
         item.setImageUrls(imageUrls);      // 保留原始字符串便于编辑时回填
         item.setStartPrice(startPrice);
-        item.setDeposit(org.example.util.DepositCalculator.calculate(sellerSetDeposit, startPrice));  // 押金（按起拍价×10% 自动算，卖家可手填）
+        item.setDeposit(DepositCalculator.calculate(sellerSetDeposit, startPrice));  // 押金（按起拍价×10% 自动算，卖家可手填）
         item.setCurrentPrice(startPrice);  // 初始当前价 = 起拍价
         item.setBidIncrement(bidIncrement == null ? new BigDecimal("1.00") : bidIncrement);
         item.setReservePrice(reservePrice);
@@ -373,7 +374,7 @@ public class ItemServlet extends HttpServlet {
                         startPrice, bidIncrement, reservePrice, startTime, endTime);
             }
         } catch (Exception e) {
-            org.example.util.ResponseUtil.handleException(e, "发布拍品");
+            ResponseUtil.handleException(e, "发布拍品");
             failPublish(req, resp, "发布出错，请稍后重试", categoryId, title, description,
                     brand, model, conditionLevel, flawDesc, imageUrls,
                     startPrice, bidIncrement, reservePrice, startTime, endTime);
@@ -541,7 +542,7 @@ public class ItemServlet extends HttpServlet {
             req.getRequestDispatcher("/WEB-INF/jsp/item/result.jsp").forward(req, resp);
 
         } catch (Exception e) {
-            org.example.util.ResponseUtil.handleException(e, "拍品结果");
+            ResponseUtil.handleException(e, "拍品结果");
             req.setAttribute("error", "加载失败，请稍后重试");
             req.getRequestDispatcher("/WEB-INF/jsp/item/result.jsp").forward(req, resp);
         }
@@ -572,7 +573,7 @@ public class ItemServlet extends HttpServlet {
             params.put("sort", "newest");
             items = mapper.findByCondition(params);
         } catch (Exception e) {
-            org.example.util.ResponseUtil.handleException(e, "我发布的拍品");
+            ResponseUtil.handleException(e, "我发布的拍品");
             items = new ArrayList<>();
             req.setAttribute("error", "加载失败，请稍后重试");
         }
@@ -624,7 +625,7 @@ public class ItemServlet extends HttpServlet {
                 rows.add(row);
             }
         } catch (Exception e) {
-            org.example.util.ResponseUtil.handleException(e, "我的出价");
+            ResponseUtil.handleException(e, "我的出价");
             req.setAttribute("error", "加载失败，请稍后重试");
         }
 
@@ -660,7 +661,7 @@ public class ItemServlet extends HttpServlet {
             List<Category> allCats = categoryMapper.findAll();
             sections = buildOrderedSections(allCats, itemMapper, categoryMapper, PER_CATEGORY);
         } catch (Exception e) {
-            org.example.util.ResponseUtil.handleException(e, "热门拍品");
+            ResponseUtil.handleException(e, "热门拍品");
             req.setAttribute("error", "加载失败，请稍后重试");
         }
 
@@ -767,7 +768,7 @@ public class ItemServlet extends HttpServlet {
             req.setAttribute("editable", scope);  // 传给 JSP 的可编辑范围
             req.getRequestDispatcher("/WEB-INF/jsp/item/edit.jsp").forward(req, resp);
         } catch (Exception e) {
-            org.example.util.ResponseUtil.handleException(e, "编辑页加载");
+            ResponseUtil.handleException(e, "编辑页加载");
             req.setAttribute("error", "加载失败，请稍后重试");
             req.getRequestDispatcher("/WEB-INF/jsp/error.jsp").forward(req, resp);
         }
@@ -902,7 +903,7 @@ public class ItemServlet extends HttpServlet {
                 // 全字段更新（含价格时间）
                 update.setCategoryId(categoryId);
                 update.setStartPrice(startPrice);
-                update.setDeposit(org.example.util.DepositCalculator.calculate(sellerSetDeposit, startPrice));
+                update.setDeposit(DepositCalculator.calculate(sellerSetDeposit, startPrice));
                 update.setBidIncrement(bidIncrement == null ? new BigDecimal("1.00") : bidIncrement);
                 update.setReservePrice(reservePrice);
                 update.setStartTime(startTime);
@@ -932,7 +933,7 @@ public class ItemServlet extends HttpServlet {
                         startPrice, bidIncrement, reservePrice, startTime, endTime, scope);
             }
         } catch (Exception e) {
-            org.example.util.ResponseUtil.handleException(e, "编辑拍品");
+            ResponseUtil.handleException(e, "编辑拍品");
             resp.sendRedirect(req.getContextPath() + "/item?action=list");
         }
     }
@@ -1022,7 +1023,7 @@ public class ItemServlet extends HttpServlet {
                 writeJson(resp, java.util.Map.of("success", false, "message", "撤拍失败，请稍后重试"));
             }
         } catch (Exception e) {
-            org.example.util.ResponseUtil.handleException(e, "撤拍");
+            ResponseUtil.handleException(e, "撤拍");
             writeJson(resp, java.util.Map.of("success", false, "message", "撤拍失败，请稍后重试"));
         }
     }
@@ -1039,7 +1040,7 @@ public class ItemServlet extends HttpServlet {
         try {
             return JSON.writeValueAsString(obj);
         } catch (Exception e) {
-            org.example.util.ResponseUtil.handleException(e, "JSON 序列化");
+            ResponseUtil.handleException(e, "JSON 序列化");
             return "[]";
         }
     }

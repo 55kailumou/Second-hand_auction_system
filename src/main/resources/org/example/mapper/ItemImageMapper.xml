@@ -23,25 +23,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         VALUES (#{itemId}, #{imageUrl}, #{sortOrder})
     </insert>
 
-    <update id="bindItemId">
-        UPDATE `item_image`
-           SET item_id = #{itemId}
-         WHERE id = #{id} AND item_id IS NULL
-    </update>
-
-    <select id="findTempByUrl" parameterType="java.lang.String" resultMap="ItemImageMap">
-        SELECT <include refid="Base_Column_List"/>
-          FROM `item_image`
-         WHERE image_url = #{imageUrl} AND item_id IS NULL
-         LIMIT 1
-    </select>
-
     <delete id="deleteById" parameterType="java.lang.Integer">
         DELETE FROM `item_image` WHERE id = #{id}
-    </delete>
-
-    <delete id="deleteByItemId" parameterType="java.lang.Integer">
-        DELETE FROM `item_image` WHERE item_id = #{itemId}
     </delete>
 
     <select id="findById" parameterType="java.lang.Integer" resultMap="ItemImageMap">
@@ -55,19 +38,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
           FROM `item_image`
          WHERE item_id = #{itemId}
          ORDER BY sort_order ASC, id ASC
-    </select>
-
-    <select id="findCoverByItemId" parameterType="java.lang.Integer" resultMap="ItemImageMap">
-        SELECT <include refid="Base_Column_List"/>
-          FROM `item_image`
-         WHERE item_id = #{itemId} AND sort_order = 0
-         LIMIT 1
-    </select>
-
-    <select id="countByItemId" parameterType="java.lang.Integer" resultType="int">
-        SELECT COUNT(*)
-          FROM `item_image`
-         WHERE item_id = #{itemId}
     </select>
 
 </mapper>

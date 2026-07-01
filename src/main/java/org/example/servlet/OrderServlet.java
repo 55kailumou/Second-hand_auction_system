@@ -149,7 +149,7 @@ public class OrderServlet extends HttpServlet {
             req.setAttribute("pageSize", pageSize);
             req.getRequestDispatcher("/WEB-INF/jsp/order/list.jsp").forward(req, resp);
         } catch (Exception e) {
-            org.example.util.ResponseUtil.handleException(e, "加载订单列表");
+            ResponseUtil.handleException(e, "加载订单列表");
             req.setAttribute("error", "加载订单失败，请稍后重试");
             req.getRequestDispatcher("/WEB-INF/jsp/order/list.jsp").forward(req, resp);
         }
@@ -203,7 +203,7 @@ public class OrderServlet extends HttpServlet {
             req.setAttribute("isBuyer", order.getBuyerId().equals(user.getId()));
             req.getRequestDispatcher("/WEB-INF/jsp/order/detail.jsp").forward(req, resp);
         } catch (Exception e) {
-            org.example.util.ResponseUtil.handleException(e, "加载订单详情");
+            ResponseUtil.handleException(e, "加载订单详情");
             req.setAttribute("error", "加载订单详情失败，请稍后重试");
             req.getRequestDispatcher("/WEB-INF/jsp/order/detail.jsp").forward(req, resp);
         }

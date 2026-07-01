@@ -73,38 +73,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         WHERE id = #{id} AND status = 0
     </update>
 
-    <!-- 9. 标记已没收（status 0→3） -->
-    <update id="markForfeited">
-        UPDATE user_deposit
-        SET status = 3,
-            refund_time = NOW(),
-            remark = #{remark}
-        WHERE id = #{id} AND status = 0
-    </update>
-
-    <!-- 10. 某拍品押金总数（status 0/1） -->
-    <select id="sumActiveAmountByItem" parameterType="int" resultType="java.math.BigDecimal">
-        SELECT COALESCE(SUM(amount), 0)
-        FROM user_deposit
-        WHERE item_id = #{itemId} AND status IN (0, 1)
-    </select>
-
-    <!-- 11. 某用户已缴押金总额（status 0/1） -->
-    <select id="sumActiveAmountByUser" parameterType="int" resultType="java.math.BigDecimal">
-        SELECT COALESCE(SUM(amount), 0)
-        FROM user_deposit
-        WHERE user_id = #{userId} AND status IN (0, 1)
-    </select>
-
-    <!-- 12. 某拍品的中标者押金（status=1） -->
-    <select id="findTransferredByItem" parameterType="int" resultType="Deposit">
-        SELECT <include refid="depositColumns"/>
-        FROM user_deposit
-        WHERE item_id = #{itemId} AND status = 1
-        LIMIT 1
-    </select>
-
-    <!-- 13. 分页查某用户押金 -->
+    <!-- 9. 分页查某用户押金 -->
     <select id="findByUserIdPaged" parameterType="map" resultType="Deposit">
         SELECT <include refid="depositColumns"/>
         FROM user_deposit

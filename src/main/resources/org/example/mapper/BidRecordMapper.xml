@@ -27,12 +27,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         UPDATE bid_record SET is_winning = 0 WHERE item_id = #{itemId}
     </update>
 
-    <!-- 4. 把某条记录置为 winning=1 -->
-    <update id="setWinning" parameterType="int">
-        UPDATE bid_record SET is_winning = 1 WHERE id = #{id}
-    </update>
-
-    <!-- 5. 某拍品的全部出价，按金额倒序 -->
+    <!-- 4. 某拍品的全部出价，按金额倒序 -->
     <select id="findByItemIdOrderByAmountDesc" parameterType="int" resultType="BidRecord">
         SELECT <include refid="bidColumns"/>
         FROM bid_record

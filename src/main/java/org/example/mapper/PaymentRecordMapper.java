@@ -28,10 +28,6 @@ public interface PaymentRecordMapper {
 
     int countByUserId(Map<String, Object> params);
 
-    /** 某用户某 type 的流水总额（收入正数/支出负数） */
-    java.math.BigDecimal sumByUserAndType(@Param("userId") Integer userId,
-                                          @Param("type") Integer type);
-
     /** 某订单相关的所有流水 */
     List<PaymentRecord> findByOrderNo(@Param("orderNo") String orderNo);
 }

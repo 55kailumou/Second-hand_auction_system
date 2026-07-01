@@ -26,10 +26,6 @@ public interface WatchListMapper {
     /** 新增收藏（如果已存在则返回 0，靠 uk_user_item 唯一索引保证） */
     int insert(WatchList watchList);
 
-    /** 按 userId + itemId 取消收藏（删除） */
-    int deleteByUserAndItem(@Param("userId") Integer userId,
-                            @Param("itemId") Integer itemId);
-
     /** 按 ID 删除 */
     int deleteById(@Param("id") Integer id);
 }

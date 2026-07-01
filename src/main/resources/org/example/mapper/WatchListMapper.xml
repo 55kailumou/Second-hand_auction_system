@@ -43,13 +43,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         VALUES (#{userId}, #{itemId})
     </insert>
 
-    <!-- 6. 按 userId + itemId 取消收藏 -->
-    <delete id="deleteByUserAndItem">
-        DELETE FROM watch_list
-        WHERE user_id = #{userId} AND item_id = #{itemId}
-    </delete>
-
-    <!-- 7. 按 ID 删除 -->
+    <!-- 6. 按 ID 删除 -->
     <delete id="deleteById" parameterType="int">
         DELETE FROM watch_list WHERE id = #{id}
     </delete>
